@@ -5,8 +5,6 @@ export function findYoutubeVideoId(str: string): string | undefined {
   // /(?:youtube\.com\/(?:[^/\n\s]+\/(?:shorts?|watch)|(?:v|e(?:mbed)?)\/|\?v=|&v=)|youtu\.be\/|\/video\/|watch\?v=|&v=)([a-zA-Z0-9_-]{11})/;
   const videoIdMatch = str.match(videoIdRegex);
 
-  console.log(videoIdMatch);
-
   if (videoIdMatch && videoIdMatch[1]) return videoIdMatch[1];
 }
 
