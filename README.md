@@ -1,3 +1,4 @@
 # Stream Video Queue
 
-Allows you to watch videos with a queue (which is formed using your Twitch chat) and voting for keeping or skipping video.
+Allows you to watch videos with Twitch chat.
+The queue is formed from orders from your chat users (youtube links catches automatically). They can also vote to leave the video or skip it.
