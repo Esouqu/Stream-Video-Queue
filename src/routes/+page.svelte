@@ -24,7 +24,6 @@
 	let twitchChannel = $page.data.twitchChannel;
 	let currentTab: number;
 
-	$: tabs = [`Очередь (${$queue.length})`, 'Настройки'];
 	$: isAutoskip = settings.isAutoskip;
 	$: isAutoplay = settings.isAutoplay;
 	$: isAutodetection = settings.isAutodetection;
@@ -36,6 +35,7 @@
 	$: {
 		if ($isAutoskip && $votesDifference >= $userInput.needed) queue.setNext();
 	}
+	$: tabs = [`Очередь (${$queue.length})`, 'Настройки'];
 
 	onMount(() => initializeSubscriptions());
 
