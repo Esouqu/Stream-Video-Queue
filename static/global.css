@@ -1,0 +1,130 @@
+:root {
+  --donationalerts-orange: #F57D07;
+  --twitch-purple: #9146FF;
+  --primary-80: rgb(255 180 168);
+  --primary-70: rgb(255, 138, 120);
+  --primary-60: rgb(255, 85, 64);
+  --primary-50: #ef0000;
+  --primary-40: rgb(192, 1, 0);
+  --primary-30: rgb(147, 1, 0);
+  --surface-tint: rgb(255 180 168);
+  --on-primary: rgb(105 1 0);
+  --primary-container: rgb(235 0 0);
+  --on-primary-container: rgb(255 255 255);
+  --secondary: rgb(255 180 168);
+  --on-secondary: rgb(105 1 0);
+  --secondary-container: rgb(134 1 0);
+  --on-secondary-container: rgb(255 200 191);
+  --tertiary: rgb(255 185 86);
+  --on-tertiary: rgb(70 43 0);
+  --tertiary-container: rgb(161 105 0);
+  --on-tertiary-container: rgb(255 255 255);
+  --error: rgb(255 180 171);
+  --on-error: rgb(105 0 5);
+  --error-container: rgb(147 0 10);
+  --on-error-container: rgb(255 218 214);
+  --background: rgb(33 14 11);
+  --on-background: rgb(255 218 212);
+  --surface: #141313;
+  --on-surface: #E5E2E1;
+  --surface-variant: rgb(96 62 57);
+  --on-surface-variant: #C4C7C7;
+  --outline: rgb(177 135 128);
+  --outline-variant: rgb(96 62 57);
+  --shadow: rgb(0 0 0);
+  --scrim: rgb(0 0 0);
+  --inverse-surface: #E5E2E1;
+  --inverse-on-surface: #313030;
+  --inverse-primary: rgb(192 1 0);
+  --primary-fixed: rgb(255 218 212);
+  --on-primary-fixed: rgb(65 0 0);
+  --primary-fixed-dim: rgb(255 180 168);
+  --on-primary-fixed-variant: rgb(147 1 0);
+  --secondary-fixed: rgb(255 218 212);
+  --on-secondary-fixed: rgb(65 0 0);
+  --secondary-fixed-dim: rgb(255 180 168);
+  --on-secondary-fixed-variant: rgb(147 1 0);
+  --tertiary-fixed: rgb(255 221 181);
+  --on-tertiary-fixed: rgb(42 24 0);
+  --tertiary-fixed-dim: rgb(255 185 86);
+  --on-tertiary-fixed-variant: rgb(100 63 0);
+  --surface-dim: #141313;
+  --surface-bright: #3A3939;
+  --surface-container: #201F1F;
+  --surface-container-low: #1C1B1B;
+  --surface-container-lower: #0E0E0E;
+  --surface-container-high: #2B2A2A;
+  --surface-container-highest: #353434;
+  --neutral: #7A767A;
+  --hover-white: rgba(255 255 255 / 15%);
+  --hover-black: rgba(0 0 0 / 15%);
+  --elevation-1: 0px 1px 2px 0px rgba(0, 0, 0, 0.30), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+  --elevation-3: 0px 1px 3px 0px rgba(0, 0, 0, 0.30), 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
+  --elevation-5: 0px 4px 4px 0px rgba(0, 0, 0, 0.30), 0px 8px 12px 6px rgba(0, 0, 0, 0.15);
+}
+
+
+* {
+  min-width: 0;
+}
+
+body {
+  display: flex;
+  height: 100vh;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
+  background-color: var(--surface-container-lower);
+  overflow: hidden;
+}
+
+/* a {
+  color: var(--primary-60);
+}
+
+h1::selection,
+h2::selection,
+h3::selection,
+p::selection,
+a::selection,
+span::selection {
+  background-color: var(--primary-60);
+} */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 5px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background: gray;
+  transition: .2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #f1f1f1;
+}
+
+/* .tippy-box[data-theme~='general'] {
+  color: var(--on-inverse-surface);
+  background-color: var(--inverse-surface);
+
+  &[data-placement^='top']>.tippy-arrow::before {
+    border-top-color: var(--inverse-surface) !important;
+  }
+
+  &[data-placement^='bottom']>.tippy-arrow::before {
+    border-bottom-color: var(--inverse-surface) !important;
+  }
+
+  &[data-placement^='left']>.tippy-arrow::before {
+    border-left-color: var(--inverse-surface) !important;
+  }
+
+  &[data-placement^='right']>.tippy-arrow::before {
+    border-right-color: var(--inverse-surface) !important;
+  }
+} */

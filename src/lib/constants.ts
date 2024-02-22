@@ -1,0 +1,6 @@
+export enum CHAT_STATE {
+  NOT_EXISTS,
+  CONNECTED,
+  DISCONNECTED,
+  CONNECTING,
+}
