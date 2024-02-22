@@ -36,7 +36,7 @@ function createChat() {
 
       if (videoId) {
         queue.add(videoId, username);
-      } else if (keyword && !votedUsernames.has(username)) {
+      } else if (videoId?.length !== 11 && keyword && !votedUsernames.has(username)) {
         votedUsernames.add(username);
         votes.addVote(keyword);
       }
