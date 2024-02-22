@@ -2,7 +2,7 @@
 </script>
 
 <svelte:head>
-	<title>Twitch - Redirect - Auction</title>
+	<title>Twitch - Redirect</title>
 </svelte:head>
 
 <div>redirect</div>
