@@ -4,12 +4,12 @@
 	import SwitchSetting from '$lib/components/SwitchSetting.svelte';
 	import VideoPlayer from '$lib/components/VideoPlayer.svelte';
 	import chat from '$lib/chat';
-	import { CHAT_STATE } from '$lib/constants';
+	import { CHAT_STATE, SOCKET_STATE } from '$lib/constants';
 	import Queue from '$lib/components/Queue.svelte';
 	import settings from '$lib/stores/settings';
 	import Indicator from '$lib/components/Indicator.svelte';
 	import votes from '$lib/stores/votes';
-	import { fly, slide } from 'svelte/transition';
+	import { fly } from 'svelte/transition';
 	import Button from '$lib/components/Button.svelte';
 	import { goto } from '$app/navigation';
 	import twitchIcon from '$lib/assets/twitch-logo/TwitchGlitchWhite.svg';
@@ -20,18 +20,23 @@
 	import Contact from '$lib/components/Contact.svelte';
 	import githubIcon from '$lib/assets/github-mark/github-mark-white.svg';
 	import discordIcon from '$lib/assets/discord-logo/icon_clyde_white_RGB.svg';
+	import centrifugo from '$lib/centrifugo';
+	import donationAlertsIcon from '$lib/assets/donationalerts-logo/DA_Alert_White.svg';
 
 	let twitchChannel = $page.data.twitchChannel;
+	let donationAlertsUser = $page.data.donationAlertsUser;
 	let currentTab: number;
 
 	$: isAutoskip = settings.isAutoskip;
 	$: isAutoplay = settings.isAutoplay;
 	$: isAutodetection = settings.isAutodetection;
 	$: percentFromViewCount = settings.percentFromViewCount;
+	$: minDonationValue = settings.minDonationValue;
 	$: isAddRandomly = settings.isAddRandomly;
 	$: userInput = settings.userInput;
 	$: votesDifference = votes.difference;
 	$: chatState = chat.state;
+	$: centrifugoState = centrifugo.state;
 	$: {
 		if ($isAutoskip && $votesDifference >= $userInput.needed) queue.setNext();
 	}
@@ -39,16 +44,18 @@
 
 	onMount(() => initializeSubscriptions());
 
-	async function connectToChat() {
+	async function connectCertifugo() {
+		if ($centrifugoState === SOCKET_STATE.CLOSED && donationAlertsUser) {
+			await centrifugo.connect(donationAlertsUser);
+		}
+	}
+
+	function connectToChat() {
 		if ($chatState === CHAT_STATE.NOT_EXISTS && twitchChannel) {
 			chat.initialize(twitchChannel.login);
 		} else if ($chatState === CHAT_STATE.DISCONNECTED) {
 			chat.connect();
 		}
-
-		// await fetch(`api/twitch/polls?broadcaster_id=${twitchChannel}`, { method: 'POST' })
-		// 	.then((res) => res.json())
-		// 	.then((data: ITwitchPollData) => console.log(data));
 	}
 </script>
 
@@ -66,14 +73,34 @@
 					style="display: flex; flex-direction: column; height: 100%; overflow: hidden;"
 					transition:fly={{ x: -200, duration: 300 }}
 				>
-					{#if $chatState === CHAT_STATE.CONNECTED}
-						<div class="chat-connection" transition:slide={{ axis: 'y', duration: 300 }}>
-							<span>Чат подключен</span>
+					<Queue />
+					<div class="connections">
+						<div
+							style="display: flex;
+							align-items: center;
+							gap: 10px;"
+						>
+							<div style="display: flex; align-items: center; width: 25px;">
+								<img src={twitchIcon} alt="Twitch Brand Icon" />
+							</div>
+							<!-- <span>Чат {$chatState === CHAT_STATE.CONNECTED ? 'подключен' : 'отключен'}</span> -->
 							<Indicator isActive={$chatState === CHAT_STATE.CONNECTED} />
 						</div>
-					{/if}
-					<Queue />
-					<!-- <div class="chat-connection"></div> -->
+						<div
+							style="display: flex;
+							align-items: center;
+							gap: 10px;"
+						>
+							<div style="display: flex; align-items: center; width: 25px;">
+								<img src={donationAlertsIcon} alt="Twitch Brand Icon" />
+							</div>
+							<!-- <span
+								>Донаты {$centrifugoState === SOCKET_STATE.OPEN ? 'подключены' : 'отключены'}</span
+							> -->
+							<Indicator isActive={$centrifugoState === SOCKET_STATE.OPEN} />
+						</div>
+						<!-- <Button --button-bg="var(--surface-variant)" title="Очистить очередь" /> -->
+					</div>
 				</div>
 			{:else if currentTab === 1}
 				<div class="settings-wrapper" transition:fly={{ x: 200, duration: 300 }}>
@@ -85,7 +112,7 @@
 									<div style="display: flex; align-items: center; width: 25px;">
 										<img src={twitchIcon} alt="Twitch Brand Icon" />
 									</div>
-									<h4 style="margin: 0;">Twitch</h4>
+									<span style="font-weight: 500;">Twitch</span>
 								</div>
 								<Button on:click={() => goto('/api/twitch/auth')} title="Авторизоваться" />
 							</div>
@@ -100,6 +127,51 @@
 								isDisabled={$chatState === CHAT_STATE.CONNECTING}
 								isLoading={$chatState === CHAT_STATE.CONNECTING}
 							/>
+						{/if}
+					</div>
+					<div>
+						<h3>DonationAlerts</h3>
+						{#if !donationAlertsUser}
+							<div style="display: flex; flex: 1; justify-content: space-between; padding: 0 10px;">
+								<div style="display: flex; align-items: center; gap: 10px;">
+									<div style="display: flex; align-items: center; width: 25px;">
+										<img src={donationAlertsIcon} alt="DonationAlerts Brand Icon" />
+									</div>
+									<span style="font-weight: 500;">DonationAlerts</span>
+								</div>
+								<Button on:click={() => goto('/api/donationalerts/auth')} title="Авторизоваться" />
+							</div>
+						{:else}
+							<div style="display: flex; flex-direction: column; gap: 10px">
+								<SwitchSetting
+									icon={donationAlertsUser.avatar}
+									title={donationAlertsUser.name}
+									description={`Следить за донатами в поисках ссылок на Youtube.\nЗаказанные этим путем видео будут находиться выше остальных`}
+									on={connectCertifugo}
+									off={centrifugo.disconnect}
+									isToggled={$centrifugoState === SOCKET_STATE.OPEN}
+									isDisabled={$centrifugoState === SOCKET_STATE.CONNECTING}
+									isLoading={$centrifugoState === SOCKET_STATE.CONNECTING}
+								/>
+								<div
+									class="additional-autodetect-setting"
+									class:disabled={$centrifugoState !== SOCKET_STATE.OPEN}
+								>
+									<span>Минимальный донат</span>
+									<NumberInput
+										--input-p="10.5px"
+										--input-w-w="90px"
+										--input-w="100%"
+										--input-text-al="start"
+										id="donationalerts-min-value"
+										suffix="Руб"
+										isFilled={false}
+										isBorderless={false}
+										isDisabled={$centrifugoState !== SOCKET_STATE.OPEN}
+										bind:value={$minDonationValue}
+									/>
+								</div>
+							</div>
 						{/if}
 					</div>
 					<div>
@@ -193,17 +265,18 @@
 	.settings-wrapper {
 		display: flex;
 		flex-direction: column;
-		padding: 10px;
+		padding: 10px 10px 25px 10px;
 		color: var(--on-surface);
+		overflow-y: auto;
 	}
 
-	.chat-connection {
+	.connections {
+		position: relative;
 		display: flex;
-		justify-content: center;
 		align-items: center;
-		gap: 10px;
-		width: 100%;
-		padding: 15px 0;
+		justify-content: center;
+		gap: 25px;
+		padding: 15px 20px;
 		color: var(--on-surface-variant);
 	}
 
@@ -226,8 +299,7 @@
 		justify-content: center;
 		align-items: center;
 		gap: 20px;
-		position: absolute;
-		bottom: 28px;
+		margin-top: 30px;
 		width: 100%;
 	}
 

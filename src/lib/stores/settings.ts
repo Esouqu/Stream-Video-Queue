@@ -12,6 +12,7 @@ function createSettings() {
     skipKeyword: 'Пропустить',
     needed: 1,
   }, 'userInput');
+  const minDonationValue = storable(100, 'minDonationValue');
 
   function setNeededVotes(amount: number) {
     userInput.update((input) => ({
@@ -28,6 +29,7 @@ function createSettings() {
     isAutoskip,
     userInput,
     setNeededVotes,
+    minDonationValue,
   }
 }
 

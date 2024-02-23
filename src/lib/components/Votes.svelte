@@ -31,7 +31,7 @@
 
 <div class="votes">
 	<div style="display: flex; align-items: center;">
-		<button type="button" class="votes-section" on:click={() => focusOn(0)}>
+		<button type="button" class="votes-section clickable" on:click={() => focusOn(0)}>
 			<div class="votes-icon-wrapper">
 				<img src={likeIcon} alt="Vote Button Icon" />
 			</div>
@@ -44,8 +44,15 @@
 			/>
 			<span>{$votes.keep}</span>
 		</button>
+
 		<div class="votes-divider" />
-		<button type="button" class="votes-section" on:click={() => focusOn(1)}>
+
+		<button
+			type="button"
+			class="votes-section"
+			class:clickable={!$isAutodetection}
+			on:click={() => focusOn(1)}
+		>
 			{#if $isAutodetection}
 				<AutoIndicator />
 			{/if}
@@ -63,7 +70,8 @@
 		</button>
 
 		<div class="votes-divider" />
-		<button type="button" class="votes-section" on:click={() => focusOn(2)}>
+
+		<button type="button" class="votes-section clickable" on:click={() => focusOn(2)}>
 			<div class="votes-icon-wrapper">
 				<img src={dislikeIcon} alt="Vote Button Icon" />
 			</div>
@@ -111,6 +119,18 @@
 			background-color: transparent;
 			transition: 0.2s;
 			cursor: pointer;
+
+			&:not(.clickable) {
+				pointer-events: none;
+				cursor: default;
+			}
+
+			&:nth-of-type(1) {
+				border-radius: 100px 0 0 100px;
+			}
+			&:nth-of-type(3) {
+				border-radius: 0 100px 100px 0;
+			}
 
 			&:hover {
 				background-color: var(--hover-white);

@@ -1,6 +1,6 @@
 <script lang="ts">
-	export let title: string = '';
-	export let icon: string = '';
+	export let title = '';
+	export let icon = '';
 	export let isDisabled = false;
 </script>
 
@@ -38,10 +38,6 @@
 
 		&:hover {
 			background-color: var(--hover-white);
-
-			// &::before {
-			// 	opacity: 0.7;
-			// }
 		}
 
 		&-wrapper {
@@ -50,7 +46,6 @@
 			background-color: var(--button-bg, var(--surface-bright));
 			height: var(--button-size, auto);
 			width: var(--button-size, auto);
-
 			overflow: hidden;
 
 			&.disabled {

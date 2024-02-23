@@ -76,6 +76,9 @@ export interface IAuthTokenData {
   access_token: string;
   refresh_token: string;
 }
+export interface IDonationAlertsRefreshToken extends Omit<IAuthTokenData, 'refresh_token'> {
+  refresh_token?: string;
+}
 
 export interface IDonationAlertsUserData {
   id: number;
@@ -160,4 +163,5 @@ export interface IQueueVideoInfo {
   channelTitle: string;
   thumbnail: string;
   username: string;
+  isPaid: boolean;
 }

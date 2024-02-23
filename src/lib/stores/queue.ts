@@ -1,5 +1,5 @@
 import type { IQueueVideoInfo, IVideoData } from '$lib/interfaces';
-import { get, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 import { v4 as uuidv4 } from 'uuid';
 import settings from './settings';
 
@@ -11,9 +11,11 @@ import settings from './settings';
 //     "channelTitle": "ChanceMixes",
 //     "thumbnail": "https://i.ytimg.com/vi/36z1ZxSOSRc/default.jpg",
 //     "username": "anon",
-//     "id": uuidv4()
+//     "id": uuidv4(),
+//     "isPaid": false,
 //   }
 // });
+
 // const testArray = [
 //   {
 //     "videoId": "36z1ZxSOSRc",
@@ -21,7 +23,8 @@ import settings from './settings';
 //     "channelTitle": "ChanceMixes",
 //     "thumbnail": "https://i.ytimg.com/vi/36z1ZxSOSRc/default.jpg",
 //     "username": "anonqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
-//     "id": '1'
+//     "id": '1',
+//     "isPaid": false,
 //   },
 //   {
 //     "videoId": "7lo0JH45u54",
@@ -29,7 +32,8 @@ import settings from './settings';
 //     "channelTitle": "NLE CHOPPA",
 //     "thumbnail": "https://i.ytimg.com/vi/7lo0JH45u54/default.jpg",
 //     "username": "anon",
-//     "id": '2'
+//     "id": '2',
+//     "isPaid": false,
 //   },
 //   {
 //     "videoId": "uDAZmwwcP18",
@@ -37,7 +41,8 @@ import settings from './settings';
 //     "channelTitle": "Deko - Topic",
 //     "thumbnail": "https://i.ytimg.com/vi/uDAZmwwcP18/default.jpg",
 //     "username": "anon",
-//     "id": '3'
+//     "id": '3',
+//     "isPaid": false,
 //   },
 //   {
 //     "videoId": "ORt47Py5x5o",
@@ -45,7 +50,8 @@ import settings from './settings';
 //     "channelTitle": "ThePrimeTime",
 //     "thumbnail": "https://i.ytimg.com/vi/ORt47Py5x5o/default.jpg",
 //     "username": "anon",
-//     "id": '4'
+//     "id": '4',
+//     "isPaid": false,
 //   },
 //   {
 //     "videoId": "AjwAdtlRKf8",
@@ -53,7 +59,8 @@ import settings from './settings';
 //     "channelTitle": "MrBeast",
 //     "thumbnail": "https://i.ytimg.com/vi/AjwAdtlRKf8/default.jpg",
 //     "username": "anon",
-//     "id": '5'
+//     "id": '5',
+//     "isPaid": false,
 //   },
 //   {
 //     "videoId": "hD4sz0XufWE",
@@ -61,7 +68,8 @@ import settings from './settings';
 //     "channelTitle": "Стримушка",
 //     "thumbnail": "https://i.ytimg.com/vi/hD4sz0XufWE/default.jpg",
 //     "username": "anon",
-//     "id": '6'
+//     "id": '6',
+//     "isPaid": false,
 //   },
 //   {
 //     "videoId": "jCE34DMLBRQ",
@@ -69,12 +77,45 @@ import settings from './settings';
 //     "channelTitle": "SALUKI",
 //     "thumbnail": "https://i.ytimg.com/vi/jCE34DMLBRQ/mqdefault.jpg",
 //     "username": "anon",
-//     "id": '7'
+//     "id": '7',
+//     "isPaid": false,
+//   },
+// ]
+
+// const testArray2 = [
+//   {
+//     "videoId": "36z1ZxSOSRc",
+//     "title": "✨💫🪐 YAMEII / deko ✿❀ Mix🌛🌈❄️🌊",
+//     "channelTitle": "ChanceMixes",
+//     "thumbnail": "https://i.ytimg.com/vi/36z1ZxSOSRc/default.jpg",
+//     "username": "anonqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+//     "id": '8',
+//     "isPaid": true,
+//   },
+//   {
+//     "videoId": "7lo0JH45u54",
+//     "title": "She look like she would 😳",
+//     "channelTitle": "NLE CHOPPA",
+//     "thumbnail": "https://i.ytimg.com/vi/7lo0JH45u54/default.jpg",
+//     "username": "anon",
+//     "id": '9',
+//     "isPaid": true,
+//   },
+//   {
+//     "videoId": "uDAZmwwcP18",
+//     "title": "nu popstar ✩°｡‘ (* · *) ⸝",
+//     "channelTitle": "Deko - Topic",
+//     "thumbnail": "https://i.ytimg.com/vi/uDAZmwwcP18/default.jpg",
+//     "username": "anon",
+//     "id": '10',
+//     "isPaid": true,
 //   },
 // ]
 
 function createQueue() {
-  const videos = writable<IQueueVideoInfo[]>([]);
+  const freeVideos = writable<IQueueVideoInfo[]>([]);
+  const paidVideos = writable<IQueueVideoInfo[]>([]);
+  const freeAndPaidVideos = derived([freeVideos, paidVideos], ([$freeVideos, $paidVideos]) => [...$paidVideos, ...$freeVideos]);
   const currentVideo = writable<IQueueVideoInfo | undefined>();
   const videoIds: Set<string> = new Set();
 
@@ -86,51 +127,52 @@ function createQueue() {
     });
   }
 
-  async function add(videoId: string, username: string) {
-    if (videoIds.has(videoId)) return;
+  async function add(videoId: string, username: string, isPaid: boolean) {
+    if (videoIds.has(videoId) && !isPaid) return;
 
+    const videos = get(freeAndPaidVideos);
+    const store = isPaid ? paidVideos : freeVideos;
     const { snippet } = await fetch(`api/youtube?video_id=${videoId}`)
       .then((res) => res.json())
       .then((data: IVideoData) => data.items[0]);
     const item: IQueueVideoInfo = {
       id: uuidv4(),
+      isPaid,
       videoId,
       title: snippet.title,
       channelTitle: snippet.channelTitle,
       thumbnail: snippet.thumbnails.medium.url,
-      username
+      username,
     }
 
-    videos.update((items) => {
+    store.update((items) => {
       if (isAddRandomly && items.length > 1) {
-        const randomIdx = Math.floor(Math.random() * (items.length - 1)) + 1;
+        const randomIdx = Math.floor(Math.random() * items.length);
         const newItems = [...items.slice(0, randomIdx), item, ...items.slice(randomIdx)];
 
-        if (items.length < 1) setCurrent(newItems[0]);
-
+        if (videos.length < 1) setCurrent(newItems[0]);
         return newItems;
       }
 
       const newItems = [...items, item];
-
-      if (items.length < 1) setCurrent(newItems[0]);
-
+      if (videos.length < 1) setCurrent(newItems[0]);
       return newItems;
     });
 
-    videoIds.add(videoId);
+    if (!isPaid) videoIds.add(videoId);
   }
 
   function setNext() {
+
     currentVideo.update((video) => {
       if (!video) return video;
 
-      const videosArray = get(videos);
+      const videosArray = get(freeAndPaidVideos);
       const currentVideoIndex = videosArray.findIndex((item) => item.id === video.id);
       const downVideo = videosArray[currentVideoIndex - 1];
       const upVideo = videosArray[currentVideoIndex + 1];
 
-      remove(video.videoId);
+      remove(video.videoId, video.isPaid);
 
       if (downVideo) return downVideo
       else if (upVideo) return upVideo
@@ -155,24 +197,22 @@ function createQueue() {
   //   });
   // }
 
-  function remove(videoId: string) {
-    videos.update((items) => {
-      const newItems = items.filter((item) => item.videoId !== videoId);
+  function remove(videoId: string, isPaid: boolean) {
+    const store = isPaid ? paidVideos : freeVideos;
 
-      return newItems;
-    });
-
+    store.update((items) => items.filter((item) => item.videoId !== videoId));
     videoIds.delete(videoId);
   }
 
   function removeAll() {
-    videos.set([]);
+    freeVideos.set([]);
+    paidVideos.set([]);
     videoIds.clear();
     setCurrent(undefined);
   }
 
   return {
-    subscribe: videos.subscribe,
+    subscribe: freeAndPaidVideos.subscribe,
     currentVideo,
     initialize,
     add,

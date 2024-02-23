@@ -19,7 +19,7 @@
 	let visibleItems: (IQueueVideoInfo & { position: number })[] = [];
 
 	$: mappedQueue = [...$queue].map((l, idx) => ({ ...l, position: idx + 1 }));
-	$: minRows = Math.max(10, mappedQueue.length);
+	$: minRows = Math.max(9, mappedQueue.length);
 	$: {
 		startIndex = Math.max(0, Math.floor((scrollTop - windowHeight) / itemHeight));
 		endIndex = Math.min(
@@ -77,6 +77,7 @@
 			<div
 				class="queue-item"
 				class:selected={isCurrentVideo}
+				class:premium={video.isPaid}
 				style="grid-row: {position};"
 				in:fly={{ x: -100, duration: 200 }}
 				out:fly={{ x: 200, duration: 200 }}
@@ -85,7 +86,7 @@
 				<Draggable
 					handle=".draggable"
 					bind:isReachedEnd={isDeleteAction}
-					on:dragstopmin={() => queue.remove(video.videoId)}
+					on:dragstopmin={() => queue.remove(video.videoId, video.isPaid)}
 				>
 					<div class="queue-item-icon-wrapper" class:draggable={!isCurrentVideo} aria-hidden>
 						<img
@@ -113,7 +114,8 @@
 
 <style lang="scss">
 	.queue {
-		padding: 0 10px 10px 0;
+		flex: 1;
+		padding: 15px 10px 0 0;
 		scrollbar-gutter: stable;
 		overflow-y: auto;
 		overflow-x: hidden;
@@ -141,6 +143,7 @@
 		}
 
 		&-item {
+			position: relative;
 			display: flex;
 			flex-direction: row;
 			padding: 5px 10px 5px 0;
@@ -148,10 +151,28 @@
 			transition: background-color 0.2s;
 			cursor: pointer;
 
+			&.premium {
+				&::before {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: 0;
+					width: 33%;
+					height: 100%;
+					opacity: 0.5;
+					background: var(--primary-50);
+					background: linear-gradient(90deg, var(--primary-60) 0%, rgba(255 255 255 / 0) 100%);
+					// background: linear-gradient(90deg, rgba(245, 117, 7, 1) 0%, rgba(245, 156, 7, 1) 35%);
+					// background-color: var(--primary-60);
+				}
+			}
 			&.selected {
 				background-color: var(--hover-white);
 				cursor: default;
 
+				&.premium::before {
+					opacity: 1;
+				}
 				&:hover {
 					background-color: rgba(255 255 255 / 10%);
 				}

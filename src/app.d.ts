@@ -1,6 +1,6 @@
 // See https://kit.svelte.dev/docs/types#app
 
-import type { ITwitchUserData } from "$lib/interfaces";
+import type { IDonationAlertsUserData, ITwitchUserData } from "$lib/interfaces";
 
 // for information about these interfaces
 declare global {
@@ -10,6 +10,8 @@ declare global {
 		interface PageData {
 			twitchSession?: string;
 			twitchChannel?: ITwitchUserData;
+			donationAlertsSession?: string;
+			donationAlertsUser?: IDonationAlertsUserData;
 		}
 		// interface PageState {}
 		// interface Platform {}

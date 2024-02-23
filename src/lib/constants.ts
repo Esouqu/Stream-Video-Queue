@@ -4,3 +4,10 @@ export enum CHAT_STATE {
   DISCONNECTED,
   CONNECTING,
 }
+
+export enum SOCKET_STATE {
+  CONNECTING = 0,
+  OPEN = 1,
+  CLOSING = 2,
+  CLOSED = 3,
+}
