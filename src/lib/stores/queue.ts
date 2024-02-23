@@ -172,7 +172,7 @@ function createQueue() {
       const downVideo = videosArray[currentVideoIndex - 1];
       const upVideo = videosArray[currentVideoIndex + 1];
 
-      remove(video.videoId, video.isPaid);
+      remove(video.id, video.isPaid);
 
       if (downVideo) return downVideo
       else if (upVideo) return upVideo
@@ -197,11 +197,11 @@ function createQueue() {
   //   });
   // }
 
-  function remove(videoId: string, isPaid: boolean) {
+  function remove(id: string, isPaid: boolean) {
     const store = isPaid ? paidVideos : freeVideos;
 
-    store.update((items) => items.filter((item) => item.videoId !== videoId));
-    videoIds.delete(videoId);
+    store.update((items) => items.filter((item) => item.id !== id));
+    videoIds.delete(id);
   }
 
   function removeAll() {

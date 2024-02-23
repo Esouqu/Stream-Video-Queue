@@ -86,7 +86,7 @@
 				<Draggable
 					handle=".draggable"
 					bind:isReachedEnd={isDeleteAction}
-					on:dragstopmin={() => queue.remove(video.videoId, video.isPaid)}
+					on:dragstopmin={() => queue.remove(video.id, video.isPaid)}
 				>
 					<div class="queue-item-icon-wrapper" class:draggable={!isCurrentVideo} aria-hidden>
 						<img
