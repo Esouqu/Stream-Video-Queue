@@ -11,12 +11,15 @@
 	// amount of buffered items that is outside of visible view but is rendered
 	const itemsBuffer = 10;
 
+	export let scrollElement: HTMLDivElement;
+
 	let itemHeight = 80;
 	let scrollTop = 0;
 	let windowHeight: number;
 	let startIndex: number;
 	let endIndex: number;
 	let visibleItems: (IQueueVideoInfo & { position: number })[] = [];
+	let isDeleteAction = false;
 
 	$: mappedQueue = [...$queue].map((l, idx) => ({ ...l, position: idx + 1 }));
 	$: minRows = Math.max(9, mappedQueue.length);
@@ -32,23 +35,7 @@
 
 		visibleItems = mappedQueue.slice(startIndex, endIndex);
 	}
-
-	let scrollElement: HTMLDivElement;
-	let isDeleteAction = false;
-	let isMouseOver = false;
-
 	$: currentVideo = queue.currentVideo;
-	// $: {
-	// 	if ($queue && scrollElement) {
-	// 		scrollElement.scrollTop = 0;
-	// 		// setTimeout(() => {
-	// 		// 	scrollElement.scrollTo({
-	// 		// 		top: scrollElement.scrollHeight,
-	// 		// 		behavior: 'smooth'
-	// 		// 	});
-	// 		// }, 5);
-	// 	}
-	// }
 
 	function onScroll(e: UIEvent) {
 		const target = e.target as HTMLDivElement;
@@ -59,15 +46,7 @@
 
 <svelte:window bind:innerHeight={windowHeight} />
 
-<div
-	class="queue"
-	bind:this={scrollElement}
-	on:scroll={onScroll}
-	on:mouseover={() => (isMouseOver = true)}
-	on:mouseleave={() => (isMouseOver = false)}
-	on:focus={() => (isMouseOver = true)}
-	aria-hidden
->
+<div class="queue" bind:this={scrollElement} on:scroll={onScroll} aria-hidden>
 	<!-- <div> -->
 	<ul class="queue-list" style="grid-template-rows: repeat({minRows}, {itemHeight}px);">
 		{#each visibleItems as video (video.id)}

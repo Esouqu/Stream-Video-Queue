@@ -2,6 +2,7 @@ import type { IQueueVideoInfo, IVideoData } from '$lib/interfaces';
 import { derived, get, writable } from 'svelte/store';
 import { v4 as uuidv4 } from 'uuid';
 import settings from './settings';
+import db from '$lib/db';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 // const testArray = Array.from(new Array(110), (_, id) => {
@@ -124,7 +125,15 @@ function createQueue() {
 
   let isAddRandomly: boolean;
 
-  function initialize() {
+  async function initialize() {
+    const paid = await db.videos.filter((v) => v.isPaid === true).toArray();
+    const free = await db.videos.filter((v) => v.isPaid === false).toArray();
+
+    paidVideos.set(paid);
+    freeVideos.set(free);
+
+    if (paid.length > 1 || free.length > 1) setNext();
+
     settings.isAddRandomly.subscribe((store) => isAddRandomly = store);
   }
 
@@ -162,19 +171,22 @@ function createQueue() {
     });
 
     if (!isPaid) submittedVideoIds.add(videoId);
+
+    await db.videos.add(item);
   }
 
   function setNext() {
     currentVideo.update((video) => {
-      if (!video) return video;
-
       const videos = get(freeAndPaidVideos);
-      const currentVideoIndex = videos.findIndex((item) => item.id === video.id);
+      const currentVideoIndex = videos.findIndex((item) => item.id === video?.id);
       const downVideo = videos[currentVideoIndex + 1];
 
-      remove(video.id, video.isPaid);
+      if (video) {
+        remove(video.id, video.isPaid);
 
-      if (video.id !== videos[0].id) return videos[0];
+        if (video.id !== videos[0].id) return videos[0];
+      }
+
       if (downVideo) return downVideo
     });
   }
@@ -183,18 +195,22 @@ function createQueue() {
     currentVideo.set(video);
   }
 
-  function remove(id: string, isPaid: boolean) {
+  async function remove(id: string, isPaid: boolean) {
     const store = isPaid ? paidVideos : freeVideos;
 
     store.update((items) => items.filter((item) => item.id !== id));
+
     submittedVideoIds.delete(id);
+    await db.videos.delete(id);
   }
 
-  function removeAll() {
+  async function removeAll() {
     freeVideos.set([]);
     paidVideos.set([]);
     submittedVideoIds.clear();
     setCurrent(undefined);
+
+    await db.videos.clear();
   }
 
   return {

@@ -27,6 +27,7 @@
 	let twitchChannel = $page.data.twitchChannel;
 	let donationAlertsUser = $page.data.donationAlertsUser;
 	let currentTab: number;
+	let scrollElement: HTMLDivElement;
 
 	$: isAutoskip = settings.isAutoskip;
 	$: isAutoplay = settings.isAutoplay;
@@ -65,7 +66,14 @@
 </svelte:head>
 
 <div class="main-page">
-	<VideoPlayer />
+	<VideoPlayer
+		on:next={() => {
+			scrollElement.scrollTo({
+				top: 0,
+				behavior: 'smooth'
+			});
+		}}
+	/>
 	<div class="left-side">
 		<Tabs options={tabs} bind:currentTab />
 		<div class="transition-container">
@@ -89,7 +97,7 @@
 							}}
 						/>
 					</div> -->
-					<Queue />
+					<Queue bind:scrollElement />
 					<div class="connections">
 						<div
 							style="display: flex;

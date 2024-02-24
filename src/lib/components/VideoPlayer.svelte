@@ -1,6 +1,6 @@
 <script lang="ts">
 	import videoPlayer from '$lib/stores/videoPlayer';
-	import { onMount } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import YouTubePlayer from 'youtube-player';
 	import votes from '$lib/stores/votes';
 	import queue from '$lib/stores/queue';
@@ -12,6 +12,8 @@
 	import skipIcon from '$lib/assets/skip_next_icon.svg';
 	import copyIcon from '$lib/assets/content_copy_icon.svg';
 	import AutoIndicator from './AutoIndicator.svelte';
+
+	const dispatch = createEventDispatcher();
 
 	let playerElement: HTMLElement;
 	let title: string;
@@ -86,7 +88,10 @@
 						icon={skipIcon}
 						title="Следущее"
 						isDisabled={$queue.length < 1}
-						on:click={() => queue.setNext()}
+						on:click={() => {
+							queue.setNext();
+							dispatch('next');
+						}}
 					/>
 				</div>
 			</div>
