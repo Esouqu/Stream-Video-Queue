@@ -126,11 +126,15 @@ function createQueue() {
   let isAddRandomly: boolean;
 
   async function initialize() {
-    const paid = await db.videos.filter((v) => v.isPaid === true).toArray();
-    const free = await db.videos.filter((v) => v.isPaid === false).toArray();
+    const paid = await db.videos.filter((item) => item.isPaid === true).toArray();
+    const free = await db.videos.filter((item) => item.isPaid === false).toArray();
 
     paidVideos.set(paid);
     freeVideos.set(free);
+
+    for (const item of [...paid, ...free]) {
+      submittedVideoIds.add(item.videoId);
+    }
 
     if (paid.length > 1 || free.length > 1) setNext();
 
@@ -182,7 +186,7 @@ function createQueue() {
       const downVideo = videos[currentVideoIndex + 1];
 
       if (video) {
-        remove(video.id, video.isPaid);
+        remove(video);
 
         if (video.id !== videos[0].id) return videos[0];
       }
@@ -195,13 +199,14 @@ function createQueue() {
     currentVideo.set(video);
   }
 
-  async function remove(id: string, isPaid: boolean) {
-    const store = isPaid ? paidVideos : freeVideos;
+  async function remove(video: IQueueVideoInfo) {
+    const store = video.isPaid ? paidVideos : freeVideos;
 
-    store.update((items) => items.filter((item) => item.id !== id));
+    store.update((items) => items.filter((item) => item.id !== video.id));
 
-    submittedVideoIds.delete(id);
-    await db.videos.delete(id);
+    if (!video.isPaid) submittedVideoIds.delete(video.videoId);
+
+    await db.videos.delete(video.id);
   }
 
   async function removeAll() {
