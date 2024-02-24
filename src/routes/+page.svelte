@@ -74,6 +74,21 @@
 					style="display: flex; flex-direction: column; height: 100%; overflow: hidden;"
 					transition:fly={{ x: -200, duration: 300 }}
 				>
+					<!-- <div>
+						<Button title="Donate" on:click={() => queue.add('ovU-lOSLHmk', 'Anon', true)} />
+						<Button
+							title="Donate Multiple"
+							on:click={() => {
+								let count = 1;
+								const intervalId = setInterval(() => {
+									count++;
+									if (count > 5) clearInterval(intervalId);
+
+									queue.add('ovU-lOSLHmk', 'Anon', true);
+								}, 100);
+							}}
+						/>
+					</div> -->
 					<Queue />
 					<div class="connections">
 						<div
@@ -268,7 +283,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: 25px;
-		padding: 15px 20px;
+		padding: 20px;
 		color: var(--on-surface-variant);
 	}
 

@@ -55,7 +55,7 @@
 	<div class="video-player-bottom-section">
 		{#key $currentVideo}
 			<div class="video-player-info" in:fade={{ duration: 300 }}>
-				<h3 class="video-player-title" {title}>{title}</h3>
+				<h2 class="video-player-title" {title}>{title}</h2>
 			</div>
 		{/key}
 		<div style="display: flex;">
@@ -105,7 +105,6 @@
 			flex-direction: column;
 			justify-content: space-between;
 			width: 100%;
-			gap: 10px;
 		}
 		&-info {
 			display: flex;
@@ -131,10 +130,6 @@
 			overflow: hidden;
 		}
 		&-title {
-			// display: -webkit-box;
-			// -webkit-line-clamp: 2;
-			// -webkit-box-orient: vertical;
-			margin: 10px 0;
 			font-size: 20px;
 			font-weight: 700;
 			line-height: 1.2;

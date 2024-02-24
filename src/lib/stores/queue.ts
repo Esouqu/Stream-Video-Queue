@@ -115,9 +115,12 @@ import settings from './settings';
 function createQueue() {
   const freeVideos = writable<IQueueVideoInfo[]>([]);
   const paidVideos = writable<IQueueVideoInfo[]>([]);
-  const freeAndPaidVideos = derived([freeVideos, paidVideos], ([$freeVideos, $paidVideos]) => [...$paidVideos, ...$freeVideos]);
+  const freeAndPaidVideos = derived(
+    [freeVideos, paidVideos],
+    ([$freeVideos, $paidVideos]) => [...$paidVideos, ...$freeVideos]
+  );
   const currentVideo = writable<IQueueVideoInfo | undefined>();
-  const videoIds: Set<string> = new Set();
+  const submittedVideoIds: Set<string> = new Set();
 
   let isAddRandomly: boolean;
 
@@ -126,7 +129,7 @@ function createQueue() {
   }
 
   async function add(videoId: string, username: string, isPaid: boolean) {
-    if (videoIds.has(videoId) && !isPaid) return;
+    if (submittedVideoIds.has(videoId) && !isPaid) return;
 
     const videos = get(freeAndPaidVideos);
     const store = isPaid ? paidVideos : freeVideos;
@@ -144,36 +147,35 @@ function createQueue() {
     }
 
     store.update((items) => {
+      let newItems: IQueueVideoInfo[] = [];
+
       if (isAddRandomly && items.length > 1) {
         const randomIdx = Math.floor(Math.random() * items.length);
-        const newItems = [...items.slice(0, randomIdx), item, ...items.slice(randomIdx)];
-
-        if (videos.length < 1) setCurrent(newItems[0]);
-        return newItems;
+        newItems = [...items.slice(0, randomIdx), item, ...items.slice(randomIdx)];
+      } else {
+        newItems = [...items, item];
       }
 
-      const newItems = [...items, item];
-
       if (videos.length < 1) setCurrent(newItems[0]);
+
       return newItems;
     });
 
-    if (!isPaid) videoIds.add(videoId);
+    if (!isPaid) submittedVideoIds.add(videoId);
   }
 
   function setNext() {
     currentVideo.update((video) => {
       if (!video) return video;
 
-      const videosArray = get(freeAndPaidVideos);
-      const currentVideoIndex = videosArray.findIndex((item) => item.id === video.id);
-      const downVideo = videosArray[currentVideoIndex + 1];
-      const upVideo = videosArray[currentVideoIndex - 1];
+      const videos = get(freeAndPaidVideos);
+      const currentVideoIndex = videos.findIndex((item) => item.id === video.id);
+      const downVideo = videos[currentVideoIndex + 1];
 
       remove(video.id, video.isPaid);
 
+      if (video.id !== videos[0].id) return videos[0];
       if (downVideo) return downVideo
-      else if (upVideo) return upVideo;
     });
   }
 
@@ -185,13 +187,13 @@ function createQueue() {
     const store = isPaid ? paidVideos : freeVideos;
 
     store.update((items) => items.filter((item) => item.id !== id));
-    videoIds.delete(id);
+    submittedVideoIds.delete(id);
   }
 
   function removeAll() {
     freeVideos.set([]);
     paidVideos.set([]);
-    videoIds.clear();
+    submittedVideoIds.clear();
     setCurrent(undefined);
   }
 

@@ -27,17 +27,9 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   }
 
   if (twitchSession) {
-    const validationInterval = 1000 * 60 * 60;
-
     await fetch('/api/twitch/user')
       .then((res) => res.json())
       .then((data: ITwitchUserData) => twitchChannel = data);
-
-    fetch('/api/twitch/validate');
-
-    setInterval(async () => {
-      fetch('/api/twitch/validate');
-    }, validationInterval);
   }
 
   if (donationAlertsSession) {
