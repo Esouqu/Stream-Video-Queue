@@ -19,8 +19,8 @@ function createVotes() {
 
   function addVote(keyword: string) {
     const { keepKeyword, skipKeyword } = userInput;
-    const isKeepKeyword = keyword.toLowerCase().includes(keepKeyword.toLowerCase());
-    const isSkipKeyword = keyword.toLowerCase().includes(skipKeyword.toLowerCase());
+    const isKeepKeyword = keyword.toLowerCase() === keepKeyword.toLowerCase();
+    const isSkipKeyword = keyword.toLowerCase() === skipKeyword.toLowerCase();
 
     counter.update((item) => {
       if (isKeepKeyword) {
