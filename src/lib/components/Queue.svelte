@@ -71,7 +71,7 @@
 	<!-- <div> -->
 	<ul class="queue-list" style="grid-template-rows: repeat({minRows}, {itemHeight}px);">
 		{#each visibleItems as video (video.id)}
-			{@const { id, videoId, position, ...rest } = video}
+			{@const { id, videoId, position, isPaid, ...rest } = video}
 			{@const isCurrentVideo = $currentVideo?.id === video.id}
 
 			<div

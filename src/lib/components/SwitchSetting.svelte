@@ -12,7 +12,6 @@
 </script>
 
 <div class="switch-setting">
-	<!-- <div class="switch-setting-inner-wrapper"> -->
 	{#if icon}
 		<div class="switch-setting-image-wrapper">
 			<img src={icon} alt="Twitch User" />
@@ -25,7 +24,6 @@
 	<div style="display: flex; justify-content: center; min-width: 48px;">
 		<Switch {on} {off} bind:isToggled bind:isDisabled bind:isLoading />
 	</div>
-	<!-- </div> -->
 </div>
 
 <style lang="scss">
@@ -33,15 +31,7 @@
 		display: flex;
 		align-items: center;
 		gap: 15px;
-		padding: 0 10px;
 		color: var(--on-surface);
-
-		// &-inner-wrapper {
-		// 	display: flex;
-		// 	align-items: center;
-		// 	gap: 15px;
-		// 	flex: 0 1 100%;
-		// }
 
 		&-image-wrapper {
 			display: flex;

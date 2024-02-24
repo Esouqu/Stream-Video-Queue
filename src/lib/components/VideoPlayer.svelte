@@ -56,7 +56,11 @@
 		{#key $currentVideo}
 			<div class="video-player-info" in:fade={{ duration: 300 }}>
 				<h3 class="video-player-title" {title}>{title}</h3>
-				<div>
+			</div>
+		{/key}
+		<div style="display: flex;">
+			{#key $currentVideo}
+				<div class="video-player-info" in:fade={{ duration: 300 }}>
 					<p class="video-player-channel">
 						{channelTitle}
 					</p>
@@ -64,27 +68,27 @@
 						{username}
 					</p>
 				</div>
-			</div>
-		{/key}
-		<div style="display: flex; align-items: center; flex: 0 1 auto; gap: 10px;">
-			<Button
-				icon={copyIcon}
-				title="Ссылка"
-				isDisabled={$queue.length < 1}
-				on:click={copyVideoUrlToClipboard}
-			/>
-			<Votes />
-			<div style="position: relative;">
-				{#if $isAutoskip}
-					<AutoIndicator />
-				{/if}
+			{/key}
+			<div style="display: flex; align-items: center; flex: 0 1 auto; gap: 10px;">
 				<Button
-					--button-progress="{isNaN(progressPercent) ? 0 : progressPercent}%"
-					icon={skipIcon}
-					title="Следущее"
+					icon={copyIcon}
+					title="Ссылка"
 					isDisabled={$queue.length < 1}
-					on:click={() => queue.setNext()}
+					on:click={copyVideoUrlToClipboard}
 				/>
+				<Votes />
+				<div style="position: relative;">
+					{#if $isAutoskip}
+						<AutoIndicator />
+					{/if}
+					<Button
+						--button-progress="{isNaN(progressPercent) ? 0 : progressPercent}%"
+						icon={skipIcon}
+						title="Следущее"
+						isDisabled={$queue.length < 1}
+						on:click={() => queue.setNext()}
+					/>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -98,9 +102,10 @@
 
 		&-bottom-section {
 			display: flex;
+			flex-direction: column;
 			justify-content: space-between;
 			width: 100%;
-			gap: 40px;
+			gap: 10px;
 		}
 		&-info {
 			display: flex;

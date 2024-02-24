@@ -11,7 +11,6 @@
 	import votes from '$lib/stores/votes';
 	import { fly } from 'svelte/transition';
 	import Button from '$lib/components/Button.svelte';
-	import { goto } from '$app/navigation';
 	import twitchIcon from '$lib/assets/twitch-logo/TwitchGlitchWhite.svg';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
@@ -22,6 +21,8 @@
 	import discordIcon from '$lib/assets/discord-logo/icon_clyde_white_RGB.svg';
 	import centrifugo from '$lib/centrifugo';
 	import donationAlertsIcon from '$lib/assets/donationalerts-logo/DA_Alert_White.svg';
+	import Auth from '$lib/components/Auth.svelte';
+	import SettingSection from '$lib/components/SettingSection.svelte';
 
 	let twitchChannel = $page.data.twitchChannel;
 	let donationAlertsUser = $page.data.donationAlertsUser;
@@ -105,21 +106,18 @@
 			{:else if currentTab === 1}
 				<div class="settings-wrapper" transition:fly={{ x: 200, duration: 300 }}>
 					<div>
-						<h3>Twitch</h3>
 						{#if !twitchChannel}
-							<div style="display: flex; flex: 1; justify-content: space-between; padding: 0 10px;">
-								<div style="display: flex; align-items: center; gap: 10px;">
-									<div style="display: flex; align-items: center; width: 25px;">
-										<img src={twitchIcon} alt="Twitch Brand Icon" />
-									</div>
-									<span style="font-weight: 500;">Twitch</span>
-								</div>
-								<Button on:click={() => goto('/api/twitch/auth')} title="Авторизоваться" />
-							</div>
+							<Auth icon={twitchIcon} title="Twitch" url="/api/twitch/auth" />
 						{:else}
+							<div style="display: flex; align-items: center; gap: 15px;">
+								<div style="display: flex; align-items: center; width: 25px;">
+									<img src={twitchIcon} alt="Twitch Brand Icon" />
+								</div>
+								<h3>Twitch</h3>
+							</div>
 							<SwitchSetting
-								icon={twitchChannel?.profile_image_url}
-								title={twitchChannel?.display_name}
+								icon={twitchChannel.profile_image_url}
+								title={twitchChannel.display_name}
 								description="Следить за чатом канала в поисках ключевых слов и ссылок на Youtube"
 								on={connectToChat}
 								off={chat.disconnet}
@@ -130,18 +128,19 @@
 						{/if}
 					</div>
 					<div>
-						<h3>DonationAlerts</h3>
 						{#if !donationAlertsUser}
-							<div style="display: flex; flex: 1; justify-content: space-between; padding: 0 10px;">
-								<div style="display: flex; align-items: center; gap: 10px;">
-									<div style="display: flex; align-items: center; width: 25px;">
-										<img src={donationAlertsIcon} alt="DonationAlerts Brand Icon" />
-									</div>
-									<span style="font-weight: 500;">DonationAlerts</span>
-								</div>
-								<Button on:click={() => goto('/api/donationalerts/auth')} title="Авторизоваться" />
-							</div>
+							<Auth
+								icon={donationAlertsIcon}
+								title="DonationAlerts"
+								url="/api/donationalerts/auth"
+							/>
 						{:else}
+							<div style="display: flex; align-items: center; gap: 15px;">
+								<div style="display: flex; align-items: center; width: 25px;">
+									<img src={donationAlertsIcon} alt="DonationAlerts Brand Icon" />
+								</div>
+								<h3>DonationAlerts</h3>
+							</div>
 							<div style="display: flex; flex-direction: column; gap: 10px">
 								<SwitchSetting
 									icon={donationAlertsUser.avatar}
@@ -174,8 +173,7 @@
 							</div>
 						{/if}
 					</div>
-					<div>
-						<h3>Плеер</h3>
+					<SettingSection title="Плеер">
 						<SwitchSetting
 							title="Автовоспроизведение"
 							description="Автоматически воспроизводить видео"
@@ -183,60 +181,54 @@
 							off={() => isAutoplay.set(false)}
 							isToggled={$isAutoplay}
 						/>
-					</div>
-					<div>
-						<h3>Голоса</h3>
-						<div style="display: flex; flex-direction: column; gap: 10px">
-							<SwitchSetting
-								title="Автопропуск"
-								description="Автоматически пропускать видео, если набранно достаточное количество голосов"
-								on={() => isAutoskip.set(true)}
-								off={() => isAutoskip.set(false)}
-								isToggled={$isAutoskip}
+					</SettingSection>
+					<SettingSection title="Голоса">
+						<SwitchSetting
+							title="Автопропуск"
+							description="Автоматически пропускать видео, если набранно достаточное количество голосов"
+							on={() => isAutoskip.set(true)}
+							off={() => isAutoskip.set(false)}
+							isToggled={$isAutoskip}
+						/>
+						<SwitchSetting
+							title="Автоопределение"
+							description="Автоматически определять нужное количество голосов в зависимости от указанного значения, не чаще, чем раз в 2 минуты"
+							on={() => isAutodetection.set(true)}
+							off={() => isAutodetection.set(false)}
+							isToggled={$isAutodetection}
+						/>
+						<div class="additional-autodetect-setting" class:disabled={!$isAutodetection}>
+							<span>Процент от количества зрителей</span>
+							<NumberInput
+								--input-p="10.5px"
+								--input-w-w="90px"
+								--input-w="100%"
+								--input-text-al="start"
+								id="autodetection-percent"
+								suffix="%"
+								isFilled={false}
+								isBorderless={false}
+								isDisabled={!$isAutodetection}
+								bind:value={$percentFromViewCount}
 							/>
-							<SwitchSetting
-								title="Автоопределение"
-								description="Автоматически определять нужное количество голосов в зависимости от указанного значения, не чаще, чем раз в 2 минуты"
-								on={() => isAutodetection.set(true)}
-								off={() => isAutodetection.set(false)}
-								isToggled={$isAutodetection}
-							/>
-							<div class="additional-autodetect-setting" class:disabled={!$isAutodetection}>
-								<span>Процент от количества зрителей</span>
-								<NumberInput
-									--input-p="10.5px"
-									--input-w-w="90px"
-									--input-w="100%"
-									--input-text-al="start"
-									id="autodetection-percent"
-									suffix="%"
-									isFilled={false}
-									isBorderless={false}
-									isDisabled={!$isAutodetection}
-									bind:value={$percentFromViewCount}
-								/>
-							</div>
 						</div>
-					</div>
-					<div>
-						<h3>Очередь</h3>
-						<div style="display: flex; flex-direction: column; gap: 10px">
-							<SwitchSetting
-								title="Добавлять Случайно"
-								description="Добавлять новое видео в случайном порядке"
-								on={() => isAddRandomly.set(true)}
-								off={() => isAddRandomly.set(false)}
-								isToggled={$isAddRandomly}
+					</SettingSection>
+					<SettingSection title="Очередь">
+						<SwitchSetting
+							title="Добавлять Случайно"
+							description="Добавлять новое видео в случайном порядке"
+							on={() => isAddRandomly.set(true)}
+							off={() => isAddRandomly.set(false)}
+							isToggled={$isAddRandomly}
+						/>
+						<div>
+							<Button
+								--button-bg="var(--surface-variant)"
+								title="Очистить очередь"
+								on:click={() => queue.removeAll()}
 							/>
-							<div>
-								<Button
-									--button-bg="var(--surface-variant)"
-									title="Очистить очередь"
-									on:click={() => queue.removeAll()}
-								/>
-							</div>
 						</div>
-					</div>
+					</SettingSection>
 
 					<div class="contacts-wrapper">
 						<Contact icon={githubIcon} title="Esouqu" url="https://github.com/Esouqu" />
@@ -285,7 +277,6 @@
 		flex: 1;
 		justify-content: space-between;
 		align-items: center;
-		padding: 0 10px;
 		font-size: 14px;
 		font-weight: 300;
 
