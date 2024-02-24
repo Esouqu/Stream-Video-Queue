@@ -10,6 +10,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
   if (!refreshToken) throw redirect(301, '/');
 
   try {
+
     const tokenData = await fetch('https://id.twitch.tv/oauth2/token', {
       method: "POST",
       headers: {
@@ -41,6 +42,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
     return new Response(JSON.stringify(tokenData), { status: 200 });
   } catch (err: unknown) {
     const error = err as { response: { status: number } };
+
 
     if (error.response?.status === 401) {
       cookies.delete(TWITCH_REFRESH_TOKEN, { path: '/' });

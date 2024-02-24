@@ -9,15 +9,21 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   let donationAlertsUser: IDonationAlertsUserData | undefined;
 
   if (!twitchSession) {
-    await fetch('/api/twitch/refresh', { method: 'POST' })
-      .then((res) => res.json())
-      .then((data: IAuthTokenData) => twitchSession = data.access_token);
+    const response = await fetch('/api/twitch/refresh', { method: 'POST' })
+      .then((res) => res);
+
+    if (response.ok) {
+      twitchSession = await response.json().then((data: IAuthTokenData) => data.access_token);
+    }
   }
 
   if (!donationAlertsSession) {
-    await fetch('/api/donationalerts/refresh', { method: 'POST' })
-      .then((res) => res.json())
-      .then((data: IAuthTokenData) => donationAlertsSession = data.access_token);
+    const response = await fetch('/api/donationalerts/refresh', { method: 'POST' })
+      .then((res) => res);
+
+    if (response.ok) {
+      donationAlertsSession = await response.json().then((data: IAuthTokenData) => data.access_token);
+    }
   }
 
   if (twitchSession) {
