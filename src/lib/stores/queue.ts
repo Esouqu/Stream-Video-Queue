@@ -136,7 +136,7 @@ function createQueue() {
       submittedVideoIds.add(item.videoId);
     }
 
-    if (paid.length > 1 || free.length > 1) setNext();
+    if (paid.length > 0 || free.length > 0) setNext();
 
     settings.isAddRandomly.subscribe((store) => isAddRandomly = store);
   }
@@ -180,18 +180,20 @@ function createQueue() {
   }
 
   function setNext() {
-    currentVideo.update((video) => {
-      const videos = get(freeAndPaidVideos);
-      const currentVideoIndex = videos.findIndex((item) => item.id === video?.id);
-      const downVideo = videos[currentVideoIndex + 1];
+    currentVideo.update((item) => {
+      const allVideos = get(freeAndPaidVideos);
+      const currentVideoIndex = allVideos.findIndex((item) => item.id === item?.id);
+      const downVideo = allVideos[currentVideoIndex + 1];
 
-      if (video) {
-        remove(video);
+      if (!item) return allVideos[0];
 
-        if (video.id !== videos[0].id) return videos[0];
+      if (item) {
+        remove(item);
+
+        if (item.id !== allVideos[0].id) return allVideos[0];
       }
 
-      if (downVideo) return downVideo
+      if (downVideo) return downVideo;
     });
   }
 
