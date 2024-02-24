@@ -2,8 +2,8 @@ import { writable, type Unsubscriber } from 'svelte/store';
 import type { IDonationAlertsUserData, IDonationData } from './interfaces';
 import { SOCKET_STATE } from './constants';
 import queue from './stores/queue';
-import { findYoutubeVideoId } from './utils';
 import settings from './stores/settings';
+import { extractYoutubeVideoId } from './utils';
 
 function createCentrifugo() {
   const state = writable<SOCKET_STATE>(SOCKET_STATE.CLOSED);
@@ -64,7 +64,7 @@ function createCentrifugo() {
         if (roundedAmount < minDonationValue) return;
 
         const username = donation.username ?? 'Аноним';
-        const videoId = findYoutubeVideoId(donation.message);
+        const videoId = extractYoutubeVideoId(donation.message);
 
         if (videoId) queue.add(videoId, username, true);
       }

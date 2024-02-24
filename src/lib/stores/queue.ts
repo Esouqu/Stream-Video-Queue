@@ -122,9 +122,7 @@ function createQueue() {
   let isAddRandomly: boolean;
 
   function initialize() {
-    settings.isAddRandomly.subscribe((store) => {
-      isAddRandomly = store;
-    });
+    settings.isAddRandomly.subscribe((store) => isAddRandomly = store);
   }
 
   async function add(videoId: string, username: string, isPaid: boolean) {
@@ -155,6 +153,7 @@ function createQueue() {
       }
 
       const newItems = [...items, item];
+
       if (videos.length < 1) setCurrent(newItems[0]);
       return newItems;
     });
@@ -163,39 +162,24 @@ function createQueue() {
   }
 
   function setNext() {
-
     currentVideo.update((video) => {
       if (!video) return video;
 
       const videosArray = get(freeAndPaidVideos);
       const currentVideoIndex = videosArray.findIndex((item) => item.id === video.id);
-      const downVideo = videosArray[currentVideoIndex - 1];
-      const upVideo = videosArray[currentVideoIndex + 1];
+      const downVideo = videosArray[currentVideoIndex + 1];
+      const upVideo = videosArray[currentVideoIndex - 1];
 
       remove(video.id, video.isPaid);
 
       if (downVideo) return downVideo
-      else if (upVideo) return upVideo
-
-      return undefined;
+      else if (upVideo) return upVideo;
     });
   }
 
   function setCurrent(video: IQueueVideoInfo | undefined) {
     currentVideo.set(video);
   }
-
-  // function removeFirst() {
-  //   videos.update((items) => {
-  //     const currentVid = get(currentVideo);
-  //     const currentVideoIndex = items.findIndex((item) => item.id === currentVid?.id);
-  //     const newItems = items.slice(1);
-
-  //     if (currentVideoIndex === 0) setCurrent(newItems[0]);
-
-  //     return newItems;
-  //   });
-  // }
 
   function remove(id: string, isPaid: boolean) {
     const store = isPaid ? paidVideos : freeVideos;

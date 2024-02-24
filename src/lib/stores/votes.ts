@@ -23,14 +23,8 @@ function createVotes() {
     const isSkipKeyword = keyword.toLowerCase() === skipKeyword.toLowerCase();
 
     counter.update((item) => {
-      if (isKeepKeyword) {
-        return { ...item, keep: item.keep + 1 }
-      }
-
-      if (isSkipKeyword) {
-        return { ...item, skip: item.skip + 1 }
-      }
-
+      if (isKeepKeyword) return { ...item, keep: item.keep + 1 };
+      if (isSkipKeyword) return { ...item, skip: item.skip + 1 };
       return item;
     });
   }
