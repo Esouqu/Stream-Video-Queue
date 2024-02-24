@@ -8,9 +8,7 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		interface PageData {
-			twitchSession?: string;
 			twitchChannel?: ITwitchUserData;
-			donationAlertsSession?: string;
 			donationAlertsUser?: IDonationAlertsUserData;
 		}
 		// interface PageState {}

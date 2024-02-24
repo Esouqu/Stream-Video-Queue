@@ -1,4 +1,4 @@
-import { DONATIONALERTS_SESSION, TWITCH_REFRESH_TOKEN, TWITCH_SESSION } from "$env/static/private";
+import { DONATIONALERTS_SESSION, TWITCH_SESSION } from "$env/static/private";
 import type { IAuthTokenData, IDonationAlertsUserData, ITwitchUserData } from "$lib/interfaces";
 import type { LayoutServerLoad } from "./$types";
 
@@ -8,46 +8,40 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   let twitchChannel: ITwitchUserData | undefined;
   let donationAlertsUser: IDonationAlertsUserData | undefined;
 
-  await fetch('/api/twitch/validate').then((res) => res.status === 200);
-
   if (!twitchSession) {
-    const response = await fetch('/api/twitch/refresh', { method: 'POST' });
-
-    if (response.status === 200) {
-      twitchSession = await response.json().then((data: IAuthTokenData) => data.access_token);
-    }
-    if (response.status === 401) {
-      cookies.delete(TWITCH_REFRESH_TOKEN, { path: '/' });
-    }
+    await fetch('/api/twitch/refresh', { method: 'POST' })
+      .then((res) => res.json())
+      .then((data: IAuthTokenData) => twitchSession = data.access_token);
   }
 
   if (!donationAlertsSession) {
-    const response = await fetch('/api/donationalerts/refresh', { method: 'POST' });
-
-    if (response.status === 200) {
-      donationAlertsSession = await response.json().then((data: IAuthTokenData) => data.access_token);
-    }
-    if (response.status === 401) {
-      cookies.delete(DONATIONALERTS_SESSION, { path: '/' });
-    }
+    await fetch('/api/donationalerts/refresh', { method: 'POST' })
+      .then((res) => res.json())
+      .then((data: IAuthTokenData) => donationAlertsSession = data.access_token);
   }
 
   if (twitchSession) {
-    twitchChannel = await fetch('/api/twitch/user')
+    const validationInterval = 1000 * 60 * 60;
+
+    await fetch('/api/twitch/user')
       .then((res) => res.json())
-      .then((data: ITwitchUserData) => data);
+      .then((data: ITwitchUserData) => twitchChannel = data);
+
+    fetch('/api/twitch/validate');
+
+    setInterval(async () => {
+      fetch('/api/twitch/validate');
+    }, validationInterval);
   }
 
   if (donationAlertsSession) {
-    donationAlertsUser = await fetch('/api/donationalerts/user')
+    await fetch('/api/donationalerts/user')
       .then((res) => res.json())
-      .then((data: IDonationAlertsUserData) => data);
+      .then((data: IDonationAlertsUserData) => donationAlertsUser = data);
   }
 
   return {
-    twitchSession,
     twitchChannel,
-    donationAlertsSession,
     donationAlertsUser
   }
 };
