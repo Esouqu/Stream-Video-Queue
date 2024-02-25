@@ -8,10 +8,12 @@
 		if (twitchChannel) {
 			const validationInterval = 1000 * 60 * 60;
 
-			fetch('/api/twitch/validate');
-
 			setInterval(async () => {
-				fetch('/api/twitch/validate');
+				const response = await fetch('/api/twitch/validate').then((res) => res);
+
+				if (response.status === 401 || response.status === 400) {
+					location.reload();
+				}
 			}, validationInterval);
 		}
 	});

@@ -76,6 +76,17 @@ export interface IAuthTokenData {
   access_token: string;
   refresh_token: string;
 }
+
+export interface ITwitchValidation {
+  client_id: string;
+  login: string;
+  scopes: string[];
+  user_id: number;
+  expires_in: number;
+  status?: number;
+  message?: string;
+}
+
 export interface IDonationAlertsRefreshToken extends Omit<IAuthTokenData, 'refresh_token'> {
   refresh_token?: string;
 }

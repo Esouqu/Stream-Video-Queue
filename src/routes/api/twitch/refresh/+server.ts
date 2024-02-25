@@ -10,8 +10,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
   if (!refreshToken) throw redirect(301, '/');
 
   try {
-
-    const tokenData = await fetch('https://id.twitch.tv/oauth2/token', {
+    const response = await fetch('https://id.twitch.tv/oauth2/token', {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -22,7 +21,11 @@ export const POST: RequestHandler = async ({ cookies }) => {
         client_secret: TWITCH_SECRET_KEY,
         refresh_token: refreshToken
       })
-    }).then((res) => res.json()).then((data: IAuthTokenData) => data)
+    }).then((res) => res);
+
+    if (response.status === 400) return new Response('Refresh token is invalid', { status: 400 });
+
+    const tokenData = await response.json().then((data: IAuthTokenData) => data);
 
     cookies.set(TWITCH_SESSION, tokenData.access_token, {
       path: '/',
@@ -37,16 +40,14 @@ export const POST: RequestHandler = async ({ cookies }) => {
       sameSite: 'lax',
       secure: !dev,
       expires: new Date(Date.now() + 30 * 1000 * 60 * 60 * 24),
-    })
+    });
 
     return new Response(JSON.stringify(tokenData), { status: 200 });
   } catch (err: unknown) {
     const error = err as { response: { status: number } };
 
-
     if (error.response?.status === 401) {
-      cookies.delete(TWITCH_REFRESH_TOKEN, { path: '/' });
-      return new Response('The twitch refresh token is invalid', { status: 401 });
+      return new Response('The twitch refresh token is invalid', { status: error.response.status });
     } else {
       return new Response('Something went wrong', { status: 500 });
     }
