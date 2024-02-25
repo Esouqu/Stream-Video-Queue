@@ -2,12 +2,12 @@ import { dev } from "$app/environment";
 import { TWITCH_REFRESH_TOKEN, TWITCH_SECRET_KEY, TWITCH_SESSION } from "$env/static/private";
 import { PUBLIC_TWITCH_CLIENT_ID } from "$env/static/public";
 import type { IAuthTokenData } from "$lib/interfaces";
-import { redirect, type RequestHandler } from "@sveltejs/kit";
+import { type RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({ cookies }) => {
   const refreshToken = cookies.get(TWITCH_REFRESH_TOKEN);
 
-  if (!refreshToken) throw redirect(301, '/');
+  if (!refreshToken) return new Response('Refresh token is invalid', { status: 400 });
 
   try {
     const response = await fetch('https://id.twitch.tv/oauth2/token', {

@@ -12,7 +12,11 @@
 				const response = await fetch('/api/twitch/validate').then((res) => res);
 
 				if (response.status === 401 || response.status === 400) {
-					location.reload();
+					const refreshResponse = await fetch('/api/twitch/refresh', { method: 'POST' }).then(
+						(res) => res
+					);
+
+					if (refreshResponse.status !== 200) location.reload();
 				}
 			}, validationInterval);
 		}
