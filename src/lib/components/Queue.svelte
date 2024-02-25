@@ -10,6 +10,7 @@
 
 	// amount of buffered items that is outside of visible view but is rendered
 	const itemsBuffer = 10;
+	const TRANSITION_DURATION = 200;
 
 	export let scrollElement: HTMLDivElement;
 
@@ -20,22 +21,31 @@
 	let endIndex: number;
 	let visibleItems: (IQueueVideoInfo & { position: number })[] = [];
 	let isDeleteAction = false;
+	let minRows: number;
 
 	$: mappedQueue = [...$queue].map((l, idx) => ({ ...l, position: idx + 1 }));
-	$: minRows = Math.max(9, mappedQueue.length);
 	$: {
-		startIndex = Math.max(0, Math.floor((scrollTop - windowHeight) / itemHeight));
-		endIndex = Math.min(
-			mappedQueue.length,
-			Math.max(
-				startIndex,
-				Math.floor((scrollTop + windowHeight + itemsBuffer * itemHeight) / itemHeight)
-			)
-		);
+		// Calculate the position of the bottom of the viewport
+		const viewportBottom = scrollTop + windowHeight + itemsBuffer * itemHeight;
+		// Calculate the index of the potential end item
+		const potentialEndIndex = Math.floor(viewportBottom / itemHeight);
+		// Ensure potentialEndIndex does not exceed the length of the mappedQueue
+		const clampedEndIndex = Math.min(mappedQueue.length, potentialEndIndex);
+		// Calculate the position of the top of the viewport
+		const viewportTop = scrollTop - windowHeight;
+		// Calculate the index of the potential start item
+		const potentialStartIndex = Math.floor(viewportTop / itemHeight);
+
+		startIndex = Math.max(0, potentialStartIndex);
+		endIndex = Math.max(startIndex, clampedEndIndex);
 
 		visibleItems = mappedQueue.slice(startIndex, endIndex);
 	}
 	$: currentVideo = queue.currentVideo;
+
+	function onRemove(video: IQueueVideoInfo) {
+		queue.remove(video);
+	}
 
 	function onScroll(e: UIEvent) {
 		const target = e.target as HTMLDivElement;
@@ -47,8 +57,7 @@
 <svelte:window bind:innerHeight={windowHeight} />
 
 <div class="queue" bind:this={scrollElement} on:scroll={onScroll} aria-hidden>
-	<!-- <div> -->
-	<ul class="queue-list" style="grid-template-rows: repeat({minRows}, {itemHeight}px);">
+	<ul class="queue-list" style="grid-auto-rows: {itemHeight}px; grid-auto-flow: row;">
 		{#each visibleItems as video (video.id)}
 			{@const { id, videoId, position, isPaid, ...rest } = video}
 			{@const isCurrentVideo = $currentVideo?.id === video.id}
@@ -58,14 +67,12 @@
 				class:selected={isCurrentVideo}
 				class:premium={video.isPaid}
 				style="grid-row: {position};"
-				in:fly={{ x: -100, duration: 200 }}
-				out:fly={{ x: 200, duration: 200 }}
-				animate:flip={{ duration: 200 }}
+				animate:flip={{ duration: TRANSITION_DURATION }}
 			>
 				<Draggable
 					handle=".draggable"
 					bind:isReachedEnd={isDeleteAction}
-					on:dragstopmin={() => queue.remove(video)}
+					on:dragstopmin={() => onRemove(video)}
 				>
 					<div class="queue-item-icon-wrapper" class:draggable={!isCurrentVideo} aria-hidden>
 						<img
@@ -88,7 +95,6 @@
 			</div>
 		{/each}
 	</ul>
-	<!-- </div> -->
 </div>
 
 <style lang="scss">
@@ -100,7 +106,7 @@
 		overflow-x: hidden;
 
 		&-list {
-			position: relative;
+			// position: relative;
 			display: grid;
 			padding: 0;
 			margin: 0;

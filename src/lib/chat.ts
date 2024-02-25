@@ -57,10 +57,23 @@ function createChat() {
     settings.isAutodetection.subscribe(async (isEnabled) => {
       if (!isEnabled) clearInterval(intervalId);
 
-      await _fetchViewCount();
+      const userViewCount = await _fetchViewCount();
+
+      if (typeof userViewCount === 'number') {
+        viewCount.set(userViewCount)
+      } else {
+        settings.isAutodetection.set(false);
+      }
 
       intervalId = setInterval(async () => {
-        await _fetchViewCount();
+        const intervalUserViewCount = await _fetchViewCount();
+
+        if (typeof intervalUserViewCount === 'number') {
+          viewCount.set(intervalUserViewCount)
+        } else {
+          settings.isAutodetection.set(false);
+          clearInterval(intervalId);
+        }
       }, VIEW_COUNT_REFRESH_RATE);
     });
 
@@ -71,11 +84,16 @@ function createChat() {
   }
 
   async function _fetchViewCount() {
-    const secondFetchData = await fetch('/api/twitch/user')
-      .then((res) => res.json())
-      .then((data: ITwitchUserData) => data);
+    const isTwitchTokenValid = await fetch('/api/twitch/validate')
+      .then((res) => res.status === 200);
 
-    viewCount.set(secondFetchData.view_count)
+    if (isTwitchTokenValid) {
+      const user = await fetch('/api/twitch/user')
+        .then((res) => res.json())
+        .then((data: ITwitchUserData) => data);
+
+      return user.view_count;
+    }
   }
 
   return {

@@ -70,7 +70,7 @@
 		on:next={() => {
 			scrollElement.scrollTo({
 				top: 0,
-				behavior: 'smooth'
+				behavior: 'instant'
 			});
 		}}
 	/>
@@ -82,7 +82,7 @@
 					style="display: flex; flex-direction: column; height: 100%; overflow: hidden;"
 					transition:fly={{ x: -200, duration: 300 }}
 				>
-					<!-- <div>
+					<div>
 						<Button title="Donate" on:click={() => queue.add('ovU-lOSLHmk', 'Anon', true)} />
 						<Button
 							title="Donate Multiple"
@@ -96,7 +96,7 @@
 								}, 100);
 							}}
 						/>
-					</div> -->
+					</div>
 					<Queue bind:scrollElement />
 					<div class="connections">
 						<div
