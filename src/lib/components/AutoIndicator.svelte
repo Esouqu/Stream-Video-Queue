@@ -9,7 +9,7 @@
 		translate: -50% 0;
 		padding: 0px 5px;
 		border-radius: 5px;
-		font-size: 14px;
+		font-size: 0.9rem;
 		color: var(--on-surface);
 		background-color: var(--primary-50);
 	}

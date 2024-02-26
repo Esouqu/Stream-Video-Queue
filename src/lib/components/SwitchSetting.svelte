@@ -19,7 +19,8 @@
 	{/if}
 	<div style="display: flex; flex-direction: column; width: 100%;">
 		<span style="font-weight: 500; margin-bottom: 5px;">{title}</span>
-		<span style="font-size: 14px; font-weight: 300; white-space: break-spaces;">{description}</span>
+		<span style="font-size: .9rem; font-weight: 300; white-space: break-spaces;">{description}</span
+		>
 	</div>
 	<div style="display: flex; justify-content: center; min-width: 48px;">
 		<Switch {on} {off} bind:isToggled bind:isDisabled bind:isLoading />

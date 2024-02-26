@@ -48,7 +48,7 @@
 		&-title {
 			position: relative;
 			z-index: 0;
-			font-size: 14px;
+			font-size: 0.9rem;
 			font-weight: 500;
 			letter-spacing: 0.7px;
 			color: var(--on-surface);

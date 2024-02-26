@@ -121,7 +121,7 @@
 		&-username {
 			margin: 0;
 			font-weight: 300;
-			font-size: 14px;
+			font-size: 0.9rem;
 			white-space: pre;
 			text-overflow: ellipsis;
 			overflow: hidden;
@@ -135,7 +135,7 @@
 			overflow: hidden;
 		}
 		&-title {
-			font-size: 20px;
+			font-size: 1.3rem;
 			font-weight: 700;
 			line-height: 1.2;
 			white-space: pre;

@@ -228,7 +228,7 @@
 				right: 10px;
 				z-index: 999;
 				translate: 0 -50%;
-				font-size: 14px;
+				font-size: 0.9rem;
 				text-transform: capitalize;
 				opacity: 0.7;
 				cursor: text;

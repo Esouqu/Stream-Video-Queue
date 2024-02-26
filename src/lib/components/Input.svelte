@@ -110,7 +110,7 @@
 		outline: 0;
 		min-width: 50px;
 		width: var(--input-w, 50px);
-		font-size: var(--input-font-size, 16px);
+		font-size: var(--input-font-size, 1rem);
 		font-weight: var(--input-font-weight, 400);
 		text-align: var(--input-text-al, center);
 		text-decoration: none;
@@ -173,7 +173,7 @@
 				right: 10px;
 				z-index: 999;
 				translate: 0 -50%;
-				font-size: 14px;
+				font-size: 0.9rem;
 				text-transform: capitalize;
 				opacity: 0.7;
 			}

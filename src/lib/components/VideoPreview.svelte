@@ -56,7 +56,7 @@
 			-webkit-line-clamp: 2;
 			-webkit-box-orient: vertical;
 			margin: 0;
-			font-size: 14px;
+			font-size: 0.9rem;
 			line-height: 20px;
 			font-weight: 500;
 			text-decoration: none;
@@ -66,14 +66,14 @@
 
 		&__channel {
 			margin: 0 0 -4px 0;
-			font-size: 12px;
+			font-size: 0.8rem;
 			line-height: 18px;
 			font-weight: 400;
 		}
 
 		&__username {
 			margin: 0;
-			font-size: 12px;
+			font-size: 0.8rem;
 			line-height: 18px;
 			font-weight: 400;
 			white-space: nowrap;

@@ -8,7 +8,7 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   let donationAlertsUser: IDonationAlertsUserData | undefined;
 
   const isTwitchTokenValid = await fetch('/api/twitch/validate')
-    .then((res) => res.status !== 401 || response.status === 400);
+    .then((res) => (res.status !== 401 && res.status !== 400));
 
   if (!isTwitchTokenValid) {
     await fetch('/api/twitch/refresh', { method: 'POST' })

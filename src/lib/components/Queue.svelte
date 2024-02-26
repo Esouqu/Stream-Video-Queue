@@ -120,7 +120,7 @@
 				justify-content: center;
 				align-items: center;
 				width: 100%;
-				font-size: 20px;
+				font-size: 1.3rem;
 				color: var(--on-surface);
 				opacity: 0.7;
 			}
@@ -173,7 +173,7 @@
 				width: 100px;
 				height: 100%;
 				font-weight: 600;
-				font-size: 14px;
+				font-size: 0.9rem;
 				color: var(--on-error-container);
 				background-color: var(--error-container);
 			}

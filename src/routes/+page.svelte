@@ -300,7 +300,7 @@
 		flex: 1;
 		justify-content: space-between;
 		align-items: center;
-		font-size: 14px;
+		font-size: 0.9rem;
 		font-weight: 300;
 
 		&.disabled span {
@@ -313,7 +313,7 @@
 		justify-content: center;
 		align-items: center;
 		gap: 20px;
-		margin-top: 30px;
+		margin-top: 50px;
 		width: 100%;
 	}
 
