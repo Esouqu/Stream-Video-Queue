@@ -135,7 +135,7 @@
 			overflow: hidden;
 		}
 		&-title {
-			font-size: 1.3rem;
+			font-size: 1.25rem;
 			font-weight: 700;
 			line-height: 1.2;
 			white-space: pre;

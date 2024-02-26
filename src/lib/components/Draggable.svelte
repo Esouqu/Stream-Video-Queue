@@ -32,7 +32,7 @@
 		applyUserSelectHack: true,
 		onDragStart: () => {
 			isDragged = true;
-			document.body.style.pointerEvents = 'none';
+			document.body.classList.add('grabbing');
 		},
 		onDrag: ({ offsetX }) => {
 			isReachedEnd = false;
@@ -51,7 +51,8 @@
 			isDragged = false;
 			isReachedEnd = false;
 			position = { x: 0, y: 0 };
-			document.body.style.pointerEvents = 'auto';
+
+			document.body.classList.remove('grabbing');
 		}
 	}}
 >

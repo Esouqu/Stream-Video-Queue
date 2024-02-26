@@ -120,7 +120,7 @@
 				justify-content: center;
 				align-items: center;
 				width: 100%;
-				font-size: 1.3rem;
+				font-size: 1.25rem;
 				color: var(--on-surface);
 				opacity: 0.7;
 			}
@@ -146,8 +146,6 @@
 					opacity: 0.5;
 					background: var(--primary-50);
 					background: linear-gradient(90deg, var(--primary-60) 0%, rgba(255 255 255 / 0) 100%);
-					// background: linear-gradient(90deg, rgba(245, 117, 7, 1) 0%, rgba(245, 156, 7, 1) 35%);
-					// background-color: var(--primary-60);
 				}
 			}
 			&.selected {
@@ -195,11 +193,6 @@
 
 				&:not(.draggable) {
 					cursor: default;
-
-					&:active {
-						filter: brightness(1);
-						cursor: default;
-					}
 				}
 
 				&:active {
