@@ -5,21 +5,21 @@
 	const twitchChannel = $page.data.twitchChannel;
 
 	onMount(() => {
-		if (twitchChannel) {
-			const validationInterval = 1000 * 60 * 60;
+		if (!twitchChannel) return;
 
-			setInterval(async () => {
-				const response = await fetch('/api/twitch/validate').then((res) => res);
+		const validationInterval = 1000 * 60 * 60;
 
-				if (response.status === 401 || response.status === 400) {
-					const refreshResponse = await fetch('/api/twitch/refresh', { method: 'POST' }).then(
-						(res) => res
-					);
+		setInterval(async () => {
+			const response = await fetch('/api/twitch/validate').then((res) => res);
 
-					if (refreshResponse.status !== 200) location.reload();
-				}
-			}, validationInterval);
-		}
+			if (response.status === 401 || response.status === 400) {
+				const refreshResponse = await fetch('/api/twitch/refresh', {
+					method: 'POST'
+				}).then((res) => res);
+
+				if (refreshResponse.status !== 200) location.reload();
+			}
+		}, validationInterval);
 	});
 </script>
 

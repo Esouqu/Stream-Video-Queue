@@ -84,10 +84,17 @@ function createChat() {
   }
 
   async function _fetchViewCount() {
-    const isTwitchTokenValid = await fetch('/api/twitch/validate')
-      .then((res) => res.status === 200);
+    const validationResponse = await fetch('/api/twitch/validate')
+      .then((res) => res);
+    let refreshTokenResponse: Response | undefined;
 
-    if (isTwitchTokenValid) {
+    if (validationResponse.status === 401 || validationResponse.status === 400) {
+      refreshTokenResponse = await fetch('/api/twitch/refresh', {
+        method: 'POST'
+      }).then((res) => res);
+    }
+
+    if (validationResponse.status === 200 || refreshTokenResponse?.status === 200) {
       const user = await fetch('/api/twitch/user')
         .then((res) => res.json())
         .then((data: ITwitchUserData) => data);

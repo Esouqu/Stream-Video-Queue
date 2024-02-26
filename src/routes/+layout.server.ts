@@ -3,24 +3,19 @@ import type { IAuthTokenData, IDonationAlertsUserData, ITwitchUserData } from "$
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
-  let twitchSession: string | undefined = cookies.get(TWITCH_SESSION);
   let donationAlertsSession: string | undefined = cookies.get(DONATIONALERTS_SESSION);
   let twitchChannel: ITwitchUserData | undefined;
   let donationAlertsUser: IDonationAlertsUserData | undefined;
 
   const isTwitchTokenValid = await fetch('/api/twitch/validate')
-    .then((res) => res.status !== 401);
+    .then((res) => res.status !== 401 || response.status === 400);
 
   if (!isTwitchTokenValid) {
-    const response = await fetch('/api/twitch/refresh', { method: 'POST' })
+    await fetch('/api/twitch/refresh', { method: 'POST' })
       .then((res) => res);
-
-    if (response.status === 200) {
-      twitchSession = await response.json().then((data: IAuthTokenData) => data.access_token);
-    }
   }
 
-  if (twitchSession) {
+  if (cookies.get(TWITCH_SESSION)) {
     twitchChannel = await fetch('/api/twitch/user')
       .then((res) => res.json())
       .then((data: ITwitchUserData) => data);
@@ -30,7 +25,7 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
     const response = await fetch('/api/donationalerts/refresh', { method: 'POST' })
       .then((res) => res);
 
-    if (response.ok) {
+    if (response.status === 200) {
       donationAlertsSession = await response.json().then((data: IAuthTokenData) => data.access_token);
     }
   }

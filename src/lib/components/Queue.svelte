@@ -21,7 +21,6 @@
 	let endIndex: number;
 	let visibleItems: (IQueueVideoInfo & { position: number })[] = [];
 	let isDeleteAction = false;
-	let minRows: number;
 
 	$: mappedQueue = [...$queue].map((l, idx) => ({ ...l, position: idx + 1 }));
 	$: {
@@ -99,6 +98,7 @@
 
 <style lang="scss">
 	.queue {
+		position: relative;
 		flex: 1;
 		padding: 15px 10px 0 0;
 		scrollbar-gutter: stable;
@@ -106,7 +106,6 @@
 		overflow-x: hidden;
 
 		&-list {
-			// position: relative;
 			display: grid;
 			padding: 0;
 			margin: 0;
