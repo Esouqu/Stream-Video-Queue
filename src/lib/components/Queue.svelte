@@ -9,12 +9,13 @@
 	import type { IQueueVideoInfo } from '$lib/interfaces';
 
 	// amount of buffered items that is outside of visible view but is rendered
-	const itemsBuffer = 10;
+	const itemHeight = 80;
+	const itemsBuffer = 3;
+	const itemsBufferHeight = itemsBuffer * itemHeight;
 	const TRANSITION_DURATION = 200;
 
 	export let scrollElement: HTMLDivElement;
 
-	let itemHeight = 80;
 	let scrollTop = 0;
 	let windowHeight: number;
 	let startIndex: number;
@@ -22,28 +23,23 @@
 	let visibleItems: (IQueueVideoInfo & { position: number })[] = [];
 	let isDeleteAction = false;
 
+	$: currentVideo = queue.currentVideo;
 	$: mappedQueue = [...$queue].map((l, idx) => ({ ...l, position: idx + 1 }));
 	$: {
-		// Calculate the position of the bottom of the viewport
-		const viewportBottom = scrollTop + windowHeight + itemsBuffer * itemHeight;
-		// Calculate the index of the potential end item
+		// Position of the top of the viewport
+		const viewportTop = scrollTop - itemsBufferHeight;
+		// Index of the potential start item
+		const potentialStartIndex = Math.floor(viewportTop / itemHeight);
+		// Position of the bottom of the viewport
+		const viewportBottom = scrollTop + windowHeight + itemsBufferHeight;
+		// Index of the potential end item
 		const potentialEndIndex = Math.floor(viewportBottom / itemHeight);
 		// Ensure potentialEndIndex does not exceed the length of the mappedQueue
 		const clampedEndIndex = Math.min(mappedQueue.length, potentialEndIndex);
-		// Calculate the position of the top of the viewport
-		const viewportTop = scrollTop - windowHeight;
-		// Calculate the index of the potential start item
-		const potentialStartIndex = Math.floor(viewportTop / itemHeight);
 
 		startIndex = Math.max(0, potentialStartIndex);
 		endIndex = Math.max(startIndex, clampedEndIndex);
-
 		visibleItems = mappedQueue.slice(startIndex, endIndex);
-	}
-	$: currentVideo = queue.currentVideo;
-
-	function onRemove(video: IQueueVideoInfo) {
-		queue.remove(video);
 	}
 
 	function onScroll(e: UIEvent) {
@@ -56,7 +52,10 @@
 <svelte:window bind:innerHeight={windowHeight} />
 
 <div class="queue" bind:this={scrollElement} on:scroll={onScroll} aria-hidden>
-	<ul class="queue-list" style="grid-auto-rows: {itemHeight}px; grid-auto-flow: row;">
+	<ul
+		class="queue-list"
+		style="grid-auto-rows: {itemHeight}px; height: {itemHeight * $queue.length}px;"
+	>
 		{#each visibleItems as video (video.id)}
 			{@const { id, videoId, position, isPaid, ...rest } = video}
 			{@const isCurrentVideo = $currentVideo?.id === video.id}
@@ -71,7 +70,7 @@
 				<Draggable
 					handle=".draggable"
 					bind:isReachedEnd={isDeleteAction}
-					on:dragstopmin={() => onRemove(video)}
+					on:dragstopmin={() => queue.remove(video)}
 				>
 					<div class="queue-item-icon-wrapper" class:draggable={!isCurrentVideo} aria-hidden>
 						<img
@@ -107,10 +106,12 @@
 
 		&-list {
 			display: grid;
+			grid-auto-flow: row;
 			padding: 0;
 			margin: 0;
 			width: 100%;
 			list-style-type: none;
+			transition: height 0.2s ease 0.2s;
 
 			&-empty {
 				position: absolute;
