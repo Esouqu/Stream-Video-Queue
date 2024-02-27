@@ -5,7 +5,7 @@ import { CHAT_STATE } from './constants';
 import type { ITwitchUserData, IUserInput } from './interfaces';
 import votes from './stores/votes';
 import settings from './stores/settings';
-import { extractKeyword, extractYoutubeVideoId } from './utils';
+import { extractKeyword, extractYoutubeVideoData } from './utils';
 
 function createChat() {
   const state = writable<CHAT_STATE>(CHAT_STATE.NOT_EXISTS);
@@ -26,12 +26,12 @@ function createChat() {
     client.on('message', (_channel, tags, message) => {
       const keywords = [votesKeywords.keepKeyword, votesKeywords.skipKeyword];
       const keyword = extractKeyword(message, keywords);
-      const videoId = extractYoutubeVideoId(message);
+      const videoData = extractYoutubeVideoData(message);
       const username = tags['display-name'] || tags.username || '???';
 
-      if (videoId) {
-        queue.add(videoId, username, false);
-      } else if (videoId?.length !== 11 && keyword && !votedUsernames.has(username)) {
+      if (videoData) {
+        queue.add(videoData, username, false);
+      } else if (keyword && !votedUsernames.has(username)) {
         votedUsernames.add(username);
         votes.addVote(keyword);
       }

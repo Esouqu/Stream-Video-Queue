@@ -39,9 +39,9 @@ function createVideoPlayer() {
       };
 
       if (isAutoPlay) {
-        await player.loadVideoById(video.videoId);
+        await player.loadVideoById(video.videoId, video.timing);
       } else {
-        await player.cueVideoById(video.videoId);
+        await player.cueVideoById(video.videoId, video.timing);
       }
     });
   }

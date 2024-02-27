@@ -141,18 +141,19 @@ function createQueue() {
     settings.isAddRandomly.subscribe((store) => isAddRandomly = store);
   }
 
-  async function add(videoId: string, username: string, isPaid: boolean) {
-    if (submittedVideoIds.has(videoId) && !isPaid) return;
+  async function add(videoData: { videoId: string, timing?: number }, username: string, isPaid: boolean) {
+    if (submittedVideoIds.has(videoData.videoId) && !isPaid) return;
 
     const videos = get(freeAndPaidVideos);
     const store = isPaid ? paidVideos : freeVideos;
-    const { snippet } = await fetch(`api/youtube?video_id=${videoId}`)
+    const { snippet } = await fetch(`api/youtube?video_id=${videoData.videoId}`)
       .then((res) => res.json())
       .then((data: IVideoData) => data.items[0]);
     const item: IQueueVideoInfo = {
       id: uuidv4(),
       isPaid,
-      videoId,
+      videoId: videoData.videoId,
+      timing: videoData.timing,
       title: snippet.title,
       channelTitle: snippet.channelTitle,
       thumbnail: snippet.thumbnails.medium.url,
@@ -174,7 +175,7 @@ function createQueue() {
       return newItems;
     });
 
-    if (!isPaid) submittedVideoIds.add(videoId);
+    if (!isPaid) submittedVideoIds.add(videoData.videoId);
 
     await db.videos.add(item);
   }

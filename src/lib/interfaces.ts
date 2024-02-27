@@ -170,6 +170,7 @@ export interface IUserInput {
 export interface IQueueVideoInfo {
   id: string;
   videoId: string;
+  timing?: number;
   title: string;
   channelTitle: string;
   thumbnail: string;

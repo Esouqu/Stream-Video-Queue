@@ -3,7 +3,7 @@ import type { IDonationAlertsUserData, IDonationData } from './interfaces';
 import { SOCKET_STATE } from './constants';
 import queue from './stores/queue';
 import settings from './stores/settings';
-import { extractYoutubeVideoId } from './utils';
+import { extractYoutubeVideoData } from './utils';
 
 function createCentrifugo() {
   const state = writable<SOCKET_STATE>(SOCKET_STATE.CLOSED);
@@ -64,9 +64,9 @@ function createCentrifugo() {
         if (roundedAmount < minDonationValue) return;
 
         const username = donation.username ?? 'Аноним';
-        const videoId = extractYoutubeVideoId(donation.message);
+        const videoData = extractYoutubeVideoData(donation.message);
 
-        if (videoId) queue.add(videoId, username, true);
+        if (videoData) queue.add(videoData, username, true);
       }
     });
 
