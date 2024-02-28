@@ -48,7 +48,6 @@ export const POST: RequestHandler = async ({ cookies }) => {
     const error = err as { response: { status: number } };
 
     if (error.response?.status === 401) {
-      cookies.delete(DONATIONALERTS_REFRESH_TOKEN, { path: '/' });
       return new Response('The donation alerts refresh token is invalid', { status: 401 });
     } else {
       return new Response('Something went wrong', { status: 500 });

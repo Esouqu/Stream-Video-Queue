@@ -8,7 +8,7 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ url, cookies }) => {
   const code = url.searchParams.get('code');
   const redirectUrl = dev ? 'http://localhost:5173/redirect/donationalerts' : 'https://stream-video-queue.vercel.app/redirect/donationalerts';
-  const tokenUrl = `https://www.donationalerts.com/oauth/token`;
+  const tokenUrl = 'https://www.donationalerts.com/oauth/token';
 
   if (!code) throw redirect(300, '/');
 
