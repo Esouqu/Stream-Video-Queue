@@ -26,7 +26,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
     }).then((res) => res);
 
     const tokenData = await response.json().then((data: IDonationAlertsRefreshToken) => data);
-    console.log(refreshToken, response, tokenData)
+
     cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
       path: '/',
       httpOnly: true,
@@ -45,7 +45,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
       });
     }
 
-    return new Response(JSON.stringify(response), { status: 200 });
+    return new Response(JSON.stringify(tokenData), { status: 200 });
   } catch (err: unknown) {
     const error = err as { response: { status: number } };
 
