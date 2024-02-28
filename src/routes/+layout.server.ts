@@ -1,4 +1,4 @@
-import { DONATIONALERTS_REFRESH_TOKEN, DONATIONALERTS_SESSION, TWITCH_SESSION } from "$env/static/private";
+import { DONATIONALERTS_SESSION, TWITCH_SESSION } from "$env/static/private";
 import type { IDonationAlertsUserData, ITwitchUserData } from "$lib/interfaces";
 import type { LayoutServerLoad } from "./$types";
 
@@ -30,8 +30,6 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   }
 
   return {
-    session: DONATIONALERTS_SESSION,
-    refreshSession: DONATIONALERTS_REFRESH_TOKEN,
     twitchChannel,
     donationAlertsUser
   }

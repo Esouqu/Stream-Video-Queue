@@ -7,7 +7,6 @@ export function extractYoutubeVideoData(str: string): { videoId: string, timing?
 
   const timingRegex = /&t=(\d+)/;
   const timingMatch = str.match(timingRegex);
-  console.log(timingMatch)
 
   if (!timingMatch || !timingMatch[1]) return { videoId: videoIdMatch[1] };
 
