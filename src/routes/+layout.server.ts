@@ -1,8 +1,9 @@
 import { DONATIONALERTS_SESSION, TWITCH_SESSION } from "$env/static/private";
-import type { IDonationAlertsUserData, ITwitchUserData } from "$lib/interfaces";
+import type { IDonationAlertsRefreshToken, IDonationAlertsUserData, ITwitchUserData } from "$lib/interfaces";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
+  let donationalertsSession = cookies.get(DONATIONALERTS_SESSION);
   let twitchChannel: ITwitchUserData | undefined;
   let donationAlertsUser: IDonationAlertsUserData | undefined;
 
@@ -19,11 +20,16 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
       .then((data: ITwitchUserData) => data);
   }
 
-  if (!cookies.get(DONATIONALERTS_SESSION)) {
-    await fetch('/api/donationalerts/refresh', { method: 'POST' })
+  if (!donationalertsSession) {
+    const refreshTokenResponse = await fetch('/api/donationalerts/refresh', { method: 'POST' })
+      .then((res) => res);
+
+    if (refreshTokenResponse.status === 200) {
+      donationalertsSession = await refreshTokenResponse.json().then((data: IDonationAlertsRefreshToken) => data.access_token);
+    }
   }
 
-  if (cookies.get(DONATIONALERTS_SESSION)) {
+  if (donationalertsSession) {
     donationAlertsUser = await fetch('/api/donationalerts/user')
       .then((res) => res.json())
       .then((data: IDonationAlertsUserData) => data);
