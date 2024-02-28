@@ -22,7 +22,7 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
 
   if (!donationalertsSession) {
     await fetch('/api/donationalerts/refresh', { method: 'POST' })
-      .then((res) => res.json()).then((data) => console.log(data));
+      .then((res) => console.log(res));
   }
 
   if (donationalertsSession) {
