@@ -57,7 +57,7 @@
 		style="grid-auto-rows: {itemHeight}px; height: {itemHeight * $queue.length}px;"
 	>
 		{#each visibleItems as video (video.id)}
-			{@const { id, videoId, position, isPaid, ...rest } = video}
+			{@const { id, videoId, position, isPaid, timing, ...rest } = video}
 			{@const isCurrentVideo = $currentVideo?.id === video.id}
 
 			<div
