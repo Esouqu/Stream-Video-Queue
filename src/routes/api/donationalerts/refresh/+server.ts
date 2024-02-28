@@ -23,18 +23,20 @@ export const POST: RequestHandler = async ({ cookies }) => {
         refresh_token: refreshToken,
         scope,
       })
-    }).then((res) => res.json()).then((data: IDonationAlertsRefreshToken) => data);
+    }).then((res) => res);
 
-    cookies.set(DONATIONALERTS_SESSION, response.access_token, {
+    const tokenData = await response.json().then((data: IDonationAlertsRefreshToken) => data);
+    console.log(response, tokenData)
+    cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
       path: '/',
       httpOnly: true,
       sameSite: "lax",
       secure: !dev,
-      expires: new Date(Date.now() + response.expires_in)
+      expires: new Date(Date.now() + tokenData.expires_in)
     });
 
-    if (response.refresh_token) {
-      cookies.set(DONATIONALERTS_REFRESH_TOKEN, response.refresh_token, {
+    if (tokenData.refresh_token) {
+      cookies.set(DONATIONALERTS_REFRESH_TOKEN, tokenData.refresh_token, {
         path: '/',
         httpOnly: true,
         sameSite: 'lax',
