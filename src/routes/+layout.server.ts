@@ -3,7 +3,6 @@ import type { IDonationAlertsUserData, ITwitchUserData } from "$lib/interfaces";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
-  const donationalertsSession = cookies.get(DONATIONALERTS_SESSION);
   let twitchChannel: ITwitchUserData | undefined;
   let donationAlertsUser: IDonationAlertsUserData | undefined;
 
@@ -20,12 +19,11 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
       .then((data: ITwitchUserData) => data);
   }
 
-  if (!donationalertsSession) {
+  if (!cookies.get(DONATIONALERTS_SESSION)) {
     await fetch('/api/donationalerts/refresh', { method: 'POST' })
-      .then((res) => console.log(res));
   }
 
-  if (donationalertsSession) {
+  if (cookies.get(DONATIONALERTS_SESSION)) {
     donationAlertsUser = await fetch('/api/donationalerts/user')
       .then((res) => res.json())
       .then((data: IDonationAlertsUserData) => data);
