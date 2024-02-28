@@ -29,8 +29,6 @@
 	let currentTab: number;
 	let scrollElement: HTMLDivElement;
 
-	$: console.log(donationAlertsUser);
-
 	$: isAutoskip = settings.isAutoskip;
 	$: isAutoplay = settings.isAutoplay;
 	$: isAutodetection = settings.isAutodetection;
