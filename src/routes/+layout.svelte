@@ -4,6 +4,8 @@
 
 	const twitchChannel = $page.data.twitchChannel;
 
+	$: console.log($page.data.testConsole);
+
 	onMount(() => {
 		if (!twitchChannel) return;
 
