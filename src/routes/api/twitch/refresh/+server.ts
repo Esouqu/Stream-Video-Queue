@@ -32,7 +32,8 @@ export const POST: RequestHandler = async ({ cookies }) => {
 
       return new Response('Refresh token is invalid', { status: 400 })
     };
-    console.log(`twitch refresh response: ${response}`)
+    console.log('twitch refresh response')
+    console.log(response)
     const tokenData = await response.json().then((data: IAuthTokenData) => data);
 
     cookies.set(TWITCH_SESSION, tokenData.access_token, {
