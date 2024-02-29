@@ -1,5 +1,4 @@
-import { dev } from "$app/environment";
-import { DONATIONALERTS_REFRESH_TOKEN, DONATIONALERTS_SESSION, TWITCH_SESSION } from "$env/static/private";
+import { DONATIONALERTS_SESSION, TWITCH_SESSION } from "$env/static/private";
 import type { IDonationAlertsRefreshToken, IDonationAlertsUserData, ITwitchUserData } from "$lib/interfaces";
 import type { LayoutServerLoad } from "./$types";
 
@@ -26,22 +25,7 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
       .then((res) => res);
 
     if (refreshTokenResponse.status === 200) {
-      const tokenData = await refreshTokenResponse.json().then((data: IDonationAlertsRefreshToken) => data);
-      donationalertsSession = tokenData.access_token;
-
-      cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
-        path: '/',
-        secure: !dev,
-        expires: new Date(Date.now() + tokenData.expires_in)
-      });
-
-      if (tokenData.refresh_token) {
-        cookies.set(DONATIONALERTS_REFRESH_TOKEN, tokenData.refresh_token, {
-          path: '/',
-          secure: !dev,
-          expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-        });
-      }
+      donationalertsSession = await refreshTokenResponse.json().then((data: IDonationAlertsRefreshToken) => data.access_token);
     }
   }
 

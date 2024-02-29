@@ -1,4 +1,5 @@
-import { DONATIONALERTS_REFRESH_TOKEN, DONATIONALERTS_SECRET_KEY } from "$env/static/private";
+import { dev } from "$app/environment";
+import { DONATIONALERTS_REFRESH_TOKEN, DONATIONALERTS_SECRET_KEY, DONATIONALERTS_SESSION } from "$env/static/private";
 import { PUBLIC_DONATIONALERTS_CLIENT_ID } from "$env/static/public";
 import type { IDonationAlertsRefreshToken } from "$lib/interfaces";
 import { redirect, type RequestHandler } from "@sveltejs/kit";
@@ -25,6 +26,24 @@ export const POST: RequestHandler = async ({ cookies }) => {
     }).then((res) => res);
 
     const tokenData = await response.json().then((data: IDonationAlertsRefreshToken) => data);
+
+    cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
+      path: '/',
+      httpOnly: true,
+      sameSite: "lax",
+      secure: !dev,
+      expires: new Date(Date.now() + tokenData.expires_in)
+    });
+
+    if (tokenData.refresh_token) {
+      cookies.set(DONATIONALERTS_REFRESH_TOKEN, tokenData.refresh_token, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: !dev,
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+      });
+    }
 
     return new Response(JSON.stringify(tokenData), { status: 200 });
   } catch (err: unknown) {
