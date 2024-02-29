@@ -8,6 +8,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
   const refreshToken = cookies.get(DONATIONALERTS_REFRESH_TOKEN);
   const scope = 'oauth-user-show oauth-donation-subscribe';
 
+  console.log(`da refresh cookies: ${refreshToken}`);
   if (!refreshToken) throw redirect(301, '/');
 
   try {
@@ -25,6 +26,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
       })
     }).then((res) => res);
 
+    console.log(`da refresh response: ${response}`)
     const tokenData = await response.json().then((data: IDonationAlertsRefreshToken) => data);
 
     cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
