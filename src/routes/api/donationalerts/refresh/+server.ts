@@ -2,13 +2,13 @@ import { dev } from "$app/environment";
 import { DONATIONALERTS_REFRESH_TOKEN, DONATIONALERTS_SECRET_KEY, DONATIONALERTS_SESSION } from "$env/static/private";
 import { PUBLIC_DONATIONALERTS_CLIENT_ID } from "$env/static/public";
 import type { IDonationAlertsRefreshToken } from "$lib/interfaces";
-import { redirect, type RequestHandler } from "@sveltejs/kit";
+import { type RequestHandler } from "@sveltejs/kit";
 
-export const POST: RequestHandler = async ({ cookies, fetch }) => {
+export const POST: RequestHandler = async ({ cookies }) => {
   const refreshToken = cookies.get(DONATIONALERTS_REFRESH_TOKEN);
   const scope = 'oauth-user-show oauth-donation-subscribe';
 
-  if (!refreshToken) throw redirect(301, '/');
+  if (!refreshToken) return new Response('No refresh token is available', { status: 400 });
 
   try {
     const response = await fetch('https://www.donationalerts.com/oauth/token', {
@@ -22,6 +22,8 @@ export const POST: RequestHandler = async ({ cookies, fetch }) => {
         scope,
       })
     }).then((res) => res);
+
+    console.log(response)
 
     const tokenData = await response.json().then((data: IDonationAlertsRefreshToken) => data);
 
