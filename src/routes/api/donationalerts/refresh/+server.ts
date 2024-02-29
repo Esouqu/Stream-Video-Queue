@@ -4,7 +4,7 @@ import { PUBLIC_DONATIONALERTS_CLIENT_ID } from "$env/static/public";
 import type { IDonationAlertsRefreshToken } from "$lib/interfaces";
 import { redirect, type RequestHandler } from "@sveltejs/kit";
 
-export const POST: RequestHandler = async ({ cookies }) => {
+export const POST: RequestHandler = async ({ cookies, fetch }) => {
   const refreshToken = cookies.get(DONATIONALERTS_REFRESH_TOKEN);
   const scope = 'oauth-user-show oauth-donation-subscribe';
 
@@ -13,9 +13,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
   try {
     const response = await fetch('https://www.donationalerts.com/oauth/token', {
       method: 'POST',
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
         client_id: PUBLIC_DONATIONALERTS_CLIENT_ID,
@@ -29,8 +27,6 @@ export const POST: RequestHandler = async ({ cookies }) => {
 
     cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
       path: '/',
-      httpOnly: true,
-      sameSite: "lax",
       secure: !dev,
       expires: new Date(Date.now() + tokenData.expires_in)
     });
@@ -38,8 +34,6 @@ export const POST: RequestHandler = async ({ cookies }) => {
     if (tokenData.refresh_token) {
       cookies.set(DONATIONALERTS_REFRESH_TOKEN, tokenData.refresh_token, {
         path: '/',
-        httpOnly: true,
-        sameSite: 'lax',
         secure: !dev,
         expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
       });
