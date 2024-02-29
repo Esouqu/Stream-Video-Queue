@@ -7,7 +7,6 @@ import { type RequestHandler } from "@sveltejs/kit";
 export const POST: RequestHandler = async ({ cookies }) => {
   const refreshToken = cookies.get(TWITCH_REFRESH_TOKEN);
 
-  console.log(`twitch refresh cookies: ${refreshToken}`);
   if (!refreshToken) return new Response('No refresh token is available', { status: 400 });
 
   try {
@@ -32,8 +31,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
 
       return new Response('Refresh token is invalid', { status: 400 })
     };
-    console.log('twitch refresh response')
-    console.log(response)
+
     const tokenData = await response.json().then((data: IAuthTokenData) => data);
 
     cookies.set(TWITCH_SESSION, tokenData.access_token, {

@@ -44,9 +44,27 @@
 	}
 	$: tabs = [`Очередь (${$queue.length})`, 'Настройки'];
 
-	onMount(() => initializeSubscriptions());
+	onMount(() => {
+		initializeSubscriptions();
 
-	async function connectCertifugo() {
+		if (!twitchChannel) return;
+
+		const validationInterval = 1000 * 60 * 60;
+
+		setInterval(async () => {
+			const response = await fetch('/api/twitch/validate').then((res) => res);
+
+			if (response.status === 401 || response.status === 400) {
+				const refreshResponse = await fetch('/api/twitch/refresh', {
+					method: 'POST'
+				}).then((res) => res);
+
+				if (refreshResponse.status !== 200) location.reload();
+			}
+		}, validationInterval);
+	});
+
+	async function connectToCertifugo() {
 		if ($centrifugoState === SOCKET_STATE.CLOSED && donationAlertsUser) {
 			await centrifugo.connect(donationAlertsUser);
 		}
@@ -169,7 +187,7 @@
 									icon={donationAlertsUser.avatar}
 									title={donationAlertsUser.name}
 									description={`Следить за донатами в поисках ссылок на Youtube.\nЗаказанные этим путем видео будут находиться выше остальных`}
-									on={connectCertifugo}
+									on={connectToCertifugo}
 									off={centrifugo.disconnect}
 									isToggled={$centrifugoState === SOCKET_STATE.OPEN}
 									isDisabled={$centrifugoState === SOCKET_STATE.CONNECTING}
