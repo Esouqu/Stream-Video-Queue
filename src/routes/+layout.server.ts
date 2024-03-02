@@ -35,10 +35,6 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
       .then((data: IDonationAlertsUserData) => data);
   }
 
-  console.log(twitchChannel);
-  console.log(cookies.get(TWITCH_SESSION))
-  console.log(donationAlertsUser);
-  console.log(donationalertsSession);
   return {
     twitchChannel,
     donationAlertsUser
