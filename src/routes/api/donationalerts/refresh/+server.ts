@@ -23,9 +23,10 @@ export const POST: RequestHandler = async ({ cookies }) => {
       })
     }).then((res) => res);
 
-    console.log(response)
+    // console.log(response)
 
     const tokenData = await response.json().then((data: IDonationAlertsRefreshToken) => data);
+    // console.log(tokenData)
 
     cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
       path: '/',
