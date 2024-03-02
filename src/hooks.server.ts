@@ -1,13 +1,27 @@
-// import { dev } from "$app/environment";
-// import { TWITCH_REFRESH_TOKEN, TWITCH_SESSION } from "$env/static/private";
-import type { HandleFetch } from "@sveltejs/kit";
+// import { DONATIONALERTS_SESSION, TWITCH_SESSION } from "$env/static/private";
+// import type { IDonationAlertsUserData, ITwitchUserData } from "$lib/interfaces";
+import type { Handle } from "@sveltejs/kit";
 
-export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
-  const cookies = event.request.headers.get('cookie');
+export const handle: Handle = async ({ event, resolve }) => {
+  // const donationalertsSession = event.cookies.get(DONATIONALERTS_SESSION);
+  // const twitchChannel = event.cookies.get(TWITCH_SESSION);
 
-  if (request.url.startsWith('https://stream-video-queue.vercel.app/') && cookies) {
-    request.headers.set('cookie', cookies);
-  }
+  // if (donationalertsSession && event.url.pathname === '/api/donationalerts/refresh') {
+  //   const donationAlertsUser = await fetch('/api/donationalerts/user')
+  //     .then((res) => res.json())
+  //     .then((data: IDonationAlertsUserData) => data);
 
-  return fetch(request);
+  //   event.locals.donationAlertsUser = donationAlertsUser;
+  // }
+
+  // if (twitchChannel && event.url.pathname === '/api/twitch/refresh') {
+  //   const twitchChannel = await fetch('/api/twitch/user')
+  //     .then((res) => res.json())
+  //     .then((data: ITwitchUserData) => data);
+
+  //   event.locals.twitchChannel = twitchChannel;
+  // }
+  console.log(event.url.pathname)
+
+  return resolve(event);
 }
