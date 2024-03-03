@@ -34,13 +34,11 @@ export const POST: RequestHandler = async ({ cookies }) => {
 
     cookies.set(TWITCH_SESSION, tokenData.access_token, {
       path: '/',
-      httpOnly: true,
       secure: !dev,
       expires: new Date(Date.now() + tokenData.expires_in * 1000)
     });
     cookies.set(TWITCH_REFRESH_TOKEN, tokenData.refresh_token, {
       path: '/',
-      httpOnly: true,
       secure: !dev,
       expires: new Date(Date.now() + 30 * 1000 * 60 * 60 * 24),
     });

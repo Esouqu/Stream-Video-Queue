@@ -24,6 +24,7 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
     const refreshTokenResponse = await fetch('/api/donationalerts/refresh', { method: 'POST' })
       .then((res) => res);
 
+    console.log(refreshTokenResponse)
     if (refreshTokenResponse.status === 200) {
       donationalertsSession = await refreshTokenResponse.json().then((data: IDonationAlertsRefreshToken) => data.access_token);
     }
