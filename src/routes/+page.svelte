@@ -159,16 +159,18 @@
 								</div>
 								<h3>Twitch</h3>
 							</div>
-							<SwitchSetting
-								icon={twitchChannel.profile_image_url}
-								title={twitchChannel.display_name}
-								description="Следить за чатом канала в поисках ключевых слов и ссылок на Youtube"
-								on={connectToChat}
-								off={chat.disconnet}
-								isToggled={$chatState === CHAT_STATE.CONNECTED}
-								isDisabled={$chatState === CHAT_STATE.CONNECTING}
-								isLoading={$chatState === CHAT_STATE.CONNECTING}
-							/>
+							<div style="display: flex; flex-direction: column; gap: 10px; padding: 0 10px;">
+								<SwitchSetting
+									icon={twitchChannel.profile_image_url}
+									title={twitchChannel.display_name}
+									description="Следить за чатом канала в поисках ключевых слов и ссылок на Youtube"
+									on={connectToChat}
+									off={chat.disconnet}
+									isToggled={$chatState === CHAT_STATE.CONNECTED}
+									isDisabled={$chatState === CHAT_STATE.CONNECTING}
+									isLoading={$chatState === CHAT_STATE.CONNECTING}
+								/>
+							</div>
 						{/if}
 					</div>
 					<div>
@@ -185,7 +187,7 @@
 								</div>
 								<h3>DonationAlerts</h3>
 							</div>
-							<div style="display: flex; flex-direction: column; gap: 10px">
+							<div style="display: flex; flex-direction: column; gap: 10px; padding: 0 10px;">
 								<SwitchSetting
 									icon={donationAlertsUser.avatar}
 									title={donationAlertsUser.name}

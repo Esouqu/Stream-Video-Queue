@@ -36,7 +36,12 @@
 			color: var(--on-surface);
 			background-color: transparent;
 			opacity: 0.7;
+			transition: 0.2s;
 			cursor: pointer;
+
+			&:hover:not(.selected) {
+				opacity: 1;
+			}
 
 			&.selected {
 				opacity: 1;

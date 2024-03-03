@@ -21,6 +21,7 @@
 				background-color: var(--primary-60);
 			}
 		}
+
 		&::before {
 			content: '';
 			position: absolute;
@@ -35,6 +36,7 @@
 			background-color: var(--primary-70);
 			opacity: 1;
 		}
+
 		&::after {
 			content: '';
 			position: absolute;

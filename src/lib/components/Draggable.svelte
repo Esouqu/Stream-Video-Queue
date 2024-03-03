@@ -3,12 +3,8 @@
 	import { createEventDispatcher } from 'svelte';
 
 	interface IDraggableEvents {
-		dragstopmin: {
-			offsetX: number;
-		};
-		dragstopmax: {
-			offsetX: number;
-		};
+		dragstopmin: { offsetX: number };
+		dragstopmax: { offsetX: number };
 	}
 
 	const dispatch = createEventDispatcher<IDraggableEvents>();
@@ -17,10 +13,7 @@
 	export let isReachedEnd = false;
 
 	let isDragged = false;
-	let position = {
-		x: 0,
-		y: 0
-	};
+	let position = { x: 0, y: 0 };
 </script>
 
 <div

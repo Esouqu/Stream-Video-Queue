@@ -22,7 +22,7 @@
 		if (!element || !isBorderless) return;
 
 		element.style.width = 'auto';
-		element.style.width = element.value.length * 9 + 'px';
+		element.style.width = (element.value.length + 1) * 9 + 'px';
 	});
 
 	function handleInput(e: Event) {
@@ -34,7 +34,7 @@
 
 		if (isBorderless) {
 			target.style.width = 'auto';
-			target.style.width = target.value.length * 9 + 'px';
+			target.style.width = (target.value.length + 1) * 9 + 'px';
 		}
 
 		if (onInput) onInput();

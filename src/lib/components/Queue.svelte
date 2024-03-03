@@ -1,14 +1,13 @@
 <script lang="ts">
 	import queue from '$lib/stores/queue';
 	import { flip } from 'svelte/animate';
-	import { fade, fly } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import dragIcon from '$lib/assets/drag_indicator_icon.svg';
 	import Draggable from './Draggable.svelte';
 	import playIcon from '$lib/assets/play_arrow_icon.svg';
 	import VideoPreview from './VideoPreview.svelte';
 	import type { IQueueVideoInfo } from '$lib/interfaces';
 
-	// amount of buffered items that is outside of visible view but is rendered
 	const itemHeight = 80;
 	const itemsBuffer = 3;
 	const itemsBufferHeight = itemsBuffer * itemHeight;
@@ -51,7 +50,7 @@
 
 <svelte:window bind:innerHeight={windowHeight} />
 
-<div class="queue" bind:this={scrollElement} on:scroll={onScroll} aria-hidden>
+<div class="queue" bind:this={scrollElement} on:scroll={onScroll}>
 	<ul
 		class="queue-list"
 		style="grid-auto-rows: {itemHeight}px; height: {itemHeight * $queue.length}px;"
@@ -63,7 +62,7 @@
 			<div
 				class="queue-item"
 				class:selected={isCurrentVideo}
-				class:premium={video.isPaid}
+				class:paid={video.isPaid}
 				style="grid-row: {position};"
 				animate:flip={{ duration: TRANSITION_DURATION }}
 			>
@@ -72,7 +71,7 @@
 					bind:isReachedEnd={isDeleteAction}
 					on:dragstopmin={() => queue.remove(video)}
 				>
-					<div class="queue-item-icon-wrapper" class:draggable={!isCurrentVideo} aria-hidden>
+					<div class="queue-item-icon-wrapper" class:draggable={!isCurrentVideo}>
 						<img
 							src={isCurrentVideo ? playIcon : dragIcon}
 							alt="Drag Indicator"
@@ -136,13 +135,13 @@
 			transition: background-color 0.2s;
 			cursor: pointer;
 
-			&.premium {
+			&.paid {
 				&::before {
 					content: '';
 					position: absolute;
 					top: 0;
 					left: 0;
-					width: 33%;
+					width: 35%;
 					height: 100%;
 					opacity: 0.5;
 					background: var(--primary-50);
@@ -151,9 +150,9 @@
 			}
 			&.selected {
 				background-color: var(--hover-white);
-				cursor: default;
+				pointer-events: none;
 
-				&.premium::before {
+				&.paid::before {
 					opacity: 1;
 				}
 				&:hover {
@@ -171,10 +170,10 @@
 				align-items: center;
 				width: 100px;
 				height: 100%;
-				font-weight: 600;
+				font-weight: 500;
 				font-size: 0.9rem;
-				color: var(--on-error-container);
-				background-color: var(--error-container);
+				color: var(--on-container);
+				background-color: var(--secondary-container);
 			}
 
 			&:hover {
@@ -197,7 +196,7 @@
 				}
 
 				&:active {
-					filter: brightness(0.5);
+					opacity: 0.5;
 					cursor: grabbing;
 				}
 

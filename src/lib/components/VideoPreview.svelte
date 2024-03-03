@@ -57,7 +57,7 @@
 			-webkit-box-orient: vertical;
 			margin: 0;
 			font-size: 0.9rem;
-			line-height: 20px;
+			line-height: 1.15rem;
 			font-weight: 500;
 			text-decoration: none;
 			overflow: hidden;

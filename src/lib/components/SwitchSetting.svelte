@@ -4,11 +4,11 @@
 	export let icon: string = '';
 	export let title: string;
 	export let description: string;
-	export let on: () => void;
-	export let off: () => void;
 	export let isToggled = false;
 	export let isDisabled = false;
 	export let isLoading = false;
+	export let on: () => void;
+	export let off: () => void;
 </script>
 
 <div class="switch-setting">
@@ -22,9 +22,7 @@
 		<span style="font-size: .9rem; font-weight: 300; white-space: break-spaces;">{description}</span
 		>
 	</div>
-	<div style="display: flex; justify-content: center; min-width: 48px;">
-		<Switch {on} {off} bind:isToggled bind:isDisabled bind:isLoading />
-	</div>
+	<Switch {on} {off} bind:isToggled bind:isDisabled bind:isLoading />
 </div>
 
 <style lang="scss">
