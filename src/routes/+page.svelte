@@ -101,7 +101,10 @@
 					transition:fly={{ x: -200, duration: 300 }}
 				>
 					<!-- <div>
-						<Button title="Donate" on:click={() => queue.add('ovU-lOSLHmk', 'Anon', true)} />
+						<Button
+							title="Donate"
+							on:click={() => queue.add({ videoId: 'ovU-lOSLHmk' }, 'Anon', true)}
+						/>
 						<Button
 							title="Donate Multiple"
 							on:click={() => {
@@ -110,7 +113,7 @@
 									count++;
 									if (count > 5) clearInterval(intervalId);
 
-									queue.add('ovU-lOSLHmk', 'Anon', true);
+									queue.add({ videoId: 'ovU-lOSLHmk' }, 'Anon', true);
 								}, 100);
 							}}
 						/>
