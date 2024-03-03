@@ -30,6 +30,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
 
     cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
       path: '/',
+      httpOnly: true,
       secure: !dev,
       expires: new Date(Date.now() + tokenData.expires_in)
     });
@@ -37,6 +38,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
     if (tokenData.refresh_token) {
       cookies.set(DONATIONALERTS_REFRESH_TOKEN, tokenData.refresh_token, {
         path: '/',
+        httpOnly: true,
         secure: !dev,
         expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
       });
