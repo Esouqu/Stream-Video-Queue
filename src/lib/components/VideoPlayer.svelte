@@ -37,9 +37,9 @@
 		}
 	}
 
-	// onMount(async () => {
-	// 	videoPlayer.initialize(YouTubePlayer(playerElement, { playerVars: { rel: 0 } }));
-	// });
+	onMount(async () => {
+		videoPlayer.initialize(YouTubePlayer(playerElement, { playerVars: { rel: 0 } }));
+	});
 
 	async function copyVideoUrlToClipboard() {
 		const url = await videoPlayer.getVideoUrl();
