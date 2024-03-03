@@ -23,10 +23,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
       })
     }).then((res) => res);
 
-    // console.log(response)
-
     const tokenData = await response.json().then((data: IDonationAlertsRefreshToken) => data);
-    // console.log(tokenData)
 
     cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
       path: '/',
@@ -41,9 +38,6 @@ export const POST: RequestHandler = async ({ cookies }) => {
         expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
       });
     }
-
-    // console.log(cookies.get(DONATIONALERTS_SESSION))
-    // console.log(cookies.get(DONATIONALERTS_REFRESH_TOKEN))
 
     return new Response(JSON.stringify(tokenData), { status: 200 });
   } catch (err: unknown) {
