@@ -44,6 +44,9 @@ export const POST: RequestHandler = async ({ cookies }) => {
       });
     }
 
+    console.log(cookies.get(DONATIONALERTS_SESSION))
+    console.log(cookies.get(DONATIONALERTS_REFRESH_TOKEN))
+
     return new Response(JSON.stringify(tokenData), { status: 200 });
   } catch (err: unknown) {
     const error = err as { response: { status: number } };
