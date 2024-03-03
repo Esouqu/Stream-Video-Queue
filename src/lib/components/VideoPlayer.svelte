@@ -38,9 +38,7 @@
 	}
 
 	onMount(async () => {
-		setTimeout(() => {
-			videoPlayer.initialize(YouTubePlayer(playerElement, { playerVars: { rel: 0 } }));
-		}, 10);
+		videoPlayer.initialize(YouTubePlayer(playerElement, { playerVars: { rel: 0 } }));
 	});
 
 	async function copyVideoUrlToClipboard() {
