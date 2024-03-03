@@ -28,15 +28,11 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 
   cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
     path: '/',
-    httpOnly: true,
-    sameSite: "lax",
     secure: !dev,
     expires: new Date(Date.now() + tokenData.expires_in)
   });
   cookies.set(DONATIONALERTS_REFRESH_TOKEN, tokenData.refresh_token, {
     path: '/',
-    httpOnly: true,
-    sameSite: "lax",
     secure: !dev,
     expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
   });

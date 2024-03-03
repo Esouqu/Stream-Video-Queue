@@ -7,7 +7,6 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ url, cookies }) => {
   const code = url.searchParams.get('code');
-  // const redirectUrl = 'http://localhost:5173/redirect/twitch';
   const redirectUrl = dev ? 'http://localhost:5173/redirect/twitch' : 'https://stream-video-queue.vercel.app/redirect/twitch';
   const tokenUrl = 'https://id.twitch.tv/oauth2/token';
 
@@ -26,16 +25,12 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 
   cookies.set(TWITCH_SESSION, tokenData.access_token, {
     path: '/',
-    httpOnly: true,
-    sameSite: "lax",
     secure: !dev,
     expires: new Date(Date.now() + tokenData.expires_in * 1000)
   });
 
   cookies.set(TWITCH_REFRESH_TOKEN, tokenData.refresh_token, {
     path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
     secure: !dev,
     expires: new Date(Date.now() + 30 * 1000 * 60 * 60 * 24),
   })

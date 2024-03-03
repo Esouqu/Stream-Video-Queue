@@ -30,6 +30,7 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   }
 
   if (donationalertsSession) {
+
     donationAlertsUser = await fetch('/api/donationalerts/user')
       .then((res) => res.json())
       .then((data: IDonationAlertsUserData) => data);

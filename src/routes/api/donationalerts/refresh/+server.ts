@@ -23,6 +23,10 @@ export const POST: RequestHandler = async ({ cookies }) => {
       })
     }).then((res) => res);
 
+    if (response.status === 401) {
+      return new Response('The donation alerts refresh token is invalid', { status: 401 });
+    }
+
     const tokenData = await response.json().then((data: IDonationAlertsRefreshToken) => data);
 
     cookies.set(DONATIONALERTS_SESSION, tokenData.access_token, {
