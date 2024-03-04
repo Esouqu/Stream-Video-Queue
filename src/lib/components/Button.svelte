@@ -6,15 +6,15 @@
 
 <div class="button-wrapper" class:disabled={isDisabled}>
 	<button class="button" on:click>
-		{#if title}
-			<span class="button__label">
-				{title}
-			</span>
-		{/if}
 		{#if icon}
 			<div class="button-icon-wrapper">
 				<img src={icon} alt="Button Icon" draggable="false" />
 			</div>
+		{/if}
+		{#if title}
+			<span class="button__label">
+				{title}
+			</span>
 		{/if}
 	</button>
 </div>
@@ -43,7 +43,7 @@
 		&-wrapper {
 			display: flex;
 			border-radius: 100px;
-			background-color: var(--button-bg, var(--surface-bright));
+			background-color: var(--button-bg, var(--surface-container-high));
 			height: var(--button-size, auto);
 			width: var(--button-size, auto);
 			overflow: hidden;
@@ -76,7 +76,7 @@
 		&-icon-wrapper {
 			position: relative;
 			display: flex;
-			width: 25px;
+			width: 24px;
 			z-index: 1;
 
 			& img {

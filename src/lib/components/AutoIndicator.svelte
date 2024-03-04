@@ -1,4 +1,8 @@
-<div class="auto-indicator">Авто</div>
+<script>
+	import { fly } from 'svelte/transition';
+</script>
+
+<div class="auto-indicator" transition:fly={{ y: 10, duration: 200 }}>Авто</div>
 
 <style lang="scss">
 	.auto-indicator {

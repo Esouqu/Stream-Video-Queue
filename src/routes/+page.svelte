@@ -40,15 +40,20 @@
 	$: chatState = chat.state;
 	$: centrifugoState = centrifugo.state;
 	$: {
-		if ($isAutoskip && $votesDifference >= $userInput.needed) queue.setNext();
+		const isChatConnected = $chatState === CHAT_STATE.CONNECTED;
+		const isEnoughVotes = $votesDifference >= $userInput.needed;
+
+		if ($isAutoskip && isChatConnected && isEnoughVotes) queue.setNext();
 	}
 	$: tabs = [`Очередь (${$queue.length})`, 'Настройки'];
 
 	onMount(() => {
+		if (twitchChannel) validateTwitchToken();
+
 		initializeSubscriptions();
+	});
 
-		if (!twitchChannel) return;
-
+	function validateTwitchToken() {
 		const validationInterval = 1000 * 60 * 60;
 
 		setInterval(async () => {
@@ -62,7 +67,7 @@
 				if (refreshResponse.status !== 200) location.reload();
 			}
 		}, validationInterval);
-	});
+	}
 
 	async function connectToCertifugo() {
 		if ($centrifugoState === SOCKET_STATE.CLOSED && donationAlertsUser) {
@@ -76,6 +81,11 @@
 		} else if ($chatState === CHAT_STATE.DISCONNECTED) {
 			chat.connect();
 		}
+	}
+
+	function disconnectFromChat() {
+		chat.disconnet();
+		settings.isAutodetection.set(false);
 	}
 </script>
 
@@ -92,7 +102,7 @@
 			});
 		}}
 	/>
-	<div class="left-side">
+	<div class="right-side">
 		<Tabs options={tabs} bind:currentTab />
 		<div class="transition-container">
 			{#if currentTab === 0}
@@ -165,7 +175,7 @@
 									title={twitchChannel.display_name}
 									description="Следить за чатом канала в поисках ключевых слов и ссылок на Youtube"
 									on={connectToChat}
-									off={chat.disconnet}
+									off={disconnectFromChat}
 									isToggled={$chatState === CHAT_STATE.CONNECTED}
 									isDisabled={$chatState === CHAT_STATE.CONNECTING}
 									isLoading={$chatState === CHAT_STATE.CONNECTING}
@@ -293,7 +303,7 @@
 		width: 100%;
 	}
 
-	.left-side {
+	.right-side {
 		position: relative;
 		display: flex;
 		flex-direction: column;

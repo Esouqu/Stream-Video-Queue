@@ -7,20 +7,31 @@
 	import settings from '$lib/stores/settings';
 	import chat from '$lib/chat';
 	import AutoIndicator from './AutoIndicator.svelte';
+	import AnimatedCounter from './AnimatedCounter.svelte';
+	import { onMount } from 'svelte';
 
 	let options: HTMLInputElement[] = [];
+	let neededValue: number;
 
 	$: isAutodetection = settings.isAutodetection;
 	$: percentFromViewCount = settings.percentFromViewCount;
 	$: viewCount = chat.viewCount;
-	$: keywords = settings.userInput;
+	$: userInput = settings.userInput;
 	$: votesDifference = votes.difference;
 	$: {
+		// sets needed amount of votes if auto detection is on and view count more than 0
 		if ($isAutodetection && $viewCount > 0) {
 			const percent = $percentFromViewCount / 100;
+			const neededVotes = Math.max(1, Math.floor($viewCount * percent));
 
-			settings.setNeededVotes(Math.floor($viewCount * percent));
+			settings.setNeededVotes(neededVotes);
 		}
+	}
+
+	onMount(() => (neededValue = $userInput.needed));
+
+	function handleVotes() {
+		settings.setNeededVotes(neededValue);
 	}
 
 	function focusOn(idx: number) {
@@ -29,20 +40,46 @@
 	}
 </script>
 
+<!-- <button type="button" class="votes-section clickable" on:click={() => votes.addVote('Оставить')}>
+	KEEP
+</button>
+<button type="button" class="votes-section clickable" on:click={() => votes.addVote('Пропустить')}>
+	SKIP
+</button> -->
 <div class="votes">
 	<div style="display: flex; align-items: center;">
 		<button type="button" class="votes-section clickable" on:click={() => focusOn(0)}>
 			<div class="votes-icon-wrapper">
 				<img src={likeIcon} alt="Vote Button Icon" />
 			</div>
+			<div style="margin-right: 6px;">
+				<AnimatedCounter value={$votes.keep} />
+			</div>
 			<Input
 				id="vote-button-{0}"
 				type="text"
 				placeholder="Слово"
 				bind:element={options[0]}
-				bind:value={$keywords.keepKeyword}
+				bind:value={$userInput.keepKeyword}
 			/>
-			<span>{$votes.keep}</span>
+		</button>
+
+		<div class="votes-divider" />
+
+		<button type="button" class="votes-section clickable" on:click={() => focusOn(2)}>
+			<div class="votes-icon-wrapper">
+				<img src={dislikeIcon} alt="Vote Button Icon" />
+			</div>
+			<div style="margin-right: 6px;">
+				<AnimatedCounter value={$votes.skip} />
+			</div>
+			<Input
+				id="vote-button-{2}"
+				type="text"
+				placeholder="Слово"
+				bind:element={options[2]}
+				bind:value={$userInput.skipKeyword}
+			/>
 		</button>
 
 		<div class="votes-divider" />
@@ -56,33 +93,22 @@
 			{#if $isAutodetection}
 				<AutoIndicator />
 			{/if}
-			<span>Набранно {$votesDifference} /</span>
+			<div style="display: flex; gap: 5px;">
+				<span>Набранно</span>
+				<AnimatedCounter value={$votesDifference} />
+				<span>/</span>
+			</div>
 			{#if $isAutodetection}
-				<span>{$keywords.needed}</span>
+				<span>{$userInput.needed}</span>
 			{:else}
 				<NumberInput
 					id="split-button-{1}"
-					isFilled={false}
+					onBlur={handleVotes}
+					onEnter={handleVotes}
 					bind:element={options[1]}
-					bind:value={$keywords.needed}
+					bind:value={neededValue}
 				/>
 			{/if}
-		</button>
-
-		<div class="votes-divider" />
-
-		<button type="button" class="votes-section clickable" on:click={() => focusOn(2)}>
-			<div class="votes-icon-wrapper">
-				<img src={dislikeIcon} alt="Vote Button Icon" />
-			</div>
-			<Input
-				id="vote-button-{2}"
-				type="text"
-				placeholder="Слово"
-				bind:element={options[2]}
-				bind:value={$keywords.skipKeyword}
-			/>
-			<span>{$votes.skip}</span>
 		</button>
 	</div>
 </div>
@@ -92,12 +118,12 @@
 		position: relative;
 		display: flex;
 		border-radius: 100px;
-		background-color: var(--surface-bright);
+		background-color: var(--surface-container-high);
 
 		&-icon-wrapper {
 			display: flex;
-			margin-right: 5px;
-			width: 25px;
+			margin-right: 6px;
+			width: 24px;
 		}
 
 		&-divider {

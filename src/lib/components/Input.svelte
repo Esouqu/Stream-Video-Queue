@@ -1,8 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
-
-	const pathName = $page.url.pathname;
+	import { measureTextWidth } from '$lib/utils';
 
 	export let id: number | string;
 	export let value: string = '';
@@ -18,12 +15,11 @@
 	export let onInput: (() => void) | null = null;
 	export let onBlur: (() => void) | null = null;
 
-	onMount(() => {
-		if (!element) return;
-
-		element.style.width = 'auto';
-		element.style.width = Math.max(50, (element.value.length + 1) * 9) + 'px';
-	});
+	$: {
+		if (value && element && isBorderless) {
+			element.style.width = measureTextWidth(value) + 'px';
+		}
+	}
 
 	function handleInput(e: Event) {
 		if (isPreventInput) return;
@@ -35,9 +31,6 @@
 		} else {
 			value = target.value;
 		}
-
-		target.style.width = 'auto';
-		target.style.width = (target.value.length + 1) * 9 + 'px';
 
 		if (onInput) onInput();
 	}
@@ -89,7 +82,7 @@
 >
 	<input
 		type="text"
-		id="input-{id}-{pathName}"
+		id="input-{id}"
 		class="input"
 		{value}
 		{placeholder}

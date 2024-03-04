@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
+	import { measureTextWidth } from '$lib/utils';
 
 	export let id: number | string;
 	export let value: number = 0;
@@ -16,14 +15,11 @@
 	export let onInput: (() => void) | null = null;
 	export let onBlur: (() => void) | null = null;
 
-	const pathName = $page.url.pathname;
-
-	onMount(() => {
-		if (!element || !isBorderless) return;
-
-		element.style.width = 'auto';
-		element.style.width = (element.value.length + 1) * 9 + 'px';
-	});
+	$: {
+		if (value && element && isBorderless) {
+			element.style.width = measureTextWidth(value.toString()) + 'px';
+		}
+	}
 
 	function handleInput(e: Event) {
 		if (isPreventInput) return;
@@ -31,11 +27,6 @@
 		const target = e.target as HTMLInputElement;
 
 		value = Number(target.value);
-
-		if (isBorderless) {
-			target.style.width = 'auto';
-			target.style.width = (target.value.length + 1) * 9 + 'px';
-		}
 
 		if (onInput) onInput();
 	}
@@ -82,7 +73,7 @@
 	{/if}
 	<input
 		type="number"
-		id="input-number-{id}-{pathName}"
+		id="input-number-{id}"
 		class="input"
 		disabled={isDisabled}
 		{placeholder}
@@ -92,6 +83,7 @@
 		on:input|preventDefault={handleInput}
 		on:blur|preventDefault={handleBlur}
 		on:click={() => element?.select()}
+		on:focus
 	/>
 </div>
 

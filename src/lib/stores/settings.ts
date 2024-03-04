@@ -10,7 +10,7 @@ function createSettings() {
   const userInput = storable<IUserInput>({
     keepKeyword: 'Оставить',
     skipKeyword: 'Пропустить',
-    needed: 1,
+    needed: 10,
   }, 'userInput');
   const minDonationValue = storable(100, 'minDonationValue');
 

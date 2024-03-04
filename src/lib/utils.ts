@@ -32,3 +32,19 @@ export function toSentenceCase(sentence: string): string {
 
   return firstLetter + restOfSentence;
 }
+
+export function measureTextWidth(text: string) {
+  const test = document.createElement('div');
+  document.body.appendChild(test);
+  test.style.fontSize = '16px';
+  test.style.position = 'absolute';
+  test.style.visibility = 'hidden';
+  test.style.height = 'auto';
+  test.style.width = 'auto';
+  test.style.whiteSpace = 'nowrap';
+  test.textContent = text;
+  const width = test.clientWidth + 1;
+  test.remove();
+
+  return width;
+}

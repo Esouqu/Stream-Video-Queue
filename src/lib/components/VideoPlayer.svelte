@@ -71,7 +71,7 @@
 					</p>
 				</div>
 			{/key}
-			<div style="display: flex; align-items: center; flex: 0 1 auto; gap: 10px;">
+			<div style="display: flex; align-items: center; flex: 0 1 auto; gap: 8px;">
 				<Button
 					icon={copyIcon}
 					title="Ссылка"

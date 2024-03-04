@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import tmi from 'tmi.js';
 import queue from './stores/queue';
 import { CHAT_STATE } from './constants';
@@ -55,25 +55,20 @@ function createChat() {
     settings.userInput.subscribe((store) => votesKeywords = store);
 
     settings.isAutodetection.subscribe(async (isEnabled) => {
-      if (!isEnabled) clearInterval(intervalId);
+      if (!isEnabled) {
+        clearInterval(intervalId);
+        return;
+      };
 
-      const userViewCount = await _fetchViewCount();
-
-      if (typeof userViewCount === 'number') {
-        viewCount.set(userViewCount)
-      } else {
-        settings.isAutodetection.set(false);
-      }
+      _setViewCount();
 
       intervalId = setInterval(async () => {
-        const intervalUserViewCount = await _fetchViewCount();
-
-        if (typeof intervalUserViewCount === 'number') {
-          viewCount.set(intervalUserViewCount)
-        } else {
-          settings.isAutodetection.set(false);
+        if (get(state) !== CHAT_STATE.CONNECTED) {
           clearInterval(intervalId);
+          return;
         }
+
+        _setViewCount(intervalId);
       }, VIEW_COUNT_REFRESH_RATE);
     });
 
@@ -81,6 +76,18 @@ function createChat() {
       votedUsernames.clear();
       votes.resetCounter();
     });
+  }
+
+  async function _setViewCount(intervalId?: number) {
+    const userViewCount = await _fetchViewCount();
+
+    if (typeof userViewCount === 'number') {
+      viewCount.set(userViewCount <= 1 ? 1 : userViewCount);
+      console.log(userViewCount <= 1 ? 1 : userViewCount);
+    } else {
+      settings.isAutodetection.set(false);
+      if (intervalId) clearInterval(intervalId);
+    }
   }
 
   async function _fetchViewCount() {
