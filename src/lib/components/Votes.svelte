@@ -43,7 +43,11 @@
 <!-- <button type="button" class="votes-section clickable" on:click={() => votes.addVote('Оставить')}>
 	KEEP
 </button>
-<button type="button" class="votes-section clickable" on:click={() => votes.addVote('Пропустить')}>
+<button
+	type="button"
+	class="votes-section clickable"
+	on:click={() => votes.addVote('Пропустить')}
+>
 	SKIP
 </button> -->
 <div class="votes">

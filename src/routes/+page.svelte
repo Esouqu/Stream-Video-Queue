@@ -23,6 +23,7 @@
 	import donationAlertsIcon from '$lib/assets/donationalerts-logo/DA_Alert_White.svg';
 	import Auth from '$lib/components/Auth.svelte';
 	import SettingSection from '$lib/components/SettingSection.svelte';
+	import twitchApi from '$lib/twitchApi';
 
 	let twitchChannel = $page.data.twitchChannel;
 	let donationAlertsUser = $page.data.donationAlertsUser;
@@ -48,31 +49,15 @@
 	$: tabs = [`Очередь (${$queue.length})`, 'Настройки'];
 
 	onMount(() => {
-		if (twitchChannel) validateTwitchToken();
+		if (twitchChannel) twitchApi.validateTokenWithInterval();
 
 		initializeSubscriptions();
 	});
 
-	function validateTwitchToken() {
-		const validationInterval = 1000 * 60 * 60;
-
-		setInterval(async () => {
-			const response = await fetch('/api/twitch/validate').then((res) => res);
-
-			if (response.status === 401 || response.status === 400) {
-				const refreshResponse = await fetch('/api/twitch/refresh', {
-					method: 'POST'
-				}).then((res) => res);
-
-				if (refreshResponse.status !== 200) location.reload();
-			}
-		}, validationInterval);
-	}
-
 	async function connectToCertifugo() {
-		if ($centrifugoState === SOCKET_STATE.CLOSED && donationAlertsUser) {
-			await centrifugo.connect(donationAlertsUser);
-		}
+		if ($centrifugoState !== SOCKET_STATE.CLOSED || !donationAlertsUser) return;
+
+		await centrifugo.connect(donationAlertsUser);
 	}
 
 	function connectToChat() {
@@ -81,11 +66,6 @@
 		} else if ($chatState === CHAT_STATE.DISCONNECTED) {
 			chat.connect();
 		}
-	}
-
-	function disconnectFromChat() {
-		chat.disconnet();
-		settings.isAutodetection.set(false);
 	}
 </script>
 
@@ -175,7 +155,7 @@
 									title={twitchChannel.display_name}
 									description="Следить за чатом канала в поисках ключевых слов и ссылок на Youtube"
 									on={connectToChat}
-									off={disconnectFromChat}
+									off={chat.disconnet}
 									isToggled={$chatState === CHAT_STATE.CONNECTED}
 									isDisabled={$chatState === CHAT_STATE.CONNECTING}
 									isLoading={$chatState === CHAT_STATE.CONNECTING}

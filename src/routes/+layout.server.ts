@@ -37,10 +37,10 @@ export const load: LayoutServerLoad = async ({ cookies, setHeaders, fetch }) => 
 
   setHeaders({
     'cache-control': 'no-store',
-  })
+  });
 
   return {
     twitchChannel,
     donationAlertsUser
   }
-};
+}

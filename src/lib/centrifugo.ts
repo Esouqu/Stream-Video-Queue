@@ -41,7 +41,7 @@ function createCentrifugo() {
             channels: [centrifugoChannel],
             client: message.result.client
           })
-        }).then((res) => res.json());
+        }).then((res) => res.json()).then((data: string) => data);
 
         socket.send(
           JSON.stringify({
@@ -74,6 +74,7 @@ function createCentrifugo() {
       state.set(SOCKET_STATE.CLOSED);
       unsubscribeMinDonationValue();
     });
+
     socket.addEventListener('error', (event) => {
       console.error('WebSocket error:', event);
       state.set(SOCKET_STATE.CLOSED);

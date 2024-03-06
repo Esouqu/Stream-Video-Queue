@@ -2,16 +2,17 @@ import { get, writable } from 'svelte/store';
 import tmi from 'tmi.js';
 import queue from './stores/queue';
 import { CHAT_STATE } from './constants';
-import type { ITwitchUserData, IUserInput } from './interfaces';
+import type { IUserInput } from './interfaces';
 import votes from './stores/votes';
 import settings from './stores/settings';
 import { extractKeyword, extractYoutubeVideoData } from './utils';
+import twitchApi from './twitchApi';
 
 function createChat() {
   const state = writable<CHAT_STATE>(CHAT_STATE.NOT_EXISTS);
   const viewCount = writable(0);
   const votedUsernames = new Set();
-  const VIEW_COUNT_REFRESH_RATE = 2000 * 60;
+  const viewCountRefreshRate = 2000 * 60;
 
   let client: tmi.Client;
   let votesKeywords: IUserInput;
@@ -63,13 +64,10 @@ function createChat() {
       _setViewCount();
 
       intervalId = setInterval(async () => {
-        if (get(state) !== CHAT_STATE.CONNECTED) {
-          clearInterval(intervalId);
-          return;
-        }
+        if (get(state) !== CHAT_STATE.CONNECTED) return;
 
-        _setViewCount(intervalId);
-      }, VIEW_COUNT_REFRESH_RATE);
+        await _setViewCount(intervalId);
+      }, viewCountRefreshRate);
     });
 
     queue.currentVideo.subscribe(() => {
@@ -79,34 +77,13 @@ function createChat() {
   }
 
   async function _setViewCount(intervalId?: number) {
-    const userViewCount = await _fetchViewCount();
+    const user = await twitchApi.getUser();
 
-    if (typeof userViewCount === 'number') {
-      viewCount.set(userViewCount <= 1 ? 1 : userViewCount);
-      console.log(userViewCount <= 1 ? 1 : userViewCount);
+    if (user) {
+      viewCount.set(user.view_count <= 1 ? 1 : user.view_count);
     } else {
       settings.isAutodetection.set(false);
       if (intervalId) clearInterval(intervalId);
-    }
-  }
-
-  async function _fetchViewCount() {
-    const validationResponse = await fetch('/api/twitch/validate')
-      .then((res) => res);
-    let refreshTokenResponse: Response | undefined;
-
-    if (validationResponse.status === 401 || validationResponse.status === 400) {
-      refreshTokenResponse = await fetch('/api/twitch/refresh', {
-        method: 'POST'
-      }).then((res) => res);
-    }
-
-    if (validationResponse.status === 200 || refreshTokenResponse?.status === 200) {
-      const user = await fetch('/api/twitch/user')
-        .then((res) => res.json())
-        .then((data: ITwitchUserData) => data);
-
-      return user.view_count;
     }
   }
 
