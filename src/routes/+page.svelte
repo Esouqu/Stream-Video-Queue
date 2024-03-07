@@ -21,6 +21,7 @@
 	import discordIcon from '$lib/assets/discord-logo/icon_clyde_white_RGB.svg';
 	import centrifugo from '$lib/centrifugo';
 	import donationAlertsIcon from '$lib/assets/donationalerts-logo/DA_Alert_White.svg';
+	import boostyIcon from '$lib/assets/boosty_logo/White.svg';
 	import Auth from '$lib/components/Auth.svelte';
 	import SettingSection from '$lib/components/SettingSection.svelte';
 	import twitchApi from '$lib/twitchApi';
@@ -267,6 +268,7 @@
 					</SettingSection>
 
 					<div class="contacts-wrapper">
+						<Contact icon={boostyIcon} title="Поддержать" url="https://boosty.to/esouqu/donate" />
 						<Contact icon={githubIcon} title="Esouqu" url="https://github.com/Esouqu" />
 						<Contact icon={discordIcon} title="nikogda" />
 					</div>

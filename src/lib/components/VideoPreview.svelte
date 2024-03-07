@@ -11,7 +11,7 @@
 	</div>
 	<div class="video-preview__info">
 		<p class="video-preview__title">{title}</p>
-		<div style="">
+		<div>
 			<p class="video-preview__channel">{channelTitle}</p>
 			<p class="video-preview__username">Заказал: {username}</p>
 		</div>
