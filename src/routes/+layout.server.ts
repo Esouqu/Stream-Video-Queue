@@ -36,7 +36,7 @@ export const load: LayoutServerLoad = async ({ cookies, setHeaders, fetch }) => 
   }
 
   setHeaders({
-    'cache-control': 'private',
+    'cache-control': 'no-store',
   });
 
   return {
