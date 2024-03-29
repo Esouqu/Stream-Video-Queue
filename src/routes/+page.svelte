@@ -141,49 +141,57 @@
 			{:else if currentTab === 1}
 				<div class="settings-wrapper" transition:fly={{ x: 200, duration: 300 }}>
 					<div>
-						<div>
-							{#if !twitchChannel}
-								<Auth icon={twitchIcon} title="Twitch" url="/api/twitch/auth" />
-							{:else}
-								<div style="display: flex; align-items: center; gap: 15px;">
-									<div style="display: flex; align-items: center; width: 25px;">
-										<img src={twitchIcon} alt="Twitch Brand Icon" />
-									</div>
-									<h3>Twitch</h3>
-								</div>
-								<div style="display: flex; flex-direction: column; gap: 10px; padding: 0 10px;">
-									<SwitchSetting
-										icon={twitchChannel.profile_image_url}
-										title={twitchChannel.display_name}
-										description="Следить за чатом канала в поисках ключевых слов и ссылок на Youtube"
-										on={connectToChat}
-										off={chat.disconnet}
-										isToggled={$chatState === CHAT_STATE.CONNECTED}
-										isDisabled={$chatState === CHAT_STATE.CONNECTING}
-										isLoading={$chatState === CHAT_STATE.CONNECTING}
-									/>
-								</div>
-							{/if}
-						</div>
-						<div>
-							{#if !donationAlertsUser}
-								<Auth
-									icon={donationAlertsIcon}
-									title="DonationAlerts"
-									url="/api/donationalerts/auth"
+						{#if !twitchChannel}
+							<Auth icon={twitchIcon} title="Twitch" url="/api/twitch/auth" />
+						{:else}
+							<SettingSection icon={twitchIcon} title='Twitch'>
+								<SwitchSetting
+									title={`Чат (${twitchChannel.display_name})`}
+									description="Следить за чатом канала в поисках ключевых слов и ссылок на Youtube"
+									on={connectToChat}
+									off={chat.disconnet}
+									isToggled={$chatState === CHAT_STATE.CONNECTED}
+									isDisabled={$chatState === CHAT_STATE.CONNECTING}
+									isLoading={$chatState === CHAT_STATE.CONNECTING}
 								/>
-							{:else}
-								<div style="display: flex; align-items: center; gap: 15px;">
-									<div style="display: flex; align-items: center; width: 25px;">
-										<img src={donationAlertsIcon} alt="DonationAlerts Brand Icon" />
-									</div>
-									<h3>DonationAlerts</h3>
-								</div>
-								<div style="display: flex; flex-direction: column; gap: 10px; padding: 0 10px;">
+								<div>
 									<SwitchSetting
-										icon={donationAlertsUser.avatar}
-										title={donationAlertsUser.name}
-										description={`Следить за донатами в поисках ссылок на Youtube.\nЗаказанные этим путем видео будут находиться выше остальных`}
+										title="Автоопределение"
+										description="Автоматически определять нужное количество голосов в зависимости от указанного значения, не чаще, чем раз в 2 минуты"
+										on={() => isAutodetection.set(true)}
+										off={() => isAutodetection.set(false)}
+										isToggled={$isAutodetection}
+									/>
+									<div class="additional-setting" class:disabled={!$isAutodetection}>
+										<span>Процент от количества зрителей</span>
+										<NumberInput
+											--input-p="10.5px"
+											--input-w-w="90px"
+											--input-w="100%"
+											--input-text-al="start"
+											id="autodetection-percent"
+											suffix="%"
+											isFilled={false}
+											isBorderless={false}
+											isDisabled={!$isAutodetection}
+											bind:value={$percentFromViewCount}
+										/>
+									</div>
+								</div>
+							</SettingSection>
+						{/if}
+						{#if !donationAlertsUser}
+							<Auth
+								icon={donationAlertsIcon}
+								title="DonationAlerts"
+								url="/api/donationalerts/auth"
+							/>
+						{:else}
+							<SettingSection icon={donationAlertsIcon} title='DonationAlerts'>
+								<div>
+									<SwitchSetting
+										title={`Донаты (${donationAlertsUser.name})`}
+										description={`Следить за донатами в поисках ссылок на Youtube.\nЗаказанные этим способом видео будут находиться выше остальных`}
 										on={connectToCertifugo}
 										off={centrifugo.disconnect}
 										isToggled={$centrifugoState === SOCKET_STATE.OPEN}
@@ -191,7 +199,7 @@
 										isLoading={$centrifugoState === SOCKET_STATE.CONNECTING}
 									/>
 									<div
-										class="additional-autodetect-setting"
+										class="additional-setting"
 										class:disabled={$centrifugoState !== SOCKET_STATE.OPEN}
 									>
 										<span>Минимальный донат</span>
@@ -209,64 +217,38 @@
 										/>
 									</div>
 								</div>
-							{/if}
-						</div>
-						<SettingSection title="Плеер">
-							<SwitchSetting
-								title="Автовоспроизведение"
-								description="Автоматически воспроизводить видео"
-								on={() => isAutoplay.set(true)}
-								off={() => isAutoplay.set(false)}
-								isToggled={$isAutoplay}
-							/>
-						</SettingSection>
-						<SettingSection title="Голоса">
-							<SwitchSetting
-								title="Автопропуск"
-								description="Автоматически пропускать видео, если набранно достаточное количество голосов"
-								on={() => isAutoskip.set(true)}
-								off={() => isAutoskip.set(false)}
-								isToggled={$isAutoskip}
-							/>
-							<SwitchSetting
-								title="Автоопределение"
-								description="Автоматически определять нужное количество голосов в зависимости от указанного значения, не чаще, чем раз в 2 минуты"
-								on={() => isAutodetection.set(true)}
-								off={() => isAutodetection.set(false)}
-								isToggled={$isAutodetection}
-							/>
-							<div class="additional-autodetect-setting" class:disabled={!$isAutodetection}>
-								<span>Процент от количества зрителей</span>
-								<NumberInput
-									--input-p="10.5px"
-									--input-w-w="90px"
-									--input-w="100%"
-									--input-text-al="start"
-									id="autodetection-percent"
-									suffix="%"
-									isFilled={false}
-									isBorderless={false}
-									isDisabled={!$isAutodetection}
-									bind:value={$percentFromViewCount}
+							</SettingSection>
+						{/if}
+						<div style="display: flex; flex-direction: column; gap: 20px;">
+							<SettingSection title="Основные" >
+								<SwitchSetting
+									title="Автовоспроизведение"
+									description="Автоматически воспроизводить видео"
+									on={() => isAutoplay.set(true)}
+									off={() => isAutoplay.set(false)}
+									isToggled={$isAutoplay}
 								/>
-							</div>
-						</SettingSection>
-						<SettingSection title="Очередь">
-							<SwitchSetting
-								title="Добавлять Случайно"
-								description="Добавлять новое видео в случайном порядке"
-								on={() => isAddRandomly.set(true)}
-								off={() => isAddRandomly.set(false)}
-								isToggled={$isAddRandomly}
-							/>
-							<div>
+								<SwitchSetting
+									title="Автопропуск"
+									description="Автоматически пропускать видео, если набранно достаточное количество голосов"
+									on={() => isAutoskip.set(true)}
+									off={() => isAutoskip.set(false)}
+									isToggled={$isAutoskip}
+								/>
+								<SwitchSetting
+									title="Добавлять Случайно"
+									description="Добавлять новое видео в случайном порядке"
+									on={() => isAddRandomly.set(true)}
+									off={() => isAddRandomly.set(false)}
+									isToggled={$isAddRandomly}
+								/>
 								<Button
 									--button-bg="var(--surface-variant)"
 									title="Очистить очередь"
 									on:click={() => queue.removeAll()}
 								/>
-							</div>
-						</SettingSection>
+							</SettingSection>
+						</div>
 					</div>
 
 					<div class="contacts-wrapper">
@@ -298,7 +280,7 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
-		padding: 10px 10px 25px 10px;
+		padding: 10px 15px 25px 15px;
 		color: var(--on-surface);
 		overflow-y: auto;
 	}
@@ -313,13 +295,14 @@
 		color: var(--on-surface-variant);
 	}
 
-	.additional-autodetect-setting {
+	.additional-setting {
 		display: flex;
 		flex: 1;
 		justify-content: space-between;
 		align-items: center;
 		font-size: 0.9rem;
 		font-weight: 300;
+		margin-top: 5px;
 
 		&.disabled span {
 			opacity: 0.5;
