@@ -1,8 +1,9 @@
 import { DONATIONALERTS_SESSION, TWITCH_SESSION } from "$env/static/private";
 import type { IDonationAlertsRefreshToken, IDonationAlertsUserData, ITwitchUserData } from "$lib/interfaces";
 import type { LayoutServerLoad } from "./$types";
+import { v4 as uuidv4 } from 'uuid';
 
-export const load: LayoutServerLoad = async ({ cookies, setHeaders, fetch }) => {
+export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   let donationalertsSession = cookies.get(DONATIONALERTS_SESSION);
   let twitchChannel: ITwitchUserData | undefined;
   let donationAlertsUser: IDonationAlertsUserData | undefined;
@@ -35,12 +36,9 @@ export const load: LayoutServerLoad = async ({ cookies, setHeaders, fetch }) => 
       .then((data: IDonationAlertsUserData) => data);
   }
 
-  setHeaders({
-    'cache-control': 'no-store',
-  });
-
   return {
     twitchChannel,
-    donationAlertsUser
+    donationAlertsUser,
+    id: uuidv4(),
   }
 }
