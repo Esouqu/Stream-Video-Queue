@@ -7,6 +7,7 @@ function createSettings() {
   const isAddRandomly = storable(false, 'isAddRandomly');
   const isAutoplay = storable(false, 'isAutoPlay');
   const isAutoskip = storable(false, 'isAutoskip');
+  const isAutoskipOnEnd = storable(false, 'isAutoskipOnEnd');
   const userInput = storable<IUserInput>({
     keepKeyword: 'Оставить',
     skipKeyword: 'Пропустить',
@@ -27,6 +28,7 @@ function createSettings() {
     isAddRandomly,
     isAutoplay,
     isAutoskip,
+    isAutoskipOnEnd,
     userInput,
     setNeededVotes,
     minDonationValue,

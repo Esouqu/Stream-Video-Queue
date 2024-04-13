@@ -236,6 +236,13 @@
 									isToggled={$isAutoskip}
 								/>
 								<SwitchSetting
+								title="Автопереход по окончанию"
+								description="Автоматически переходить на следующее видео"
+								on={() => isAutoskipOnEnd.set(true)}
+								off={() => isAutoskipOnEnd.set(false)}
+								isToggled={$isAutoskipOnEnd}
+							/>
+							<SwitchSetting
 									title="Добавлять Случайно"
 									description="Добавлять новое видео в случайном порядке"
 									on={() => isAddRandomly.set(true)}

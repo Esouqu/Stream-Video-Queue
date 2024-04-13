@@ -7,12 +7,13 @@ function createVideoPlayer() {
   let player: YouTubePlayer;
   let videos: IQueueVideoInfo[] = [];
   let isAutoPlay: boolean;
+  let isAutoskipOnEnd: boolean;
 
   function initialize(playerInstance: YouTubePlayer) {
     player = playerInstance;
 
     playerInstance.on('stateChange', (e: CustomEvent<unknown> & { data: number }) => {
-      if (e.data === 0) queue.setNext();
+      if (e.data === 0 && isAutoskipOnEnd) queue.setNext();
     });
 
     _initializeSubscriptions();
@@ -29,6 +30,7 @@ function createVideoPlayer() {
 
   function _initializeSubscriptions() {
     settings.isAutoplay.subscribe((store) => isAutoPlay = store);
+    settings.isAutoskipOnEnd.subscribe((store) => isAutoskipOnEnd = store);
 
     queue.subscribe((v) => videos = v);
 
