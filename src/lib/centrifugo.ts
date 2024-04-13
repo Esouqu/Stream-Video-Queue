@@ -1,4 +1,4 @@
-import { writable, type Unsubscriber } from 'svelte/store';
+import { writable } from 'svelte/store';
 import type { IDonationAlertsUserData, IDonationData } from './interfaces';
 import { SOCKET_STATE } from './constants';
 import queue from './stores/queue';
@@ -9,15 +9,16 @@ function createCentrifugo() {
   const state = writable<SOCKET_STATE>(SOCKET_STATE.CLOSED);
   let socket: WebSocket;
   let minDonationValue: number;
-  let unsubscribeMinDonationValue: Unsubscriber;
+  let isDonationEnabled: boolean;
+
+  function initialize() {
+    settings.minDonationValue.subscribe((store) => minDonationValue = store);
+    settings.isDonationEnabled.subscribe((store) => isDonationEnabled = store);
+  }
 
   async function connect(user: IDonationAlertsUserData) {
     state.set(SOCKET_STATE.CONNECTING);
     socket = new WebSocket('wss://centrifugo.donationalerts.com/connection/websocket');
-
-    unsubscribeMinDonationValue = settings.minDonationValue.subscribe((value) => {
-      minDonationValue = value;
-    });
 
     socket.addEventListener('open', () => {
       socket.send(
@@ -66,13 +67,12 @@ function createCentrifugo() {
         const username = donation.username ?? 'Аноним';
         const videoData = extractYoutubeVideoData(donation.message);
 
-        if (videoData) queue.add(videoData, username, true);
+        if (videoData && isDonationEnabled) queue.add(videoData, username, true);
       }
     });
 
     socket.addEventListener('close', () => {
       state.set(SOCKET_STATE.CLOSED);
-      unsubscribeMinDonationValue();
     });
 
     socket.addEventListener('error', (event) => {
@@ -90,6 +90,7 @@ function createCentrifugo() {
     state,
     connect,
     disconnect,
+    initialize,
   }
 }
 

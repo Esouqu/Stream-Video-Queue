@@ -14,6 +14,9 @@ function createChat() {
   const votedUsernames = new Set();
   const viewCountRefreshRate = 2000 * 60;
 
+  let isVotesEnabled = false;
+  let isLinksEnabled = false;
+  // let isPaidVideosSkippable = false;
   let client: tmi.Client;
   let votesKeywords: IUserInput;
   let intervalId: number;
@@ -30,9 +33,9 @@ function createChat() {
       const videoData = extractYoutubeVideoData(message);
       const username = tags['display-name'] || tags.username || '???';
 
-      if (videoData) {
+      if (videoData && isLinksEnabled) {
         queue.add(videoData, username, false);
-      } else if (keyword && !votedUsernames.has(username)) {
+      } else if (keyword && !votedUsernames.has(username) && isVotesEnabled) {
         votedUsernames.add(username);
         votes.addVote(keyword);
       }
@@ -54,7 +57,9 @@ function createChat() {
 
   function _initializeSubscriptions() {
     settings.userInput.subscribe((store) => votesKeywords = store);
-
+    settings.isLinksEnabled.subscribe((store) => isLinksEnabled = store);
+    settings.isVotesEnabled.subscribe((store) => isVotesEnabled = store);
+    // settings.isPaidVideosSkippable.subscribe((store) => isPaidVideosSkippable = store);
     settings.isAutodetection.subscribe(async (isEnabled) => {
       if (!isEnabled) {
         clearInterval(intervalId);

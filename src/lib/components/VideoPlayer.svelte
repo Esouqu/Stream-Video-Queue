@@ -22,6 +22,7 @@
 
 	$: userInput = settings.userInput;
 	$: isAutoskip = settings.isAutoskip;
+	$: isVotesEnabled = settings.isVotesEnabled;
 	$: votesDifference = votes.difference;
 	$: progressPercent = clamp(($votesDifference / $userInput.needed) * 100, 0, 100);
 	$: currentVideo = queue.currentVideo;
@@ -78,7 +79,9 @@
 					isDisabled={$queue.length < 1}
 					on:click={copyVideoUrlToClipboard}
 				/>
-				<Votes />
+				{#if $isVotesEnabled}
+					<Votes />
+				{/if}
 				<div style="position: relative;">
 					{#if $isAutoskip}
 						<AutoIndicator />

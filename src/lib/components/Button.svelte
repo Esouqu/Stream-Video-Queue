@@ -45,6 +45,7 @@
 			border-radius: 100px;
 			background-color: var(--button-bg, var(--surface-container-high));
 			height: var(--button-size, auto);
+			min-width: var(--button-size, fit-content);
 			width: var(--button-size, auto);
 			overflow: hidden;
 

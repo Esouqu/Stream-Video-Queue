@@ -1,6 +1,6 @@
 <script lang="ts">
 	export let icon: string = '';
-	export let title: string;
+	export let title: string = '';
 </script>
 
 <div class="setting-section">
@@ -10,7 +10,9 @@
 				<img src={icon} alt="Setting Section Icon" />
 			</div>
 		{/if}
-		<h3>{title}</h3>
+		{#if title}
+			<h3 style="margin: 15px 0;">{title}</h3>
+		{/if}
 	</div>
 	<div class="setting-section-inner">
 		<slot />
@@ -23,7 +25,7 @@
 			display: flex;
 			flex-direction: column;
 			gap: 10px;
-			padding: 0 10px;
+			padding: 0 0 0 10px;
 		}
 
 		&-image-wrapper {

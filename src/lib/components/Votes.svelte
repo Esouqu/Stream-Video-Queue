@@ -10,6 +10,7 @@
 	import AnimatedCounter from './AnimatedCounter.svelte';
 	import { onMount } from 'svelte';
 
+	export let isDisabled = false;
 	let options: HTMLInputElement[] = [];
 	let neededValue: number;
 
@@ -22,9 +23,10 @@
 		// sets needed amount of votes if auto detection is on and view count more than 0
 		if ($isAutodetection && $viewCount > 0) {
 			const percent = $percentFromViewCount / 100;
-			const neededVotes = Math.max(1, Math.floor($viewCount * percent));
+			const votes = Math.max(1, Math.floor($viewCount * percent));
 
-			settings.setNeededVotes(neededVotes);
+			settings.setNeededVotes(votes);
+			neededValue = votes;
 		}
 	}
 
@@ -50,7 +52,7 @@
 >
 	SKIP
 </button> -->
-<div class="votes">
+<div class="votes" class:disabled={isDisabled}>
 	<div style="display: flex; align-items: center;">
 		<button type="button" class="votes-section clickable" on:click={() => focusOn(0)}>
 			<div class="votes-icon-wrapper">
@@ -123,6 +125,10 @@
 		display: flex;
 		border-radius: 100px;
 		background-color: var(--surface-container-high);
+
+		&.disabled {
+			opacity: 0.5;
+		}
 
 		&-icon-wrapper {
 			display: flex;
