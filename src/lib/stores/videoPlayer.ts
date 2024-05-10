@@ -20,7 +20,7 @@ function createVideoPlayer() {
 
     if (videos[0]) {
       playerInstance.cueVideoById(videos[0]);
-      queue.currentVideo.set(videos[0]);
+      queue.setCurrent(videos[0]);
     }
   }
 

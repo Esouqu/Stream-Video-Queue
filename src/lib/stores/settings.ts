@@ -6,12 +6,9 @@ function createSettings() {
   const isVotesEnabled = writable(false);
   const isLinksEnabled = writable(false);
   const isDonationEnabled = writable(false);
-  const isPaidVideosSkippable = writable(false);
-  // const votingTimer = writable({
-  //   isEnabled: false,
-  //   time: 0,
-  // });
+  // const isPaidVideosSkippable = writable(false);
 
+  const shouldDeletePreviousVideos = storable(false, 'shouldDeletePreviousVideos');
   const percentFromViewCount = storable(7, 'percentFromViewCount');
   const isAutodetection = storable(false, 'isAutodetection');
   const isAddRandomly = storable(false, 'isAddRandomly');
@@ -44,7 +41,7 @@ function createSettings() {
     isVotesEnabled,
     isLinksEnabled,
     isDonationEnabled,
-    isPaidVideosSkippable,
+    shouldDeletePreviousVideos,
     setNeededVotes,
   }
 }

@@ -56,13 +56,14 @@
 		style="grid-auto-rows: {itemHeight}px; height: {itemHeight * $queue.length}px;"
 	>
 		{#each visibleItems as video (video.id)}
-			{@const { id, videoId, position, isPaid, timing, ...rest } = video}
+			{@const { id, videoId, position, isPaid, timing, channelTitle, ...rest } = video}
 			{@const isCurrentVideo = $currentVideo?.id === video.id}
 
 			<div
 				class="queue-item"
 				class:selected={isCurrentVideo}
 				class:paid={video.isPaid}
+				class:watched={video.isWatched}
 				style="grid-row: {position};"
 				animate:flip={{ duration: TRANSITION_DURATION }}
 			>
@@ -98,7 +99,6 @@
 	.queue {
 		position: relative;
 		flex: 1;
-		padding: 15px 10px 0 0;
 		scrollbar-gutter: stable;
 		overflow-y: auto;
 		overflow-x: hidden;
@@ -134,6 +134,10 @@
 			color: var(--on-surface);
 			transition: background-color 0.2s;
 			cursor: pointer;
+
+			&.watched {
+				opacity: 0.5;
+			}
 
 			&.paid {
 				&::before {

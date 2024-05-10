@@ -176,4 +176,5 @@ export interface IQueueVideoInfo {
   thumbnail: string;
   username: string;
   isPaid: boolean;
+  isWatched: boolean;
 }

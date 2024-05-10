@@ -27,6 +27,7 @@
 	import twitchApi from '$lib/twitchApi';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import DonateKit from '$lib/components/DonateKit.svelte';
+	import settingsIcon from '$lib/assets/settings_icon.svg';
 
 	let twitchChannel = $page.data.twitchChannel;
 	let donationAlertsUser = $page.data.donationAlertsUser;
@@ -40,6 +41,7 @@
 	$: isVotesEnabled = settings.isVotesEnabled;
 	$: isLinksEnabled = settings.isLinksEnabled;
 	$: isDonationEnabled = settings.isDonationEnabled;
+	$: shouldDeletePreviousVideos = settings.shouldDeletePreviousVideos;
 	// $: isPaidVideosSkippable = settings.isPaidVideosSkippable;
 	$: percentFromViewCount = settings.percentFromViewCount;
 	$: minDonationValue = settings.minDonationValue;
@@ -85,10 +87,10 @@
 
 <div class="main-page">
 	<VideoPlayer
-		on:next={() => {
+		onNextVideo={(videoId) => {
 			scrollElement.scrollTo({
-				top: 0,
-				behavior: 'instant'
+				top: videoId * 80,
+				behavior: 'smooth'
 			});
 		}}
 	/>
@@ -102,111 +104,44 @@
 				>
 					<!-- <DonateKit /> -->
 					<Queue bind:scrollElement />
-					<div class="connections">
-						<div
-							style="display: flex;
-							align-items: center;
-							gap: 10px;"
-						>
-							<div style="display: flex; align-items: center; width: 25px;">
-								<img src={twitchIcon} alt="Twitch Brand Icon" />
-							</div>
-							{#if $isVotesEnabled || $isLinksEnabled}
-								<span>{twitchConnectionName}</span>
+					{#if twitchChannel || donationAlertsUser}
+						<div class="bottom-wrapper">
+							{#if twitchChannel}
+								<div style="display: flex; align-items: center; gap: 10px;">
+									<div class="icon-wrapper">
+										<img src={twitchIcon} alt="Twitch Brand Icon" />
+									</div>
+									{#if $isVotesEnabled || $isLinksEnabled}
+										<span>{twitchConnectionName}</span>
+									{/if}
+									<Indicator isActive={$isVotesEnabled || $isLinksEnabled} />
+								</div>
 							{/if}
-							<Indicator isActive={$isVotesEnabled || $isLinksEnabled} />
-						</div>
-						<div
-							style="display: flex;
-							align-items: center;
-							gap: 10px;"
-						>
-							<div style="display: flex; align-items: center; width: 25px;">
-								<img src={donationAlertsIcon} alt="Twitch Brand Icon" />
-							</div>
-							{#if $isDonationEnabled}
-								<span>Донаты</span>
+							{#if donationAlertsUser}
+								<div style="display: flex; align-items: center; gap: 10px;">
+									<div class="icon-wrapper">
+										<img src={donationAlertsIcon} alt="Twitch Brand Icon" />
+									</div>
+									{#if $isDonationEnabled}
+										<span>Донаты</span>
+									{/if}
+									<Indicator isActive={$isDonationEnabled} />
+								</div>
 							{/if}
-							<Indicator isActive={$isDonationEnabled} />
 						</div>
-					</div>
+					{/if}
 				</div>
 			{:else if currentTab === 1}
-				<div class="settings-wrapper" transition:fly={{ x: 200, duration: 300 }}>
-					<div>
-						<div>
-							<Auth
-								icon={twitchIcon}
-								title={twitchChannel ? `Twitch (${twitchChannel.display_name})` : 'Twitch'}
-								url="/api/twitch/auth"
-								isLoggedIn={!!twitchChannel}
-								onLogout={() => {
-									fetch('/api/twitch/logout');
-									twitchChannel = undefined;
-								}}
-							/>
-							{#if twitchChannel}
-								{#if $chatState === CHAT_STATE.CONNECTING}
-									<Spinner />
-								{:else if $chatState === CHAT_STATE.CONNECTED}
-									<SettingSection>
-										<SwitchSetting
-											title="Ссылки"
-											description="Отслеживать ссылки на Youtube"
-											on={() => isLinksEnabled.set(true)}
-											off={() => isLinksEnabled.set(false)}
-											isToggled={$isLinksEnabled}
-										/>
-										<SwitchSetting
-											title="Голоса"
-											description="Отслеживать голоса"
-											on={() => isVotesEnabled.set(true)}
-											off={() => isVotesEnabled.set(false)}
-											isToggled={$isVotesEnabled}
-										/>
-										<SwitchSetting
-											title="Автопропуск"
-											description="Автоматически пропускать видео, если набранно достаточное количество голосов"
-											on={() => isAutoskip.set(true)}
-											off={() => isAutoskip.set(false)}
-											isToggled={$isAutoskip}
-											isDisabled={!$isVotesEnabled}
-										/>
-										<div>
-											<SwitchSetting
-												title="Автоопределение"
-												description="Автоматически определять нужное количество голосов в зависимости от указанного значения, не чаще, чем раз в 2 минуты"
-												on={() => isAutodetection.set(true)}
-												off={() => isAutodetection.set(false)}
-												isToggled={$isAutodetection}
-												isDisabled={!$isVotesEnabled}
-											/>
-											<div class="additional-setting" class:disabled={!$isVotesEnabled}>
-												<span>Процент от количества зрителей</span>
-												<NumberInput
-													--input-p="10.5px"
-													--input-w-w="90px"
-													--input-w="100%"
-													--input-text-al="start"
-													id="autodetection-percent"
-													suffix="%"
-													isFilled={false}
-													isBorderless={false}
-													isDisabled={!$isVotesEnabled}
-													bind:value={$percentFromViewCount}
-												/>
-											</div>
-										</div>
-									</SettingSection>
-								{/if}
-							{/if}
-						</div>
+				<div
+					style="display: flex; flex-direction: column; height: 100%; overflow: hidden;"
+					transition:fly={{ x: 200, duration: 300 }}
+				>
+					<div class="settings-wrapper">
 						<div>
 							<Auth
 								icon={donationAlertsIcon}
-								title={donationAlertsUser
-									? `DonationAlerts (${donationAlertsUser.name})`
-									: 'DonationAlerts'}
+								title="DonationAlerts"
+								userName={donationAlertsUser?.name}
 								url="/api/donationalerts/auth"
 								isLoggedIn={!!donationAlertsUser}
 								onLogout={() => {
@@ -255,7 +190,73 @@
 								</SettingSection>
 							{/if}
 						</div>
-						<SettingSection title="Основные">
+						<div>
+							<Auth
+								icon={twitchIcon}
+								title="Twitch"
+								userName={twitchChannel?.display_name}
+								url="/api/twitch/auth"
+								isLoggedIn={!!twitchChannel}
+								onLogout={() => {
+									fetch('/api/twitch/logout');
+									twitchChannel = undefined;
+								}}
+							/>
+							{#if twitchChannel}
+								{#if $chatState === CHAT_STATE.CONNECTING}
+									<Spinner />
+								{:else if $chatState === CHAT_STATE.CONNECTED}
+									<SettingSection>
+										<SwitchSetting
+											title="Отслеживать Youtube ссылки"
+											on={() => isLinksEnabled.set(true)}
+											off={() => isLinksEnabled.set(false)}
+											isToggled={$isLinksEnabled}
+										/>
+										<SwitchSetting
+											title="Отслеживать голоса"
+											on={() => isVotesEnabled.set(true)}
+											off={() => isVotesEnabled.set(false)}
+											isToggled={$isVotesEnabled}
+										/>
+										<SwitchSetting
+											title="Автопропуск"
+											description="Автоматически пропускать видео, если набранно достаточное количество голосов"
+											on={() => isAutoskip.set(true)}
+											off={() => isAutoskip.set(false)}
+											isToggled={$isAutoskip}
+											isDisabled={!$isVotesEnabled}
+										/>
+										<div>
+											<SwitchSetting
+												title="Автоопределение"
+												description="Автоматически определять нужное количество голосов в зависимости от указанного значения, не чаще, чем раз в 2 минуты"
+												on={() => isAutodetection.set(true)}
+												off={() => isAutodetection.set(false)}
+												isToggled={$isAutodetection}
+												isDisabled={!$isVotesEnabled}
+											/>
+											<div class="additional-setting" class:disabled={!$isVotesEnabled}>
+												<span>Процент от количества зрителей</span>
+												<NumberInput
+													--input-p="10.5px"
+													--input-w-w="90px"
+													--input-w="100%"
+													--input-text-al="start"
+													id="autodetection-percent"
+													suffix="%"
+													isFilled={false}
+													isBorderless={false}
+													isDisabled={!$isVotesEnabled}
+													bind:value={$percentFromViewCount}
+												/>
+											</div>
+										</div>
+									</SettingSection>
+								{/if}
+							{/if}
+						</div>
+						<SettingSection icon={settingsIcon} title="Основные">
 							<SwitchSetting
 								title="Автовоспроизведение"
 								description="Автоматически воспроизводить видео"
@@ -263,9 +264,8 @@
 								off={() => isAutoplay.set(false)}
 								isToggled={$isAutoplay}
 							/>
-
 							<SwitchSetting
-								title="Автопереход по окончанию"
+								title="Автопереход"
 								description="Автоматически переходить на следующее видео по окончанию текущего"
 								on={() => isAutoskipOnEnd.set(true)}
 								off={() => isAutoskipOnEnd.set(false)}
@@ -278,6 +278,13 @@
 								off={() => isAddRandomly.set(false)}
 								isToggled={$isAddRandomly}
 							/>
+							<SwitchSetting
+								title="Удалять просмотренное"
+								description="Удалять текущее видео из очереди перед переходом на следующее"
+								on={() => shouldDeletePreviousVideos.set(true)}
+								off={() => shouldDeletePreviousVideos.set(false)}
+								isToggled={$shouldDeletePreviousVideos}
+							/>
 							<Button
 								--button-bg="var(--surface-variant)"
 								title="Очистить очередь"
@@ -285,8 +292,7 @@
 							/>
 						</SettingSection>
 					</div>
-
-					<div class="contacts-wrapper">
+					<div class="bottom-wrapper">
 						<Contact icon={boostyIcon} title="Поддержать" url="https://boosty.to/esouqu/donate" />
 						<Contact icon={githubIcon} title="Esouqu" url="https://github.com/Esouqu" />
 						<Contact icon={discordIcon} title="nikogda" />
@@ -314,21 +320,11 @@
 	.settings-wrapper {
 		display: flex;
 		flex-direction: column;
-		justify-content: space-between;
-		padding: 10px 15px 25px 15px;
+		gap: 32px;
+		padding: 20px 15px;
 		color: var(--on-surface);
 		scrollbar-gutter: stable;
 		overflow-y: auto;
-	}
-
-	.connections {
-		position: relative;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 25px;
-		padding: 20px;
-		color: var(--on-surface-variant);
 	}
 
 	.additional-setting {
@@ -338,20 +334,21 @@
 		align-items: center;
 		font-size: 0.9rem;
 		font-weight: 300;
-		margin-top: 5px;
+		margin-top: 6px;
 
 		&.disabled span {
 			opacity: 0.5;
 		}
 	}
 
-	.contacts-wrapper {
+	.bottom-wrapper {
+		position: relative;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		gap: 20px;
-		margin-top: 30px;
-		width: 100%;
+		margin: 25px 0;
+		color: var(--on-surface-variant);
 	}
 
 	.transition-container {

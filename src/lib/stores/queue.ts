@@ -124,24 +124,16 @@ function createQueue() {
   const submittedVideoIds: Set<string> = new Set();
 
   let isAddRandomly: boolean;
+  let shouldDeletePreviousVideos: boolean;
 
   async function initialize() {
-    const paid = await db.videos.filter((item) => item.isPaid === true).toArray();
-    const free = await db.videos.filter((item) => item.isPaid === false).toArray();
-
-    paidVideos.set(paid);
-    freeVideos.set(free);
-
-    for (const item of [...paid, ...free]) {
-      submittedVideoIds.add(item.videoId);
-    }
-
-    if (paid.length > 0 || free.length > 0) setNext();
+    await loadVideosFromDb();
 
     settings.isAddRandomly.subscribe((store) => isAddRandomly = store);
+    settings.shouldDeletePreviousVideos.subscribe((store) => shouldDeletePreviousVideos = store);
   }
 
-  async function add(videoData: { videoId: string, timing?: number }, username: string, isPaid: boolean) {
+  async function add(videoData: Pick<IQueueVideoInfo, 'videoId' | 'timing'>, username: string, isPaid: boolean) {
     if (submittedVideoIds.has(videoData.videoId) && !isPaid) return;
 
     const videos = get(freeAndPaidVideos);
@@ -151,13 +143,14 @@ function createQueue() {
       .then((data: IVideoData) => data.items[0]);
     const item: IQueueVideoInfo = {
       id: uuidv4(),
-      isPaid,
       videoId: videoData.videoId,
       timing: videoData.timing,
       title: snippet.title,
       channelTitle: snippet.channelTitle,
       thumbnail: snippet.thumbnails.medium.url,
       username,
+      isPaid,
+      isWatched: false,
     }
 
     store.update((items) => {
@@ -181,20 +174,25 @@ function createQueue() {
   }
 
   function setNext() {
-    currentVideo.update((item) => {
+    currentVideo.update((prevVideo) => {
       const allVideos = get(freeAndPaidVideos);
-      const currentVideoIndex = allVideos.findIndex((item) => item.id === item?.id);
+      const currentVideoIndex = allVideos.findIndex((item) => item.id === prevVideo?.id);
       const downVideo = allVideos[currentVideoIndex + 1];
 
-      if (!item) return allVideos[0];
+      if (prevVideo) {
+        const store = prevVideo.isPaid ? paidVideos : freeVideos;
 
-      if (item) {
-        remove(item);
+        store.update((items) => items.map((item) => {
+          if (item.id !== prevVideo.id) return item;
+          return { ...item, isWatched: true };
+        }));
+        db.videos.update(prevVideo.id, { isWatched: true });
 
-        if (item.id !== allVideos[0].id) return allVideos[0];
+        if (shouldDeletePreviousVideos) remove(prevVideo);
+        if (downVideo) return downVideo;
       }
 
-      if (downVideo) return downVideo;
+      return allVideos[0];
     });
   }
 
@@ -219,6 +217,20 @@ function createQueue() {
     setCurrent(undefined);
 
     await db.videos.clear();
+  }
+
+  async function loadVideosFromDb() {
+    const paid = await db.videos.filter((item) => item.isPaid === true).toArray();
+    const free = await db.videos.filter((item) => item.isPaid === false).toArray();
+
+    paidVideos.set(paid);
+    freeVideos.set(free);
+
+    for (const item of [...paid, ...free]) {
+      submittedVideoIds.add(item.videoId);
+    }
+
+    if (paid.length > 0 || free.length > 0) setNext();
   }
 
   return {

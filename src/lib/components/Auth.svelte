@@ -7,6 +7,7 @@
 	export let url: string;
 	export let isLoggedIn: boolean;
 	export let onLogout: (() => void) | null;
+	export let userName = '';
 
 	function handleClick() {
 		if (!isLoggedIn) {
@@ -19,12 +20,17 @@
 
 <div class="auth">
 	<div class="auth-title-wrapper">
-		<div class="auth-icon-wrapper">
+		<div class="icon-wrapper" style="width: 30px; height: 30px;">
 			<img src={icon} alt="{title} Brand Icon" />
 		</div>
-		<h3 style="margin: 0;">{title}</h3>
+		<div>
+			<h3 style="margin: 0;">{title}</h3>
+			{#if isLoggedIn}
+				<p style="margin: 0; font-size: 0.9rem;">Пользователь: {userName}</p>
+			{/if}
+		</div>
 	</div>
-	<Button on:click={handleClick} title={isLoggedIn ? 'Выйти' : 'Авторизоваться'} />
+	<Button on:click={handleClick} title={isLoggedIn ? 'Выйти' : 'Подключить'} />
 </div>
 
 <style lang="scss">
@@ -32,7 +38,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin: 15px 0;
 
 		&-title-wrapper {
 			display: flex;

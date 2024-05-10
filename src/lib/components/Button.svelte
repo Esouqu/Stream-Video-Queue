@@ -7,7 +7,7 @@
 <div class="button-wrapper" class:disabled={isDisabled}>
 	<button class="button" on:click>
 		{#if icon}
-			<div class="button-icon-wrapper">
+			<div class="icon-wrapper">
 				<img src={icon} alt="Button Icon" draggable="false" />
 			</div>
 		{/if}
@@ -72,17 +72,6 @@
 			height: 100%;
 			background-color: var(--primary-container);
 			transition: 0.3s;
-		}
-
-		&-icon-wrapper {
-			position: relative;
-			display: flex;
-			width: 24px;
-			z-index: 1;
-
-			& img {
-				width: 100%;
-			}
 		}
 	}
 </style>

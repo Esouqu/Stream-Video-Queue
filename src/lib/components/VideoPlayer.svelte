@@ -1,6 +1,6 @@
 <script lang="ts">
 	import videoPlayer from '$lib/stores/videoPlayer';
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import YouTubePlayer from 'youtube-player';
 	import votes from '$lib/stores/votes';
 	import queue from '$lib/stores/queue';
@@ -13,7 +13,7 @@
 	import copyIcon from '$lib/assets/content_copy_icon.svg';
 	import AutoIndicator from './AutoIndicator.svelte';
 
-	const dispatch = createEventDispatcher();
+	export let onNextVideo: ((videoId: number) => void) | null = null;
 
 	let playerElement: HTMLElement;
 	let title: string;
@@ -93,7 +93,11 @@
 						isDisabled={$queue.length < 1}
 						on:click={() => {
 							queue.setNext();
-							dispatch('next');
+
+							if (onNextVideo) {
+								const currentVideoId = $queue.findIndex((item) => item.id === $currentVideo?.id);
+								onNextVideo(currentVideoId);
+							}
 						}}
 					/>
 				</div>
