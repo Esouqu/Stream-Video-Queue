@@ -1,6 +1,7 @@
 <script lang="ts">
 	export let options: string[];
 	export let currentTab: number = 0;
+	export let onTabChange: ((idx: number) => void) | null = null;
 </script>
 
 <div class="tabs">
@@ -9,8 +10,13 @@
 			type="button"
 			class="tabs__tab"
 			class:selected={currentTab === idx}
-			on:click={() => (currentTab = idx)}>{title}</button
+			on:click={() => {
+				currentTab = idx;
+				onTabChange?.(idx);
+			}}
 		>
+			{title}
+		</button>
 	{/each}
 </div>
 

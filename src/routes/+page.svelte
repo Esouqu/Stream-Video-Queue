@@ -42,11 +42,11 @@
 	$: isLinksEnabled = settings.isLinksEnabled;
 	$: isDonationEnabled = settings.isDonationEnabled;
 	$: shouldDeletePreviousVideos = settings.shouldDeletePreviousVideos;
-	// $: isPaidVideosSkippable = settings.isPaidVideosSkippable;
 	$: percentFromViewCount = settings.percentFromViewCount;
 	$: minDonationValue = settings.minDonationValue;
 	$: isAddRandomly = settings.isAddRandomly;
 	$: userInput = settings.userInput;
+	$: currentVideo = queue.currentVideo;
 	$: votesDifference = votes.difference;
 	$: chatState = chat.state;
 	$: centrifugoState = centrifugo.state;
@@ -57,7 +57,7 @@
 		if ($isAutoskip && isChatConnected && isEnoughVotes) queue.setNext();
 	}
 	$: tabs = [`Очередь (${$queue.length})`, 'Настройки'];
-	$: twitchConnectionName = getTwitchSettingsName($isVotesEnabled, $isLinksEnabled);
+	$: twitchConnectionName = getTwitchIndicationTitle($isVotesEnabled, $isLinksEnabled);
 
 	onMount(() => {
 		if (twitchChannel) {
@@ -72,7 +72,7 @@
 		initializeSubscriptions();
 	});
 
-	function getTwitchSettingsName(votes: boolean, links: boolean) {
+	function getTwitchIndicationTitle(votes: boolean, links: boolean) {
 		if (votes && links) return 'Голоса и Cсылки';
 		if (votes) return 'Только Голоса';
 		if (links) return 'Только Ссылки';
@@ -95,7 +95,19 @@
 		}}
 	/>
 	<div class="right-side">
-		<Tabs options={tabs} bind:currentTab />
+		<Tabs
+			options={tabs}
+			bind:currentTab
+			onTabChange={(tabIdx) => {
+				if (tabIdx === 0) {
+					const currentVideoId = $queue.findIndex((item) => item.id === $currentVideo?.id);
+
+					setTimeout(() => {
+						scrollElement.scrollTo({ top: currentVideoId * 80, behavior: 'smooth' });
+					}, 300);
+				}
+			}}
+		/>
 		<div class="transition-container">
 			{#if currentTab === 0}
 				<div
