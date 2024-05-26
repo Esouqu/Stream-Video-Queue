@@ -89,12 +89,13 @@
 
 <style lang="scss">
 	.input {
+		-moz-appearance: textfield;
+		appearance: textfield;
 		position: relative;
 		padding: var(--input-p, 0);
 		border: 1px solid var(--outline-variant);
 		border-radius: 5px;
 		outline: 0;
-		min-width: 9px;
 		width: var(--input-w, 20px);
 		text-align: var(--input-text-al, center);
 		text-decoration: none;
@@ -223,6 +224,7 @@
 				font-size: 0.9rem;
 				text-transform: capitalize;
 				opacity: 0.7;
+				pointer-events: none;
 				cursor: text;
 			}
 		}

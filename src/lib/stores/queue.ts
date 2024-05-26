@@ -121,6 +121,7 @@ function createQueue() {
     ([$freeVideos, $paidVideos]) => [...$paidVideos, ...$freeVideos]
   );
   const currentVideo = writable<IQueueVideoInfo | undefined>();
+  const isLoading = writable(true);
   const submittedVideoIds: Set<string> = new Set();
 
   let isAddRandomly: boolean;
@@ -133,24 +134,21 @@ function createQueue() {
     settings.shouldDeletePreviousVideos.subscribe((store) => shouldDeletePreviousVideos = store);
   }
 
-  async function add(videoData: Pick<IQueueVideoInfo, 'videoId' | 'timing'>, username: string, isPaid: boolean) {
-    if (submittedVideoIds.has(videoData.videoId) && !isPaid) return;
+  async function add(videoData: Pick<IQueueVideoInfo, 'videoId' | 'timing' | 'price' | 'message' | 'username' | 'isPaid'>) {
+    if (submittedVideoIds.has(videoData.videoId) && !videoData.isPaid) return;
 
     const videos = get(freeAndPaidVideos);
-    const store = isPaid ? paidVideos : freeVideos;
+    const store = videoData.isPaid ? paidVideos : freeVideos;
     const { snippet } = await fetch(`api/youtube?video_id=${videoData.videoId}`)
       .then((res) => res.json())
       .then((data: IVideoData) => data.items[0]);
     const item: IQueueVideoInfo = {
       id: uuidv4(),
-      videoId: videoData.videoId,
-      timing: videoData.timing,
       title: snippet.title,
       channelTitle: snippet.channelTitle,
       thumbnail: snippet.thumbnails.medium.url,
-      username,
-      isPaid,
       isWatched: false,
+      ...videoData,
     }
 
     store.update((items) => {
@@ -168,7 +166,7 @@ function createQueue() {
       return newItems;
     });
 
-    if (!isPaid) submittedVideoIds.add(videoData.videoId);
+    if (!videoData.isPaid) submittedVideoIds.add(videoData.videoId);
 
     await db.videos.add(item);
   }
@@ -220,6 +218,8 @@ function createQueue() {
   }
 
   async function loadVideosFromDb() {
+    isLoading.set(true);
+
     const paid = await db.videos.filter((item) => item.isPaid === true).toArray();
     const free = await db.videos.filter((item) => item.isPaid === false).toArray();
 
@@ -231,11 +231,14 @@ function createQueue() {
     }
 
     if (paid.length > 0 || free.length > 0) setNext();
+
+    isLoading.set(false);
   }
 
   return {
     subscribe: freeAndPaidVideos.subscribe,
     currentVideo,
+    isLoading,
     initialize,
     add,
     remove,

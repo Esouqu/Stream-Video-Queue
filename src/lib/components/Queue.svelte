@@ -7,6 +7,7 @@
 	import playIcon from '$lib/assets/play_arrow_icon.svg';
 	import VideoPreview from './VideoPreview.svelte';
 	import type { IQueueVideoInfo } from '$lib/interfaces';
+	import settings from '$lib/stores/settings';
 
 	const itemHeight = 80;
 	const itemsBuffer = 3;
@@ -23,7 +24,9 @@
 	let isDeleteAction = false;
 
 	$: currentVideo = queue.currentVideo;
-	$: mappedQueue = [...$queue].map((l, idx) => ({ ...l, position: idx + 1 }));
+	$: isQueueLoading = queue.isLoading;
+	$: shouldSortPaidVideos = settings.shouldSortPaidVideos;
+	$: mappedQueue = mapQueue($queue);
 	$: {
 		// Position of the top of the viewport
 		const viewportTop = scrollTop - itemsBufferHeight;
@@ -41,6 +44,14 @@
 		visibleItems = mappedQueue.slice(startIndex, endIndex);
 	}
 
+	function mapQueue(q: IQueueVideoInfo[]) {
+		if ($shouldSortPaidVideos) {
+			q = [...q].sort((a, b) => b.price - a.price);
+		}
+
+		return q.map((l, idx) => ({ ...l, position: idx + 1 }));
+	}
+
 	function onScroll(e: UIEvent) {
 		const target = e.target as HTMLDivElement;
 
@@ -56,7 +67,7 @@
 		style="grid-auto-rows: {itemHeight}px; height: {itemHeight * $queue.length}px;"
 	>
 		{#each visibleItems as video (video.id)}
-			{@const { id, videoId, position, isPaid, timing, channelTitle, ...rest } = video}
+			{@const { id, videoId, position, isPaid, isWatched, timing, channelTitle, ...rest } = video}
 			{@const isCurrentVideo = $currentVideo?.id === video.id}
 
 			<div
@@ -88,9 +99,16 @@
 				</Draggable>
 			</div>
 		{:else}
-			<div class="queue-list-empty" in:fade={{ duration: 300 }}>
-				<p>Очередь пуста</p>
-			</div>
+			<div class="queue-list-empty" in:fade={{ duration: 300 }}></div>
+			{#if $queue.length < 1}
+				<div class="queue-list-empty" transition:fade>
+					{#if $isQueueLoading}
+						Загрузка очереди...
+					{:else}
+						<p>Очередь пуста</p>
+					{/if}
+				</div>
+			{/if}
 		{/each}
 	</ul>
 </div>
@@ -135,29 +153,29 @@
 			transition: background-color 0.2s;
 			cursor: pointer;
 
-			&.watched {
+			&:not(.selected).watched {
 				opacity: 0.5;
 			}
 
-			&.paid {
-				&::before {
-					content: '';
-					position: absolute;
-					top: 0;
-					left: 0;
-					width: 35%;
-					height: 100%;
-					opacity: 0.5;
-					background: var(--primary-50);
-					background: linear-gradient(90deg, var(--primary-60) 0%, rgba(255 255 255 / 0) 100%);
-				}
+			&::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 0%;
+				height: 100%;
+				opacity: 0.5;
+				background: linear-gradient(90deg, var(--primary-60) 0%, rgba(255 255 255 / 0) 100%);
+				transition: 0.3s;
 			}
+
 			&.selected {
 				background-color: var(--hover-white);
-				pointer-events: none;
+				cursor: default;
 
 				&.paid::before {
 					opacity: 1;
+					width: 35%;
 				}
 				&:hover {
 					background-color: rgba(255 255 255 / 10%);

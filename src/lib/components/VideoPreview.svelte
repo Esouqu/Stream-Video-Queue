@@ -1,18 +1,29 @@
 <script lang="ts">
+	import tooltip from '$lib/actions/tooltip';
+
 	export let title: string;
 	export let thumbnail: string;
 	export let username: string;
+	export let price: number = 0;
+	export let message: string = '';
 </script>
 
-<div class="video-preview" on:click aria-hidden>
+<div
+	class="video-preview"
+	aria-hidden
+	use:tooltip={{ content: `Сообщение от ${username}\n${message}`, placement: 'left' }}
+	on:click
+>
 	<div class="video-preview__thumbnail">
 		<img src={thumbnail} alt="Video Thumbnail" draggable="false" />
 	</div>
 	<div class="video-preview__info">
 		<p class="video-preview__title">{title}</p>
 		<div>
-			<!-- <p class="video-preview__channel">{channelTitle}</p> -->
 			<p class="video-preview__username">Заказал: {username}</p>
+			{#if price > 0}
+				<div class="video-preview__price">{price} RUB</div>
+			{/if}
 		</div>
 	</div>
 </div>
@@ -71,6 +82,16 @@
 			white-space: nowrap;
 			text-overflow: ellipsis;
 			overflow: hidden;
+		}
+
+		&__price {
+			padding: 0px 5px;
+			border-radius: 8px;
+			width: fit-content;
+			font-size: 0.8rem;
+			font-weight: 500;
+			color: var(--on-surface);
+			background-color: var(--primary-50);
 		}
 	}
 </style>

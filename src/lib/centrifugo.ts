@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { IDonationAlertsUserData, IDonationData } from './interfaces';
+import type { IDonationAlertsUserData, IDonationData, IQueueVideoInfo } from './interfaces';
 import { SOCKET_STATE } from './constants';
 import queue from './stores/queue';
 import settings from './stores/settings';
@@ -7,13 +7,18 @@ import { extractYoutubeVideoData } from './utils';
 
 function createCentrifugo() {
   const state = writable<SOCKET_STATE>(SOCKET_STATE.CLOSED);
+
   let socket: WebSocket;
   let minDonationValue: number;
   let isDonationEnabled: boolean;
+  let donationSkip: { isEnabled: boolean, value: number, type: 'fixed' | 'percent' };
+  let currentVideo: IQueueVideoInfo | undefined;
 
   function initialize() {
     settings.minDonationValue.subscribe((store) => minDonationValue = store);
     settings.isDonationEnabled.subscribe((store) => isDonationEnabled = store);
+    settings.donationSkip.subscribe((store) => donationSkip = store);
+    queue.currentVideo.subscribe((store) => currentVideo = store)
   }
 
   async function connect(user: IDonationAlertsUserData) {
@@ -67,7 +72,23 @@ function createCentrifugo() {
         const username = donation.username ?? 'Аноним';
         const videoData = extractYoutubeVideoData(donation.message);
 
-        if (videoData && isDonationEnabled) queue.add(videoData, username, true);
+        if (donationSkip.isEnabled && currentVideo) {
+          const dynamicValue = donationSkip.value / 100 * currentVideo.price;
+
+          if (donationSkip.type === 'fixed' && roundedAmount === donationSkip.value) {
+            queue.setNext();
+          } else if (donationSkip.type === 'percent' && roundedAmount === dynamicValue) {
+            queue.setNext();
+          }
+        }
+
+        if (videoData && isDonationEnabled) queue.add({
+          username,
+          price: roundedAmount,
+          message: donation.message,
+          isPaid: true,
+          ...videoData,
+        });
       }
     });
 

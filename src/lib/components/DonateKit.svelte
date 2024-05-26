@@ -1,10 +1,21 @@
 <script lang="ts">
 	import queue from '$lib/stores/queue';
+	import { getRandomInRange } from '$lib/utils';
 	import Button from './Button.svelte';
+
+	function addVideo() {
+		queue.add({
+			videoId: 'ovU-lOSLHmk',
+			isPaid: true,
+			message: 'test',
+			username: 'zxc',
+			price: getRandomInRange(100, 1000)
+		});
+	}
 </script>
 
 <div>
-	<Button title="Donate" on:click={() => queue.add({ videoId: 'ovU-lOSLHmk' }, 'Anon', true)} />
+	<Button title="Donate" on:click={() => addVideo()} />
 	<Button
 		title="Donate Multiple"
 		on:click={() => {
@@ -13,7 +24,7 @@
 				count++;
 				if (count > 5) clearInterval(intervalId);
 
-				queue.add({ videoId: 'ovU-lOSLHmk' }, 'Anon', true);
+				addVideo();
 			}, 50);
 		}}
 	/>

@@ -16,7 +16,6 @@ function createChat() {
 
   let isVotesEnabled = false;
   let isLinksEnabled = false;
-  // let isPaidVideosSkippable = false;
   let client: tmi.Client;
   let votesKeywords: IUserInput;
   let intervalId: number;
@@ -34,7 +33,13 @@ function createChat() {
       const username = tags['display-name'] || tags.username || '???';
 
       if (videoData && isLinksEnabled) {
-        queue.add(videoData, username, false);
+        queue.add({
+          username,
+          message,
+          price: 0,
+          isPaid: false,
+          ...videoData,
+        });
       } else if (keyword && !votedUsernames.has(username) && isVotesEnabled) {
         votedUsernames.add(username);
         votes.addVote(keyword);

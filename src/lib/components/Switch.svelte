@@ -25,12 +25,12 @@
 <style lang="scss">
 	.switch {
 		position: relative;
-		padding: 0;
-		border: 0;
-		border-radius: 30px;
-		width: 42px;
 		min-width: 42px;
 		height: 24px;
+		padding: 0;
+		border: 0;
+		border-radius: 100px;
+		outline: 2px solid #b4b4b4;
 		background-color: var(--neutral);
 		opacity: 1;
 		transition: 0.2s;
@@ -48,21 +48,22 @@
 		&::after {
 			content: '';
 			position: absolute;
-			display: flex;
-			translate: 3px -50%;
+			left: 3px;
+			top: 50%;
+			translate: 0 -50%;
 			border-radius: 50%;
 			width: 18px;
 			height: 18px;
-			box-shadow: 0 1px 0 black;
+			box-shadow: 0 0px 2px black;
 			background-color: white;
 			transition: 0.2s;
 		}
-
 		&.enabled {
-			background-color: var(--switch-color, var(--primary-60));
+			outline-color: var(--primary-70);
+			background-color: var(--primary-60);
 
 			&::after {
-				translate: 21px -50%;
+				translate: 100% -50%;
 			}
 		}
 	}

@@ -4,7 +4,7 @@
 </script>
 
 <div class="setting-section">
-	<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 24px;">
+	<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 16px;">
 		{#if icon}
 			<div class="icon-wrapper" style="width: 30px; height: 30px;">
 				<img src={icon} alt="Setting Section Icon" />
@@ -24,8 +24,7 @@
 		&-inner {
 			display: flex;
 			flex-direction: column;
-			gap: 16px;
-			padding: 0 0 0 10px;
+			gap: 8px;
 		}
 	}
 </style>

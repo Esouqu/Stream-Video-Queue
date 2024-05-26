@@ -104,14 +104,13 @@ export interface IDonationAlertsUserData {
 
 export interface IDonationData {
   id: number | string;
-  isInstant: boolean;
+  name: string;
   username: string;
   amount: number;
   amount_in_user_currency: number;
   currency: string;
   message: string;
   created_at: string;
-  name: string;
   message_type: string;
   paying_system: string;
   is_shown: boolean;
@@ -175,6 +174,8 @@ export interface IQueueVideoInfo {
   channelTitle: string;
   thumbnail: string;
   username: string;
+  price: number;
+  message: string;
   isPaid: boolean;
   isWatched: boolean;
 }

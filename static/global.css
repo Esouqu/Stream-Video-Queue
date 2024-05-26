@@ -97,6 +97,30 @@ body {
   }
 }
 
+.default-title {
+  margin: 0;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.5px;
+}
+
+.support-text {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 300;
+  letter-spacing: 0.25px;
+  white-space: break-spaces;
+}
+
+.tippy-box[data-theme~='general'] {
+  white-space-collapse: break-spaces;
+  word-break: break-all;
+  letter-spacing: 0.25px;
+  color: var(--on-surface);
+  background-color: var(--surface-container-highest);
+  box-shadow: var(--elevation-1);
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -114,4 +138,10 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: #f1f1f1;
+}
+
+@supports (-moz-appearance:none) {
+  * {
+    scrollbar-width: thin;
+  }
 }

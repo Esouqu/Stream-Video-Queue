@@ -6,7 +6,6 @@ function createSettings() {
   const isVotesEnabled = writable(false);
   const isLinksEnabled = writable(false);
   const isDonationEnabled = writable(false);
-  // const isPaidVideosSkippable = writable(false);
 
   const shouldDeletePreviousVideos = storable(false, 'shouldDeletePreviousVideos');
   const percentFromViewCount = storable(7, 'percentFromViewCount');
@@ -21,6 +20,16 @@ function createSettings() {
     needed: 10,
   }, 'userInput');
   const minDonationValue = storable(100, 'minDonationValue');
+  const donationSkip = storable<{
+    isEnabled: boolean;
+    value: number;
+    type: 'fixed' | 'percent';
+  }>({
+    isEnabled: false,
+    value: 100,
+    type: 'fixed',
+  }, 'donationSkipAction');
+  const shouldSortPaidVideos = storable(false, 'shouldSortPaidVideos');
 
   function setNeededVotes(amount: number) {
     userInput.update((input) => ({
@@ -42,6 +51,8 @@ function createSettings() {
     isLinksEnabled,
     isDonationEnabled,
     shouldDeletePreviousVideos,
+    donationSkip,
+    shouldSortPaidVideos,
     setNeededVotes,
   }
 }

@@ -44,11 +44,5 @@
 			align-items: center;
 			gap: 15px;
 		}
-
-		&-icon-wrapper {
-			display: flex;
-			align-items: center;
-			width: 25px;
-		}
 	}
 </style>
