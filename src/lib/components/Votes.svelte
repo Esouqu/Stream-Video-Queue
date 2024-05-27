@@ -38,20 +38,9 @@
 
 	function focusOn(idx: number) {
 		options[idx]?.focus();
-		options[idx]?.select();
 	}
 </script>
 
-<!-- <button type="button" class="votes-section clickable" on:click={() => votes.addVote('Оставить')}>
-	KEEP
-</button>
-<button
-	type="button"
-	class="votes-section clickable"
-	on:click={() => votes.addVote('Пропустить')}
->
-	SKIP
-</button> -->
 <div class="votes" class:disabled={isDisabled}>
 	<div style="display: flex; align-items: center;">
 		<button type="button" class="votes-section clickable" on:click={() => focusOn(0)}>

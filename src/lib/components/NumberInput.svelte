@@ -35,8 +35,6 @@
 		const target = e.target as HTMLInputElement;
 		const isConfirmKey = e.code === 'Enter';
 
-		// if (!onEnter || !isConfirmKey) return;
-		// onEnter();
 		if (isConfirmKey) {
 			if (onEnter) onEnter();
 
@@ -82,7 +80,6 @@
 		on:keydown={handleKeyDown}
 		on:input|preventDefault={handleInput}
 		on:blur|preventDefault={handleBlur}
-		on:click={() => element?.select()}
 		on:focus
 	/>
 </div>

@@ -9,14 +9,14 @@ function createCentrifugo() {
   const state = writable<SOCKET_STATE>(SOCKET_STATE.CLOSED);
 
   let socket: WebSocket;
-  let minDonationValue: number;
-  let isDonationEnabled: boolean;
+  let minYoutubeLinkPrice: number;
+  let isYoutubeLinksEnabled: boolean;
   let donationSkip: { isEnabled: boolean, value: number, type: 'fixed' | 'percent' };
   let currentVideo: IQueueVideoInfo | undefined;
 
   function initialize() {
-    settings.minDonationValue.subscribe((store) => minDonationValue = store);
-    settings.isDonationEnabled.subscribe((store) => isDonationEnabled = store);
+    settings.minDonationValue.subscribe((store) => minYoutubeLinkPrice = store);
+    settings.isDonationEnabled.subscribe((store) => isYoutubeLinksEnabled = store);
     settings.donationSkip.subscribe((store) => donationSkip = store);
     queue.currentVideo.subscribe((store) => currentVideo = store)
   }
@@ -65,30 +65,8 @@ function createCentrifugo() {
 
       if (!message.result.type && message.result.channel === centrifugoChannel) {
         const donation: IDonationData = message.result.data.data;
-        const roundedAmount = Math.round(donation.amount_in_user_currency);
 
-        if (roundedAmount < minDonationValue) return;
-
-        const username = donation.username ?? 'Аноним';
-        const videoData = extractYoutubeVideoData(donation.message);
-
-        if (donationSkip.isEnabled && currentVideo) {
-          const dynamicValue = donationSkip.value / 100 * currentVideo.price;
-
-          if (donationSkip.type === 'fixed' && roundedAmount === donationSkip.value) {
-            queue.setNext();
-          } else if (donationSkip.type === 'percent' && roundedAmount === dynamicValue) {
-            queue.setNext();
-          }
-        }
-
-        if (videoData && isDonationEnabled) queue.add({
-          username,
-          price: roundedAmount,
-          message: donation.message,
-          isPaid: true,
-          ...videoData,
-        });
+        processDonation(donation);
       }
     });
 
@@ -100,6 +78,26 @@ function createCentrifugo() {
       console.error('WebSocket error:', event);
       state.set(SOCKET_STATE.CLOSED);
     });
+  }
+
+  function processDonation(donation: IDonationData) {
+    const roundedAmount = Math.round(donation.amount_in_user_currency);
+    const username = donation.username ?? 'Аноним';
+    const videoData = extractYoutubeVideoData(donation.message);
+    const dynamicSkipValue = currentVideo ? donationSkip.value / 100 * currentVideo.price : 0;
+    const skipPrice = donationSkip.type === 'fixed' ? donationSkip.value : dynamicSkipValue;
+
+    if (videoData && isYoutubeLinksEnabled && roundedAmount >= minYoutubeLinkPrice) {
+      queue.add({
+        ...videoData,
+        username,
+        price: roundedAmount,
+        message: donation.message,
+        isPaid: true,
+      });
+    } else if (donationSkip.isEnabled && roundedAmount === skipPrice) {
+      queue.setNext();
+    }
   }
 
   function disconnect() {

@@ -7,7 +7,7 @@
 		height: var(--spinner-size, 25px);
 		width: var(--spinner-size, 25px);
 		border-color: var(--primary-60) var(--primary-60) transparent transparent;
-		border-width: calc(var(--spinner-size) / 15);
+		border-width: calc(var(--spinner-size) / 10);
 		border-style: solid;
 		border-image: initial;
 		border-radius: 50%;

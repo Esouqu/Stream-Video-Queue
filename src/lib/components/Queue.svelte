@@ -8,6 +8,7 @@
 	import VideoPreview from './VideoPreview.svelte';
 	import type { IQueueVideoInfo } from '$lib/interfaces';
 	import settings from '$lib/stores/settings';
+	import Spinner from './Spinner.svelte';
 
 	const itemHeight = 80;
 	const itemsBuffer = 3;
@@ -99,16 +100,13 @@
 				</Draggable>
 			</div>
 		{:else}
-			<div class="queue-list-empty" in:fade={{ duration: 300 }}></div>
-			{#if $queue.length < 1}
-				<div class="queue-list-empty" transition:fade>
-					{#if $isQueueLoading}
-						Загрузка очереди...
-					{:else}
-						<p>Очередь пуста</p>
-					{/if}
-				</div>
-			{/if}
+			<div class="queue-list-empty" transition:fade>
+				{#if $isQueueLoading}
+					<Spinner --spinner-size="40px" />
+				{:else}
+					<p>Очередь пуста</p>
+				{/if}
+			</div>
 		{/each}
 	</ul>
 </div>

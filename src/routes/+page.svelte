@@ -33,6 +33,7 @@
 	let donationAlertsUser = $page.data.donationAlertsUser;
 	let currentTab: number;
 	let scrollElement: HTMLDivElement;
+	let currentSkipValue = 0;
 
 	$: donationSkip = settings.donationSkip;
 	$: isAutoskip = settings.isAutoskip;
@@ -59,6 +60,15 @@
 		if ($isAutoskip && isChatConnected && isEnoughVotes) queue.setNext();
 	}
 	$: tabs = [`Очередь (${$queue.length})`, 'Настройки'];
+	$: {
+		if (!$currentVideo && $donationSkip.type === 'percent') {
+			currentSkipValue = 0;
+		} else if ($donationSkip.type === 'fixed') {
+			currentSkipValue = $donationSkip.value;
+		} else if ($currentVideo && $donationSkip.type === 'percent') {
+			currentSkipValue = ($donationSkip.value / 100) * $currentVideo.price;
+		}
+	}
 
 	function onNextVideo(videoId: number) {
 		scrollElement.scrollTo({
@@ -108,11 +118,6 @@
 							</Snackbar>
 						{/if}
 						{#if $donationSkip.isEnabled}
-							{@const dynamicSkipValue =
-								$currentVideo && ($donationSkip.value / 100) * $currentVideo.price}
-							{@const currentSkipValue =
-								$donationSkip.type === 'fixed' ? $donationSkip.value : dynamicSkipValue}
-
 							<Snackbar>
 								<SettingWrapper title="Пропустить" isAdditional={true}>
 									<span style="white-space: nowrap;">{currentSkipValue} руб</span>
@@ -184,7 +189,7 @@
 										<Snackbar>
 											<SettingWrapper
 												title="Пропуск"
-												description="Пропускать текущее видео, если сумма доната равна указанному значению"
+												description="Пропускать текущее видео, если сумма доната равна указанному значению и в сообщении доната нет ссылки на Youtube видео"
 											>
 												<Switch bind:isToggled={$donationSkip.isEnabled} />
 											</SettingWrapper>
