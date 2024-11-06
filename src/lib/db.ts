@@ -7,7 +7,7 @@ class Database extends Dexie {
   constructor() {
     super('Database');
     this.version(1).stores({
-      videos: 'id, videoId, title, channelTitle, thumbnail, username, isPaid, isWatched, timing, price, message',
+      videos: 'id, videoId, title, channelTitle, thumbnail, username, isPaid, isWatched, startSeconds, endSeconds, price, message',
     });
   }
 }

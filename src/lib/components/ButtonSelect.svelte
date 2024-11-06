@@ -1,6 +1,13 @@
 <script lang="ts">
 	export let options: { title: string; value: string }[] = [];
 	export let currentOption = options[0].value;
+	export let onOptionChange: ((optionValue: string) => void) | null = null;
+
+	function setOption(optionValue: string) {
+		currentOption = optionValue;
+
+		if (onOptionChange) onOptionChange(optionValue);
+	}
 </script>
 
 <div class="button-select">
@@ -8,7 +15,7 @@
 		<button
 			type="button"
 			class:selected={option.value === currentOption}
-			on:click={() => (currentOption = option.value)}>{option.title}</button
+			on:click={() => setOption(option.value)}>{option.title}</button
 		>
 	{/each}
 </div>

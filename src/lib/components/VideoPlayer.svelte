@@ -12,6 +12,8 @@
 	import skipIcon from '$lib/assets/skip_next_icon.svg';
 	import copyIcon from '$lib/assets/content_copy_icon.svg';
 	import AutoIndicator from './AutoIndicator.svelte';
+	import chat from '$lib/stores/chat';
+	import { CHAT_STATE } from '$lib/constants';
 
 	export let onNextVideo: ((videoId: number) => void) | null = null;
 
@@ -20,11 +22,10 @@
 	let username: string;
 	let channelTitle: string;
 
-	$: userInput = settings.userInput;
-	$: isAutoskip = settings.isAutoskip;
-	$: isVotesEnabled = settings.isVotesEnabled;
+	$: chatState = chat.state;
+	$: twitchSettings = settings.twitch;
 	$: votesDifference = votes.difference;
-	$: progressPercent = clamp(($votesDifference / $userInput.needed) * 100, 0, 100);
+	$: progressPercent = clamp(($votesDifference / $twitchSettings.votes.needed) * 100, 0, 100);
 	$: currentVideo = queue.currentVideo;
 	$: {
 		if ($currentVideo) {
@@ -41,6 +42,15 @@
 	onMount(async () => {
 		videoPlayer.initialize(YouTubePlayer(playerElement, { playerVars: { rel: 0 } }));
 	});
+
+	function setNextVideo() {
+		queue.setNext();
+
+		if (onNextVideo) {
+			const currentVideoId = $queue.findIndex((item) => item.id === $currentVideo?.id);
+			onNextVideo(currentVideoId);
+		}
+	}
 
 	async function copyVideoUrlToClipboard() {
 		const url = await videoPlayer.getVideoUrl();
@@ -79,11 +89,11 @@
 					isDisabled={$queue.length < 1}
 					on:click={copyVideoUrlToClipboard}
 				/>
-				{#if $isVotesEnabled}
+				{#if $twitchSettings.isVotesEnabled && $chatState === CHAT_STATE.CONNECTED}
 					<Votes />
 				{/if}
 				<div style="position: relative;">
-					{#if $isAutoskip}
+					{#if $twitchSettings.shouldAutoSkip}
 						<AutoIndicator />
 					{/if}
 					<Button
@@ -91,14 +101,7 @@
 						icon={skipIcon}
 						title="Следущее"
 						isDisabled={$queue.length < 1}
-						on:click={() => {
-							queue.setNext();
-
-							if (onNextVideo) {
-								const currentVideoId = $queue.findIndex((item) => item.id === $currentVideo?.id);
-								onNextVideo(currentVideoId);
-							}
-						}}
+						on:click={setNextVideo}
 					/>
 				</div>
 			</div>

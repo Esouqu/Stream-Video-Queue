@@ -7,10 +7,10 @@ describe('find youtube videoId', () => {
     ['https://youtube.com/shorts/qjx6YRCgDFQ?si=em2ghK-05xOuSHbu', { videoId: 'qjx6YRCgDFQ' }],
     ['https://youtu.be/74yRsfR2Lgo?si=KBkrqn1p3bv_Rzhf', { videoId: '74yRsfR2Lgo' }],
     ['https://youtu.be/74yRsfR2LgoqEQ2?si=KBkrqn1p3bv_Rzhf', { videoId: '74yRsfR2Lgo' }],
-    ['https://www.youtube.com/watch?v=_yKMZVja1Ek&t=918s', { videoId: '_yKMZVja1Ek', timing: 918 }],
-    ['https://youtu.be/_xuHm33I1y0?si=4x_wJL7-Qz8A1p_X&t=57', { videoId: '_xuHm33I1y0', timing: 57 }],
-    ['https://www.youtube.com/watch?v=HLZOg4ohBug&t=17846s', { videoId: 'HLZOg4ohBug', timing: 17846 }],
-    ['https://youtu.be/l8MBFaFVZbk?si=_DYdkNtI2pWKc6vC&t=324', { videoId: 'l8MBFaFVZbk', timing: 324 }],
+    ['https://www.youtube.com/watch?v=_yKMZVja1Ek&t=918s', { videoId: '_yKMZVja1Ek', startSeconds: 918 }],
+    ['https://youtu.be/_xuHm33I1y0?si=4x_wJL7-Qz8A1p_X&t=57', { videoId: '_xuHm33I1y0', startSeconds: 57 }],
+    ['https://www.youtube.com/watch?v=HLZOg4ohBug&t=17846s', { videoId: 'HLZOg4ohBug', startSeconds: 17846 }],
+    ['https://youtu.be/l8MBFaFVZbk?si=_DYdkNtI2pWKc6vC&t=324', { videoId: 'l8MBFaFVZbk', startSeconds: 324 }],
   ])('[%s] should return -> [%s]', (link, videoId) => {
     expect(extractYoutubeVideoData(link)).toStrictEqual(videoId);
   });

@@ -1,4 +1,4 @@
-import chat from "./chat";
+import chat from "./stores/chat";
 import type { ITwitchUserData } from "./interfaces";
 
 class TwitchApi {
@@ -12,7 +12,7 @@ class TwitchApi {
       if (isValid || isRefreshed) return;
 
       clearInterval(intervalId);
-      chat.disconnet();
+      chat.disconnect();
       location.reload();
     }, validationInterval);
   }

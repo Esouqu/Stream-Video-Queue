@@ -4,9 +4,9 @@
 </script>
 
 <div class="setting-section">
-	<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 16px;">
+	<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
 		{#if icon}
-			<div class="icon-wrapper" style="width: 30px; height: 30px;">
+			<div class="icon-wrapper">
 				<img src={icon} alt="Setting Section Icon" />
 			</div>
 		{/if}

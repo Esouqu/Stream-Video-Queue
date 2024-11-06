@@ -169,7 +169,8 @@ export interface IUserInput {
 export interface IQueueVideoInfo {
   id: string;
   videoId: string;
-  timing?: number;
+  startSeconds: number;
+  endSeconds?: number;
   title: string;
   channelTitle: string;
   thumbnail: string;
@@ -178,4 +179,20 @@ export interface IQueueVideoInfo {
   message: string;
   isPaid: boolean;
   isWatched: boolean;
+}
+
+export interface IToggleWithInput {
+  isEnabled: boolean;
+  value: number;
+}
+
+export interface ITimerSettings extends IToggleWithInput {
+  type: 'fixed' | 'perMinute';
+}
+
+export interface IDonationalertsSettings {
+  linkAction: IToggleWithInput;
+  skipAction: IToggleWithInput & {
+    type: 'fixed' | 'percent';
+  };
 }

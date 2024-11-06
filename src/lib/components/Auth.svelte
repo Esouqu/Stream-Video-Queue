@@ -20,7 +20,7 @@
 
 <div class="auth">
 	<div class="auth-title-wrapper">
-		<div class="icon-wrapper" style="width: 30px; height: 30px;">
+		<div class="icon-wrapper">
 			<img src={icon} alt="{title} Brand Icon" />
 		</div>
 		<div>
@@ -42,7 +42,7 @@
 		&-title-wrapper {
 			display: flex;
 			align-items: center;
-			gap: 15px;
+			gap: 8px;
 		}
 	}
 </style>

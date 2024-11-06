@@ -1,13 +1,13 @@
 <script lang="ts">
+	import Icon from './Icon.svelte';
+
 	export let title: string;
 	export let icon: string;
 	export let url: string = '';
 </script>
 
 <a href={url} target="_blank" class="contact" class:clickable={!!url}>
-	<div class="icon-wrapper">
-		<img src={icon} alt="Contact" />
-	</div>
+	<Icon src={icon} />
 	<div class="contact-title">
 		{title}
 	</div>
@@ -18,7 +18,7 @@
 		position: relative;
 		display: flex;
 		align-items: center;
-		gap: 7px;
+		gap: 6px;
 		transition: 0.2s;
 		pointer-events: none;
 		text-decoration: none;
@@ -35,7 +35,7 @@
 				translate: -50% 0;
 				border-radius: 3px;
 				width: 100%;
-				padding: 0 3px;
+				padding: 0 2px;
 				height: 2px;
 				background-color: var(--primary-60);
 				transition: ease-out 0.2s;

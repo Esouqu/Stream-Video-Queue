@@ -2,7 +2,7 @@
 	import queue from '$lib/stores/queue';
 	import Tabs from '$lib/components/Tabs.svelte';
 	import VideoPlayer from '$lib/components/VideoPlayer.svelte';
-	import chat from '$lib/chat';
+	import chat from '$lib/stores/chat';
 	import { CHAT_STATE, SOCKET_STATE } from '$lib/constants';
 	import Queue from '$lib/components/Queue.svelte';
 	import settings from '$lib/stores/settings';
@@ -15,19 +15,22 @@
 	import NumberInput from '$lib/components/NumberInput.svelte';
 	import Contact from '$lib/components/Contact.svelte';
 	import githubIcon from '$lib/assets/github-mark/github-mark-white.svg';
-	import discordIcon from '$lib/assets/discord-logo/icon_clyde_white_RGB.svg';
-	import centrifugo from '$lib/centrifugo';
+	import centrifugo from '$lib/stores/centrifugo';
 	import donationAlertsIcon from '$lib/assets/donationalerts-logo/DA_Alert_White.svg';
 	import boostyIcon from '$lib/assets/boosty_logo/White.svg';
 	import Auth from '$lib/components/Auth.svelte';
 	import SettingSection from '$lib/components/SettingSection.svelte';
-	import Spinner from '$lib/components/Spinner.svelte';
-	import DonateKit from '$lib/components/DonateKit.svelte';
-	import settingsIcon from '$lib/assets/settings_icon.svg';
 	import Snackbar from '$lib/components/Snackbar.svelte';
 	import SettingWrapper from '$lib/components/SettingWrapper.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import ButtonSelect from '$lib/components/ButtonSelect.svelte';
+	import VideoPreview from '$lib/components/VideoPreview.svelte';
+	import QueueItem from '$lib/components/QueueItem.svelte';
+	import telegramIcon from '$lib/assets/telegram-logo/telegram-icon.svg';
+	import timerIcon from '$lib/assets/timer_icon.svg';
+	import playerIcon from '$lib/assets/player_icon.svg';
+	import queueIcon from '$lib/assets/queue_icon.svg';
+	import timer from '$lib/stores/timer';
 
 	let twitchChannel = $page.data.twitchChannel;
 	let donationAlertsUser = $page.data.donationAlertsUser;
@@ -35,39 +38,30 @@
 	let scrollElement: HTMLDivElement;
 	let currentSkipValue = 0;
 
-	$: donationSkip = settings.donationSkip;
-	$: isAutoskip = settings.isAutoskip;
-	$: isAutoplay = settings.isAutoplay;
-	$: isAutoskipOnEnd = settings.isAutoskipOnEnd;
-	$: isAutodetection = settings.isAutodetection;
-	$: isVotesEnabled = settings.isVotesEnabled;
-	$: isLinksEnabled = settings.isLinksEnabled;
-	$: isDonationEnabled = settings.isDonationEnabled;
-	$: shouldSortPaidVideos = settings.shouldSortPaidVideos;
-	$: shouldDeletePreviousVideos = settings.shouldDeletePreviousVideos;
-	$: percentFromViewCount = settings.percentFromViewCount;
-	$: minDonationValue = settings.minDonationValue;
-	$: isAddRandomly = settings.isAddRandomly;
-	$: userInput = settings.userInput;
+	$: hhmmss = timer.hhmmss;
+	$: donationAlertsSettings = settings.donationalerts;
+	$: playerSettings = settings.player;
+	$: queueSettings = settings.queue;
+	$: timerSettings = settings.timer;
+	$: twitchSettings = settings.twitch;
 	$: currentVideo = queue.currentVideo;
 	$: votesDifference = votes.difference;
 	$: chatState = chat.state;
 	$: centrifugoState = centrifugo.state;
 	$: {
 		const isChatConnected = $chatState === CHAT_STATE.CONNECTED;
-		const isEnoughVotes = $votesDifference >= $userInput.needed;
+		const isEnoughVotes = $votesDifference >= $twitchSettings.votes.needed;
 
-		if ($isAutoskip && isChatConnected && isEnoughVotes) queue.setNext();
+		if ($twitchSettings.shouldAutoSkip && isChatConnected && isEnoughVotes) queue.setNext();
 	}
 	$: tabs = [`Очередь (${$queue.length})`, 'Настройки'];
 	$: {
-		if (!$currentVideo && $donationSkip.type === 'percent') {
-			currentSkipValue = 0;
-		} else if ($donationSkip.type === 'fixed') {
-			currentSkipValue = $donationSkip.value;
-		} else if ($currentVideo && $donationSkip.type === 'percent') {
-			currentSkipValue = ($donationSkip.value / 100) * $currentVideo.price;
-		}
+		const skipValue = $donationAlertsSettings.skipAction.value;
+		const skipValueType = $donationAlertsSettings.skipAction.type;
+		const dynamicSkipValue = $currentVideo ? (skipValue / 100) * $currentVideo.price : 0;
+		const skipPrice = skipValueType === 'fixed' ? skipValue : dynamicSkipValue;
+
+		currentSkipValue = skipPrice;
 	}
 
 	function onNextVideo(videoId: number) {
@@ -95,57 +89,72 @@
 <div class="main-page">
 	<VideoPlayer {onNextVideo} />
 	<div class="right-side">
+		<!-- <h1 style="color: white;">{$hhmmss}</h1> -->
 		<Tabs options={tabs} {onTabChange} bind:currentTab />
 		<div class="transition-container">
 			{#if currentTab === 0}
-				<div
-					style="display: flex; flex-direction: column; height: 100%; overflow: hidden;"
-					transition:fly={{ x: -200, duration: 300 }}
-				>
-					<!-- <DonateKit /> -->
+				<div class="section-wrapper" transition:fly={{ x: -200, duration: 300 }}>
 					<div
 						class="available-actions"
-						class:collapsed={!$isDonationEnabled &&
-							!$donationSkip.isEnabled &&
-							!$isLinksEnabled &&
-							!$isVotesEnabled}
+						class:collapsed={$centrifugoState !== SOCKET_STATE.OPEN &&
+							$chatState !== CHAT_STATE.CONNECTED}
 					>
-						{#if $isDonationEnabled}
-							<Snackbar>
-								<SettingWrapper title="Заказать" isAdditional={true}>
-									<span style="white-space: nowrap;">от {$minDonationValue} руб</span>
-								</SettingWrapper>
-							</Snackbar>
+						{#if $centrifugoState === SOCKET_STATE.OPEN}
+							{#if $donationAlertsSettings.linkAction.isEnabled}
+								<Snackbar --snackbar-p="8px">
+									<SettingWrapper title="Заказать" isAdditional={true}>
+										<span style="white-space: nowrap;">
+											от {$donationAlertsSettings.linkAction.value}
+											{$timerSettings.type === 'fixed' ? 'руб' : 'руб/мин'}
+										</span>
+									</SettingWrapper>
+								</Snackbar>
+							{/if}
+							{#if $donationAlertsSettings.skipAction.isEnabled}
+								<Snackbar --snackbar-p="8px">
+									<SettingWrapper title="Пропустить" isAdditional={true}>
+										<span style="white-space: nowrap;">{currentSkipValue} руб</span>
+									</SettingWrapper>
+								</Snackbar>
+							{/if}
 						{/if}
-						{#if $donationSkip.isEnabled}
-							<Snackbar>
-								<SettingWrapper title="Пропустить" isAdditional={true}>
-									<span style="white-space: nowrap;">{currentSkipValue} руб</span>
-								</SettingWrapper>
-							</Snackbar>
-						{/if}
-						{#if $isLinksEnabled}
-							<Snackbar>
-								<SettingWrapper title="Twitch ссылки" isAdditional={true}>
-									<Indicator isActive={$isLinksEnabled} />
-								</SettingWrapper>
-							</Snackbar>
-						{/if}
-						{#if $isVotesEnabled}
-							<Snackbar>
-								<SettingWrapper title="Twitch голоса" isAdditional={true}>
-									<Indicator isActive={$isVotesEnabled} />
-								</SettingWrapper>
-							</Snackbar>
+						{#if $chatState === CHAT_STATE.CONNECTED}
+							{#if $twitchSettings.isLinksEnabled}
+								<Snackbar --snackbar-p="8px">
+									<SettingWrapper title="Twitch ссылки" isAdditional={true}>
+										<Indicator isActive={$twitchSettings.isLinksEnabled} />
+									</SettingWrapper>
+								</Snackbar>
+							{/if}
+							{#if $twitchSettings.isVotesEnabled}
+								<Snackbar --snackbar-p="8px">
+									<SettingWrapper title="Twitch голоса" isAdditional={true}>
+										<Indicator isActive={$twitchSettings.isVotesEnabled} />
+									</SettingWrapper>
+								</Snackbar>
+							{/if}
 						{/if}
 					</div>
-					<Queue bind:scrollElement />
+					<Queue
+						items={$queue}
+						shouldSort={$queueSettings.shouldSortPaidVideos}
+						bind:scrollElement
+						let:item
+					>
+						{@const { id, videoId, position, startSeconds, isPaid, channelTitle, ...rest } = item}
+						{@const isCurrentVideo = $currentVideo?.id === item.id}
+
+						<QueueItem isSelected={isCurrentVideo} onDelete={() => queue.remove(item)}>
+							<VideoPreview
+								{...rest}
+								isSelected={isCurrentVideo}
+								on:click={() => !isCurrentVideo && queue.setCurrent(item)}
+							/>
+						</QueueItem>
+					</Queue>
 				</div>
 			{:else if currentTab === 1}
-				<div
-					style="display: flex; flex-direction: column; height: 100%; overflow: hidden;"
-					transition:fly={{ x: 200, duration: 300 }}
-				>
+				<div class="section-wrapper" transition:fly={{ x: 200, duration: 300 }}>
 					<div class="settings-wrapper">
 						<div>
 							<Auth
@@ -161,68 +170,74 @@
 							/>
 							{#if donationAlertsUser}
 								<SettingSection>
-									{#if $centrifugoState === SOCKET_STATE.CONNECTING}
-										<Spinner />
-									{:else if $centrifugoState === SOCKET_STATE.OPEN}
-										<Snackbar>
-											<SettingWrapper
-												title="Отслеживать Youtube ссылки"
-												description="Оплаченные видео будут находиться выше остальных"
-											>
-												<Switch bind:isToggled={$isDonationEnabled} />
-											</SettingWrapper>
-											<SettingWrapper title="Минимальная стоимость" isAdditional={true}>
-												<NumberInput
-													--input-p="10.5px"
-													--input-w-w="90px"
-													--input-w="100%"
-													--input-text-al="start"
-													id="donation-video-price"
-													suffix="руб"
-													placeholder="Значение"
-													isFilled={false}
-													isBorderless={false}
-													bind:value={$minDonationValue}
-												/>
-											</SettingWrapper>
-										</Snackbar>
-										<Snackbar>
-											<SettingWrapper
-												title="Пропуск"
-												description="Пропускать текущее видео, если сумма доната равна указанному значению и в сообщении доната нет ссылки на Youtube видео"
-											>
-												<Switch bind:isToggled={$donationSkip.isEnabled} />
-											</SettingWrapper>
-											<SettingWrapper
-												title="Тип стоимости"
-												description="Динамическая - процент от стоимости текущего видео"
-												isAdditional={true}
-												isVertical={true}
-											>
-												<ButtonSelect
-													options={[
-														{ title: 'Фиксированная', value: 'fixed' },
-														{ title: 'Динамическая', value: 'percent' }
-													]}
-													bind:currentOption={$donationSkip.type}
-												/>
-											</SettingWrapper>
-											<SettingWrapper title="Стоимость" isAdditional={true}>
-												<NumberInput
-													--input-p="10.5px"
-													--input-w-w="90px"
-													--input-w="100%"
-													--input-text-al="start"
-													id="donation-skip"
-													suffix={$donationSkip.type === 'fixed' ? 'руб' : '%'}
-													placeholder="Значение"
-													isFilled={false}
-													isBorderless={false}
-													bind:value={$donationSkip.value}
-												/>
-											</SettingWrapper>
-										</Snackbar>
-									{/if}
+									<Snackbar>
+										<SettingWrapper title="Отслеживать донаты">
+											<Switch
+												on={() => donationAlertsUser && centrifugo.connect(donationAlertsUser)}
+												off={() => centrifugo.disconnect()}
+												isToggled={$centrifugoState === SOCKET_STATE.OPEN}
+												isDisabled={$centrifugoState === SOCKET_STATE.CONNECTING}
+											/>
+										</SettingWrapper>
+									</Snackbar>
+									<Snackbar isDisabled={$centrifugoState !== SOCKET_STATE.OPEN}>
+										<SettingWrapper
+											title="Заказ видео"
+											description="Оплаченные видео будут находиться выше остальных"
+										>
+											<Switch bind:isToggled={$donationAlertsSettings.linkAction.isEnabled} />
+										</SettingWrapper>
+										<SettingWrapper title="Стоимость" isAdditional={true}>
+											<NumberInput
+												--input-p="10.5px"
+												--input-w-w="90px"
+												--input-w="100%"
+												--input-text-al="start"
+												id="donation-video-price"
+												suffix="руб"
+												placeholder="Значение"
+												isFilled={false}
+												isBorderless={false}
+												bind:value={$donationAlertsSettings.linkAction.value}
+											/>
+										</SettingWrapper>
+									</Snackbar>
+									<Snackbar isDisabled={$centrifugoState !== SOCKET_STATE.OPEN}>
+										<SettingWrapper
+											title="Пропуск видео"
+											description="Пропускать текущее видео, если сумма доната равна указанному значению и в сообщении доната нет ссылки на Youtube видео"
+										>
+											<Switch bind:isToggled={$donationAlertsSettings.skipAction.isEnabled} />
+										</SettingWrapper>
+										<SettingWrapper
+											title="Тип стоимости"
+											description="Динамическая - процент от стоимости текущего видео"
+											isAdditional={true}
+											isVertical={true}
+										>
+											<ButtonSelect
+												options={[
+													{ title: 'Фиксированная', value: 'fixed' },
+													{ title: 'Динамическая', value: 'percent' }
+												]}
+												bind:currentOption={$donationAlertsSettings.skipAction.type}
+											/>
+										</SettingWrapper>
+										<SettingWrapper title="Стоимость" isAdditional={true}>
+											<NumberInput
+												--input-p="10.5px"
+												--input-w-w="90px"
+												--input-w="100%"
+												--input-text-al="start"
+												id="donation-skip"
+												suffix={$donationAlertsSettings.skipAction.type === 'fixed' ? 'руб' : '%'}
+												placeholder="Значение"
+												isFilled={false}
+												isBorderless={false}
+												bind:value={$donationAlertsSettings.skipAction.value}
+											/>
+										</SettingWrapper>
+									</Snackbar>
 								</SettingSection>
 							{/if}
 						</div>
@@ -239,62 +254,54 @@
 								}}
 							/>
 							{#if twitchChannel}
-								{#if $chatState === CHAT_STATE.CONNECTING}
-									<Spinner />
-								{:else if $chatState === CHAT_STATE.CONNECTED}
-									<SettingSection>
-										<Snackbar>
-											<SettingWrapper title="Отслеживать Youtube ссылки">
-												<Switch bind:isToggled={$isLinksEnabled} />
-											</SettingWrapper>
-										</Snackbar>
-										<Snackbar>
-											<SettingWrapper title="Отслеживать голоса">
-												<Switch bind:isToggled={$isVotesEnabled} />
-											</SettingWrapper>
-										</Snackbar>
-										<Snackbar isDisabled={!$isVotesEnabled}>
-											<SettingWrapper
-												title="Автопропуск"
-												description="Автоматически пропускать видео, если набранно достаточное количество голосов"
-											>
-												<Switch bind:isToggled={$isAutoskip} />
-											</SettingWrapper>
-										</Snackbar>
-
-										<Snackbar isDisabled={!$isVotesEnabled}>
-											<SettingWrapper
-												title="Автоопределение"
-												description="Автоматически определять нужное количество голосов в зависимости от указанного значения, не чаще, чем раз в 2 минуты"
-											>
-												<Switch bind:isToggled={$isAutodetection} />
-											</SettingWrapper>
-											<SettingWrapper title="Процент от зрителей" isAdditional={true}>
-												<NumberInput
-													--input-p="10.5px"
-													--input-w-w="90px"
-													--input-w="100%"
-													--input-text-al="start"
-													id="autodetection-percent"
-													suffix="%"
-													placeholder="Значение"
-													isFilled={false}
-													isBorderless={false}
-													bind:value={$percentFromViewCount}
-												/>
-											</SettingWrapper>
-										</Snackbar>
-									</SettingSection>
-								{/if}
+								<SettingSection>
+									<Snackbar>
+										<SettingWrapper
+											title="Отслеживать"
+											description="Обрабатывать сообщения из чата с указанными настройками"
+										>
+											<Switch
+												on={() => twitchChannel && chat.connect(twitchChannel.login)}
+												off={() => chat.disconnect()}
+												isToggled={$chatState === CHAT_STATE.CONNECTED}
+												isDisabled={$chatState === CHAT_STATE.CONNECTING}
+											/>
+										</SettingWrapper>
+										<SettingWrapper title="Youtube ссылки" isAdditional={true}>
+											<Switch
+												isDisabled={$chatState !== CHAT_STATE.CONNECTED}
+												bind:isToggled={$twitchSettings.isLinksEnabled}
+											/>
+										</SettingWrapper>
+										<SettingWrapper
+											title="Голоса"
+											description="Возможность голосовать за пропуск текущего видео указанными словами"
+											isAdditional={true}
+										>
+											<Switch
+												isDisabled={$chatState !== CHAT_STATE.CONNECTED}
+												bind:isToggled={$twitchSettings.isVotesEnabled}
+											/>
+										</SettingWrapper>
+									</Snackbar>
+									<Snackbar isDisabled={$chatState !== CHAT_STATE.CONNECTED}>
+										<SettingWrapper
+											title="Автопропуск"
+											description="Автоматически пропускать видео, если набранно достаточное количество голосов"
+										>
+											<Switch bind:isToggled={$twitchSettings.shouldAutoSkip} />
+										</SettingWrapper>
+									</Snackbar>
+								</SettingSection>
 							{/if}
 						</div>
-						<SettingSection icon={settingsIcon} title="Основные">
+						<SettingSection icon={playerIcon} title="Плеер">
 							<Snackbar>
 								<SettingWrapper
 									title="Автовоспроизведение"
 									description="Автоматически воспроизводить видео"
 								>
-									<Switch bind:isToggled={$isAutoplay} />
+									<Switch bind:isToggled={$playerSettings.shouldAutoplay} />
 								</SettingWrapper>
 							</Snackbar>
 							<Snackbar>
@@ -302,15 +309,17 @@
 									title="Автопереход"
 									description="Автоматически переходить на следующее видео по окончанию текущего"
 								>
-									<Switch bind:isToggled={$isAutoskipOnEnd} />
+									<Switch bind:isToggled={$playerSettings.shouldPlayNextVideo} />
 								</SettingWrapper>
 							</Snackbar>
+						</SettingSection>
+						<SettingSection icon={queueIcon} title="Очередь">
 							<Snackbar>
 								<SettingWrapper
 									title="Добавлять случайно"
 									description={`Добавлять новое видео в случайном порядке`}
 								>
-									<Switch bind:isToggled={$isAddRandomly} />
+									<Switch bind:isToggled={$queueSettings.shouldAddRandomly} />
 								</SettingWrapper>
 							</Snackbar>
 							<Snackbar>
@@ -318,7 +327,7 @@
 									title="Сортировать по цене"
 									description="Если активно, то 'Добавлять случайно' не будет работать на платные видео"
 								>
-									<Switch bind:isToggled={$shouldSortPaidVideos} />
+									<Switch bind:isToggled={$queueSettings.shouldSortPaidVideos} />
 								</SettingWrapper>
 							</Snackbar>
 							<Snackbar>
@@ -326,7 +335,7 @@
 									title="Удалять просмотренное"
 									description="Удалять текущее видео из очереди перед переходом на следующее"
 								>
-									<Switch bind:isToggled={$shouldDeletePreviousVideos} />
+									<Switch bind:isToggled={$queueSettings.shouldDeletePreviousVideo} />
 								</SettingWrapper>
 							</Snackbar>
 							<Button
@@ -336,11 +345,50 @@
 								on:click={() => queue.removeAll()}
 							/>
 						</SettingSection>
+						<SettingSection icon={timerIcon} title="Таймер">
+							<Snackbar>
+								<SettingWrapper title="Отсчитывать время">
+									<Switch bind:isToggled={$timerSettings.isEnabled} />
+								</SettingWrapper>
+								<SettingWrapper
+									title="Тип стоимости"
+									description={`От стоимости - время будет расчитываться в зависимости от стоимости заказа видео\n(т.е. ${$donationAlertsSettings.linkAction.value} руб/мин, на данный момент)`}
+									isAdditional={true}
+									isVertical={true}
+								>
+									<ButtonSelect
+										options={[
+											{ title: 'Фиксированно', value: 'fixed' },
+											{ title: 'От стоимости', value: 'perMinute' }
+										]}
+										bind:currentOption={$timerSettings.type}
+										onOptionChange={(value) => {
+											const SECONDS = 60;
+											if (value === 'perMinute') $timerSettings.value = SECONDS;
+										}}
+									/>
+								</SettingWrapper>
+								<SettingWrapper title="Секунды" isAdditional={true}>
+									<NumberInput
+										--input-p="10.5px"
+										--input-w-w="90px"
+										--input-w="100%"
+										--input-text-al="start"
+										id="timer-value"
+										suffix="сек"
+										isFilled={false}
+										isBorderless={false}
+										isDisabled={$timerSettings.type === 'perMinute'}
+										bind:value={$timerSettings.value}
+									/>
+								</SettingWrapper>
+							</Snackbar>
+						</SettingSection>
 					</div>
 					<div class="bottom-wrapper">
-						<Contact icon={boostyIcon} title="Поддержать" url="https://boosty.to/esouqu/donate" />
-						<Contact icon={githubIcon} title="Esouqu" url="https://github.com/Esouqu" />
-						<Contact icon={discordIcon} title="nikogda" />
+						<Contact icon={githubIcon} title="GitHub" url="https://github.com/Esouqu" />
+						<Contact icon={telegramIcon} title="Telegram" url="https://t.me/esouqu" />
+						<Contact icon={boostyIcon} title="Boosty" url="https://boosty.to/esouqu/donate" />
 					</div>
 				</div>
 			{/if}
@@ -362,8 +410,15 @@
 		overflow: hidden;
 	}
 
+	.section-wrapper {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		overflow: hidden;
+	}
 	.settings-wrapper {
 		display: flex;
+		flex: 1;
 		flex-direction: column;
 		gap: 32px;
 		padding: 20px 15px;
@@ -377,7 +432,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 20px;
+		gap: 12px;
 		margin: 25px 0;
 		color: var(--on-surface-variant);
 	}
@@ -386,7 +441,7 @@
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 6px;
-		margin: 16px 0;
+		margin: 16px 8px;
 
 		&.collapsed {
 			margin: 0;

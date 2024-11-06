@@ -19,13 +19,11 @@ export const POST: RequestHandler = async ({ cookies }) => {
         client_secret: TWITCH_SECRET_KEY,
         refresh_token: refreshToken
       })
-    }).then((res) => res);
+    });
 
     if (response.status === 400) {
       cookies.delete(TWITCH_SESSION, { path: '/' });
       cookies.delete(TWITCH_REFRESH_TOKEN, { path: '/' });
-
-      location.reload();
 
       return new Response('Refresh token is invalid', { status: 400 })
     };
@@ -40,7 +38,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
     cookies.set(TWITCH_REFRESH_TOKEN, tokenData.refresh_token, {
       path: '/',
       secure: !dev,
-      expires: new Date(Date.now() + 30 * 1000 * 60 * 60 * 24),
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
     return new Response(JSON.stringify(tokenData), { status: 200 });

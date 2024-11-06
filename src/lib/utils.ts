@@ -1,4 +1,4 @@
-export function extractYoutubeVideoData(str: string): { videoId: string, timing?: number } | undefined {
+export function extractYoutubeVideoData(str: string): { videoId: string, startSeconds: number } | undefined {
   const videoIdRegex =
     /(?:youtu\.be\/|youtube\.com\/(?:shorts\/|watch\?v=|embed\/|v\/)|youtu\.be\/|\/video\/|watch\?v=|&v=)([a-zA-Z0-9_-]{11})?/;
   const videoIdMatch = str.match(videoIdRegex);
@@ -7,10 +7,9 @@ export function extractYoutubeVideoData(str: string): { videoId: string, timing?
 
   const timingRegex = /&t=(\d+)/;
   const timingMatch = str.match(timingRegex);
+  const startSeconds = timingMatch ? Number(timingMatch[1]) : 0;
 
-  if (!timingMatch || !timingMatch[1]) return { videoId: videoIdMatch[1] };
-
-  return { videoId: videoIdMatch[1], timing: Number(timingMatch[1]) };
+  return { videoId: videoIdMatch[1], startSeconds };
 }
 
 export function extractKeyword(str: string, keywords: string[]): string | undefined {
@@ -53,4 +52,24 @@ export function getRandomInRange(min: number, max: number) {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export function insertRandomly<T>(items: T[], item: T) {
+  const randomIdx = Math.floor(Math.random() * items.length);
+  const firstHalf = items.slice(0, randomIdx);
+  const secondHalf = items.slice(randomIdx);
+
+  return [...firstHalf, item, ...secondHalf];
+}
+
+export function msToHHMMSS(ms: number) {
+  const hour = Math.floor(ms / 3600000);
+  const min = Math.floor((ms % 3600000) / 60000);
+  const sec = Math.floor((ms % 60000) / 1000);
+
+  return [
+    String(hour).padStart(2, '0'),
+    String(min).padStart(2, '0'),
+    String(sec).padStart(2, '0')
+  ].join(':');
 }

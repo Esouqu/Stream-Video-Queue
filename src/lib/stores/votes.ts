@@ -3,22 +3,17 @@ import settings from './settings';
 import type { IUserInput } from '$lib/interfaces';
 
 function createVotes() {
-  const counter = writable({
-    keep: 0,
-    skip: 0,
-  });
+  const counter = writable({ keep: 0, skip: 0 });
   const difference = derived(counter, ($counter) => Math.max(0, $counter.skip - $counter.keep));
 
-  let userInput: IUserInput;
+  let votesInput: IUserInput;
 
   function initialize() {
-    settings.userInput.subscribe((store) => {
-      userInput = store;
-    });
+    settings.twitch.subscribe((store) => votesInput = store.votes);
   }
 
   function addVote(keyword: string) {
-    const { keepKeyword, skipKeyword } = userInput;
+    const { keepKeyword, skipKeyword } = votesInput;
     const isKeepKeyword = keyword.toLowerCase() === keepKeyword.toLowerCase();
     const isSkipKeyword = keyword.toLowerCase() === skipKeyword.toLowerCase();
 

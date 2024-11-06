@@ -1,15 +1,26 @@
 <script lang="ts">
 	import tooltip from '$lib/actions/tooltip';
+	import settings from '$lib/stores/settings';
+	import timer from '$lib/stores/timer';
 
 	export let title: string;
 	export let thumbnail: string;
 	export let username: string;
-	export let price: number = 0;
-	export let message: string = '';
+	export let endSeconds: number | undefined = undefined;
+	export let price = 0;
+	export let message = '';
+	export let isSelected = false;
+	export let isWatched = false;
+
+	$: hhmmss = timer.hhmmss;
+	$: timerSettings = settings.timer;
+	$: isTimerEnabled = $timerSettings.isEnabled;
 </script>
 
 <div
 	class="video-preview"
+	class:selected={isSelected}
+	class:transparent={isWatched}
 	aria-hidden
 	use:tooltip={{ content: `Сообщение от ${username}\n${message}`, placement: 'left' }}
 	on:click
@@ -22,7 +33,12 @@
 		<div>
 			<p class="video-preview__username">Заказал: {username}</p>
 			{#if price > 0}
-				<div class="video-preview__price">{price} RUB</div>
+				<div style="display: flex; gap: 5px;">
+					<div class="video-preview__chip">{price} RUB</div>
+					{#if isTimerEnabled && isSelected && endSeconds}
+						<div class="video-preview__chip">{$hhmmss}</div>
+					{/if}
+				</div>
 			{/if}
 		</div>
 	</div>
@@ -37,6 +53,10 @@
 		gap: 10px;
 		width: 100%;
 		height: 70px;
+
+		&:not(.selected).transparent {
+			opacity: 0.3;
+		}
 
 		&__thumbnail {
 			position: relative;
@@ -84,14 +104,19 @@
 			overflow: hidden;
 		}
 
-		&__price {
+		&__chip {
 			padding: 0px 5px;
-			border-radius: 8px;
+			border-radius: 4px;
 			width: fit-content;
 			font-size: 0.8rem;
 			font-weight: 500;
 			color: var(--on-surface);
-			background-color: var(--primary-50);
+			background-color: var(--primary-40);
 		}
+
+		// &.selected &__chip {
+		// 	color: var(--on-surface);
+		// 	background-color: var(--primary-50);
+		// }
 	}
 </style>

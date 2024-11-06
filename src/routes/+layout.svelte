@@ -1,23 +1,15 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { page } from '$app/stores';
-	import centrifugo from '$lib/centrifugo';
-	import chat from '$lib/chat';
+	import DonateKit from '$lib/components/DonateKit.svelte';
 	import initializeSubscriptions from '$lib/subscriptionBus';
 	import twitchApi from '$lib/twitchApi';
 	import { onMount } from 'svelte';
 
 	let twitchChannel = $page.data.twitchChannel;
-	let donationAlertsUser = $page.data.donationAlertsUser;
 
 	onMount(() => {
-		if (twitchChannel) {
-			twitchApi.validateTokenWithInterval();
-			chat.initialize(twitchChannel.login);
-		}
-
-		if (donationAlertsUser) {
-			centrifugo.connect(donationAlertsUser);
-		}
+		if (twitchChannel) twitchApi.validateTokenWithInterval();
 
 		initializeSubscriptions();
 	});
@@ -25,6 +17,11 @@
 
 <div class="layout-wrapper">
 	<slot />
+	{#if dev}
+		<div style="position: absolute; right: 20px; bottom: 20px;">
+			<DonateKit />
+		</div>
+	{/if}
 </div>
 
 <style lang="scss">

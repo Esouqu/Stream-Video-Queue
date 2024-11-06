@@ -1,23 +1,26 @@
 import { writable } from 'svelte/store';
-import type { IDonationAlertsUserData, IDonationData, IQueueVideoInfo } from './interfaces';
-import { SOCKET_STATE } from './constants';
-import queue from './stores/queue';
-import settings from './stores/settings';
-import { extractYoutubeVideoData } from './utils';
+import type { IDonationAlertsUserData, IDonationData, IQueueVideoInfo, IToggleWithInput } from '../interfaces';
+import { SOCKET_STATE } from '../constants';
+import queue from './queue';
+import settings from './settings';
+import { extractYoutubeVideoData } from '../utils';
 
 function createCentrifugo() {
   const state = writable<SOCKET_STATE>(SOCKET_STATE.CLOSED);
+  const minuteInSeconds = 60;
 
   let socket: WebSocket;
-  let minYoutubeLinkPrice: number;
-  let isYoutubeLinksEnabled: boolean;
-  let donationSkip: { isEnabled: boolean, value: number, type: 'fixed' | 'percent' };
+  let linkAction: IToggleWithInput;
+  let skipAction: { isEnabled: boolean, value: number, type: 'fixed' | 'percent' };
   let currentVideo: IQueueVideoInfo | undefined;
+  let timerType: 'fixed' | 'perMinute';
 
   function initialize() {
-    settings.minDonationValue.subscribe((store) => minYoutubeLinkPrice = store);
-    settings.isDonationEnabled.subscribe((store) => isYoutubeLinksEnabled = store);
-    settings.donationSkip.subscribe((store) => donationSkip = store);
+    settings.donationalerts.subscribe((store) => {
+      linkAction = store.linkAction;
+      skipAction = store.skipAction;
+    });
+    settings.timer.subscribe((store) => timerType = store.type);
     queue.currentVideo.subscribe((store) => currentVideo = store)
   }
 
@@ -28,9 +31,7 @@ function createCentrifugo() {
     socket.addEventListener('open', () => {
       socket.send(
         JSON.stringify({
-          params: {
-            token: user.socket_connection_token
-          },
+          params: { token: user.socket_connection_token },
           id: 1
         })
       );
@@ -84,18 +85,31 @@ function createCentrifugo() {
     const roundedAmount = Math.round(donation.amount_in_user_currency);
     const username = donation.username ?? 'Аноним';
     const videoData = extractYoutubeVideoData(donation.message);
-    const dynamicSkipValue = currentVideo ? donationSkip.value / 100 * currentVideo.price : 0;
-    const skipPrice = donationSkip.type === 'fixed' ? donationSkip.value : dynamicSkipValue;
+    const dynamicSkipValue = currentVideo ? skipAction.value / 100 * currentVideo.price : 0;
+    const skipPrice = skipAction.type === 'fixed' ? skipAction.value : dynamicSkipValue;
 
-    if (videoData && isYoutubeLinksEnabled && roundedAmount >= minYoutubeLinkPrice) {
+    if (videoData && linkAction.isEnabled && roundedAmount >= linkAction.value) {
+      const startSeconds = videoData.startSeconds;
+      const paidSeconds = Math.round(roundedAmount / linkAction.value * minuteInSeconds);
+      const isStartAndEndSecondsSame = startSeconds + paidSeconds === startSeconds;
+      let endSeconds = isStartAndEndSecondsSame || timerType === 'perMinute' ? undefined : startSeconds + paidSeconds;
+
+      if (timerType === 'fixed') {
+        endSeconds = 60;
+      } else {
+        endSeconds = paidSeconds;
+      }
+
       queue.add({
-        ...videoData,
+        videoId: videoData.videoId,
+        startSeconds,
+        endSeconds,
         username,
         price: roundedAmount,
         message: donation.message,
         isPaid: true,
       });
-    } else if (donationSkip.isEnabled && roundedAmount === skipPrice) {
+    } else if (skipAction.isEnabled && roundedAmount === skipPrice) {
       queue.setNext();
     }
   }
@@ -110,6 +124,7 @@ function createCentrifugo() {
     connect,
     disconnect,
     initialize,
+    processDonation,
   }
 }
 
