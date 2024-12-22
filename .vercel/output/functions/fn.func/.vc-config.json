@@ -1,0 +1,10 @@
+{
+	"runtime": "nodejs22.x",
+	"handler": "..\\..\\..\\..\\..\\..\\..\\..\\Users\\T3s\\Desktop\\projects\\web\\Deployed\\Stream-Video-Viewer\\.svelte-kit\\vercel-tmp\\index.js",
+	"launcherType": "Nodejs",
+	"experimentalResponseStreaming": true,
+	"framework": {
+		"slug": "sveltekit",
+		"version": "2.9.0"
+	}
+}

@@ -1,12 +1,12 @@
 <div class="circle-wrapper">
-	<div class="circle" />
+	<div class="circle"></div>
 </div>
 
 <style lang="scss">
 	.circle {
 		height: var(--spinner-size, 25px);
 		width: var(--spinner-size, 25px);
-		border-color: var(--primary-60) var(--primary-60) transparent transparent;
+		border-color: hsl(var(--primary)) hsl(var(--primary)) transparent transparent;
 		border-width: calc(var(--spinner-size) / 10);
 		border-style: solid;
 		border-image: initial;

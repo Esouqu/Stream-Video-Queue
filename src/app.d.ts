@@ -8,8 +8,8 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		interface PageData {
-			twitchChannel?: ITwitchUserData;
-			donationAlertsUser?: IDonationAlertsUserData;
+			twitchUserData?: ITwitchUserData;
+			donationAlertsUserData?: IDonationAlertsUserData;
 		}
 		// interface PageState {}
 		// interface Platform {}

@@ -102,7 +102,7 @@ export interface IDonationAlertsUserData {
   socket_connection_token: string;
 }
 
-export interface IDonationData {
+export interface IDonationSocketData {
   id: number | string;
   name: string;
   username: string;
@@ -134,65 +134,40 @@ export interface ITwitchUserData {
   created_at: Date;
 }
 
-export interface ITwitchPollData {
-  "data": [
-    {
-      "id": string,
-      "broadcaster_id": string,
-      "broadcaster_name": string,
-      "broadcaster_login": string,
-      "title": string,
-      "choices": Array<{
-        "id": string,
-        "title": string,
-        "votes": number,
-        "channel_points_votes": number,
-        "bits_votes": number
-      }>,
-      "bits_voting_enabled": boolean,
-      "bits_per_vote": number,
-      "channel_points_voting_enabled": boolean,
-      "channel_points_per_vote": number,
-      "status": "ACTIVE",
-      "duration": number,
-      "started_at": string
-    }
-  ]
-}
+export interface IQueueItem {
+  id: number;
+  submittedBy: string[];
+  donationAmount: number;
+  message: string;
+  isWatched: boolean;
 
-export interface IUserInput {
-  keepKeyword: string;
-  skipKeyword: string;
-  needed: number;
-}
-
-export interface IQueueVideoInfo {
-  id: string;
   videoId: string;
   startSeconds: number;
-  endSeconds?: number;
   title: string;
   channelTitle: string;
   thumbnail: string;
-  username: string;
-  price: number;
-  message: string;
-  isPaid: boolean;
-  isWatched: boolean;
 }
 
-export interface IToggleWithInput {
-  isEnabled: boolean;
-  value: number;
+export interface TwitchVideoData {
+  id: string;
+  stream_id: string | null;
+  user_id: string;
+  user_login: string;
+  user_name: string;
+  title: string;
+  description: string;
+  created_at: string;
+  published_at: string;
+  url: string;
+  thumbnail_url: string;
+  viewable: string;
+  view_count: number;
+  language: string;
+  type: 'archive' | 'highlight' | 'upload';
+  duration: string;
+  muted_segments: Array<{ duration: number; offset: number }>;
 }
 
-export interface ITimerSettings extends IToggleWithInput {
-  type: 'fixed' | 'perMinute';
-}
-
-export interface IDonationalertsSettings {
-  linkAction: IToggleWithInput;
-  skipAction: IToggleWithInput & {
-    type: 'fixed' | 'percent';
-  };
+export interface TwitchVideoDataResponse {
+  data: TwitchVideoData[];
 }

@@ -1,29 +1,38 @@
 <script lang="ts">
-	import queue from '$lib/stores/queue';
 	import { flip } from 'svelte/animate';
-	import { fade } from 'svelte/transition';
-	import type { IQueueVideoInfo } from '$lib/interfaces';
-	import Spinner from './Spinner.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
+	import { ScrollArea } from './ui/scroll-area';
+	import type { IQueueItem } from '$lib/interfaces';
+	import { remToPx } from '$lib/utils';
 
-	const itemHeight = 80;
+	interface Props {
+		items: IQueueItem[];
+		currentItemIndex: number;
+		scrollElement?: HTMLDivElement | null;
+		children: Snippet<[IQueueItem & { position: number }]>;
+	}
+
 	const itemsBuffer = 3;
-	const itemsBufferHeight = itemsBuffer * itemHeight;
 
-	export let scrollElement: HTMLDivElement;
-	export let items: IQueueVideoInfo[];
-	export let shouldSort = false;
+	let { items, currentItemIndex, scrollElement = $bindable(null), children }: Props = $props();
 
-	let scrollTop = 0;
-	let windowHeight: number;
-	let minHeight: number;
-	let startIndex: number;
-	let endIndex: number;
-	let visibleItems: (IQueueVideoInfo & { position: number })[] = [];
+	let scrollTop = $state(0);
+	let itemHeight = $state(remToPx(5.5));
+	let itemsBufferHeight = $derived(itemsBuffer * itemHeight);
+	let windowHeight: number = $state(0);
+	let minHeight: number = $state(0);
+	let visibleItems: (IQueueItem & { position: number })[] = $state([]);
+	let mappedItems = $derived(items.map((l, idx) => ({ ...l, position: idx + 1 })));
 
-	$: isQueueLoading = queue.isLoading;
-	$: mappedItems = mapQueue(items);
-	$: {
+	onMount(() => {
+		if (scrollElement) {
+			minHeight = scrollElement.offsetHeight;
+
+			setTimeout(() => scrollToCurrentItem(), 300);
+		}
+	});
+
+	$effect(() => {
 		if (scrollElement) {
 			// Position of the top of the viewport
 			const viewportTop = scrollTop - itemsBufferHeight;
@@ -35,66 +44,65 @@
 			const potentialEndIndex = Math.floor(viewportBottom / itemHeight);
 			// Ensure potentialEndIndex does not exceed the length of the mappedItems
 			const clampedEndIndex = Math.min(mappedItems.length, potentialEndIndex);
+			const startIndex = Math.max(0, potentialStartIndex);
+			const endIndex = Math.max(startIndex, clampedEndIndex);
 
-			startIndex = Math.max(0, potentialStartIndex);
-			endIndex = Math.max(startIndex, clampedEndIndex);
 			visibleItems = mappedItems.slice(startIndex, endIndex);
 			minHeight = Math.max(scrollElement.offsetHeight, itemHeight * mappedItems.length);
 		}
-	}
+	});
 
-	onMount(() => (minHeight = scrollElement.offsetHeight));
-
-	function mapQueue(q: IQueueVideoInfo[]) {
-		if (shouldSort) {
-			q = [...q].sort((a, b) => b.price - a.price);
+	$effect(() => {
+		if (scrollElement && currentItemIndex >= 0) {
+			scrollToCurrentItem();
 		}
+	});
 
-		return q.map((l, idx) => ({ ...l, position: idx + 1 }));
+	function scrollToCurrentItem() {
+		if (!scrollElement) return;
+
+		const scrollToOffset = (itemsBuffer / 2) * itemHeight;
+		const targetPosition = currentItemIndex * itemHeight;
+
+		scrollElement.scrollTo({
+			top: Math.max(targetPosition - scrollToOffset, 0),
+			behavior: 'smooth'
+		});
 	}
 
-	function onScroll(e: UIEvent) {
+	function onresize() {
+		itemHeight = remToPx(5.5);
+	}
+
+	function onscroll(e: UIEvent) {
 		const target = e.target as HTMLDivElement;
 
 		scrollTop = target.scrollTop;
 	}
 </script>
 
-<svelte:window bind:innerHeight={windowHeight} />
+<svelte:window bind:innerHeight={windowHeight} {onresize} />
 
-<div class="queue" bind:this={scrollElement} on:scroll={onScroll}>
-	<ul class="queue-list" style="grid-auto-rows: {itemHeight}px; height: {minHeight}px;">
+<ScrollArea class="relative flex h-full p-2" bind:ref={scrollElement} {onscroll}>
+	<div class="queue-list" style="grid-auto-rows: {itemHeight}px; height: {minHeight}px;">
 		{#each visibleItems as item (item.id)}
-			<div class="queue-item" style="grid-row: {item.position};" animate:flip={{ duration: 200 }}>
-				<slot {item} />
+			<div class="flex" style="grid-row: {item.position};" animate:flip={{ duration: 200 }}>
+				{@render children(item)}
 			</div>
 		{:else}
-			<div class="queue-list-empty" transition:fade>
-				{#if $isQueueLoading}
-					<Spinner --spinner-size="40px" />
-				{:else}
-					<p>Очередь пуста</p>
-				{/if}
+			<div class="queue-list-empty">
+				<p class="text-lg font-medium text-muted-foreground">Очередь пуста</p>
 			</div>
 		{/each}
-	</ul>
-</div>
+	</div>
+</ScrollArea>
 
 <style lang="scss">
 	.queue {
-		height: 100%;
-		overflow-y: auto;
-		overflow-x: hidden;
-		scrollbar-gutter: stable;
-
 		&-list {
-			position: relative;
 			display: grid;
 			grid-auto-flow: row;
-			padding: 0;
-			margin: 0;
-			list-style-type: none;
-			transition: height 0.2s ease 0.2s;
+			transition: height 0.2s;
 
 			&-empty {
 				position: absolute;
@@ -104,9 +112,7 @@
 				justify-content: center;
 				align-items: center;
 				width: 100%;
-				font-size: 1.25rem;
-				color: var(--on-surface);
-				opacity: 0.7;
+				height: 100%;
 			}
 		}
 	}

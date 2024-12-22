@@ -1,0 +1,16 @@
+const GOOGLE_API_KEY = "AIzaSyD-Z_CgltMcJqPl5paKjM3XrRVAhcuojOc";
+const DONATIONALERTS_SECRET_KEY = "gDzPbC4gg8WLHUNAHZLralXOgRipiWiOx1EdMFiu";
+const DONATIONALERTS_SESSION = "TYDonationAlertsSession";
+const DONATIONALERTS_REFRESH_TOKEN = "TYDonationAlertsRefreshToken";
+const TWITCH_SECRET_KEY = "3d21pmo9ws6ftwczc9a80b3xznvtv9";
+const TWITCH_SESSION = "TYTwitchSession";
+const TWITCH_REFRESH_TOKEN = "TYTwitchRefreshToken";
+export {
+  DONATIONALERTS_SESSION as D,
+  GOOGLE_API_KEY as G,
+  TWITCH_SESSION as T,
+  DONATIONALERTS_REFRESH_TOKEN as a,
+  DONATIONALERTS_SECRET_KEY as b,
+  TWITCH_REFRESH_TOKEN as c,
+  TWITCH_SECRET_KEY as d
+};

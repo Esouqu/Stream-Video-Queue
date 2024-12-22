@@ -1,193 +1,70 @@
 <script lang="ts">
-	import { measureTextWidth } from '$lib/utils';
+	import { Input } from './ui/input';
+	import type { HTMLInputAttributes } from 'svelte/elements';
 
-	export let id: number | string;
-	export let value: string = '';
-	export let type: 'text' | 'number';
-	export let placeholder: string = '';
-	export let suffix: string = '';
-	export let isFilled = false;
-	export let isDisabled = false;
-	export let isPreventInput = false;
-	export let isBorderless = true;
-	export let element: HTMLInputElement | null = null;
-	export let onEnter: (() => void) | null = null;
-	export let onInput: (() => void) | null = null;
-	export let onBlur: (() => void) | null = null;
+	interface Props {
+		id: string;
+		class?: string;
+		value?: string | number | null;
+		type?: HTMLInputAttributes['type'];
+		confirmAction?: 'enter/blur' | 'default';
+		placeholder?: string;
+		suffix?: string;
+		isFilled?: boolean;
+		disabled?: boolean;
+		onConfirmation?: ((value: number | string | null) => void) | null;
+	}
 
-	$: {
-		if (value && element && isBorderless) {
-			element.style.width = measureTextWidth(value) + 'px';
+	let {
+		id,
+		class: className,
+		type,
+		value = $bindable(type === 'number' ? null : ''),
+		confirmAction = 'default',
+		placeholder = '',
+		disabled = false,
+		onConfirmation
+	}: Props = $props();
+
+	let ref: HTMLElement | null | undefined = $state();
+
+	function onkeydown(e: KeyboardEvent) {
+		if (confirmAction === 'enter/blur' && e.key === 'Enter') {
+			onConfirmation?.(value);
+			ref?.blur();
 		}
 	}
 
-	function handleInput(e: Event) {
-		if (isPreventInput) return;
-
+	function oninput(e: Event) {
 		const target = e.target as HTMLInputElement;
 
 		if (type === 'number') {
-			parseInput(target.value);
+			value = Number(target.value);
 		} else {
 			value = target.value;
 		}
 
-		if (onInput) onInput();
-	}
-
-	function handleKeyDown(e: KeyboardEvent) {
-		const target = e.target as HTMLInputElement;
-		const isConfirmKey = e.code === 'Enter';
-
-		if (!isConfirmKey) return;
-
-		if (onEnter) onEnter();
-
-		if (type === 'number') {
-			parseInput(target.value);
-		} else {
-			value = target.value;
+		if (confirmAction === 'default') {
+			onConfirmation?.(value);
 		}
-
-		target.blur();
 	}
 
-	function handleBlur(e: Event) {
-		const target = e.target as HTMLInputElement;
-
-		if (!onBlur) return;
-
-		if (type === 'number') {
-			parseInput(target.value);
-		} else {
-			value = target.value;
+	function onblur() {
+		if (confirmAction === 'enter/blur') {
+			onConfirmation?.(value);
 		}
-
-		onBlur();
-	}
-
-	function parseInput(inputValue: string) {
-		value = inputValue;
-		const parsedValue = value.match(/\d+/g)?.join('');
-		value = parsedValue ?? '';
 	}
 </script>
 
-<div
-	class="input-wrapper"
-	class:disabled={isDisabled}
-	class:filled={isFilled}
-	class:borderless={isBorderless}
-	data-suffix={suffix}
->
-	<input
-		type="text"
-		id="input-{id}"
-		class="input"
-		{value}
-		{placeholder}
-		spellcheck="false"
-		bind:this={element}
-		on:keydown={handleKeyDown}
-		on:input|preventDefault={handleInput}
-		on:blur|preventDefault={handleBlur}
-		on:focus
-	/>
-</div>
-
-<style lang="scss">
-	.input {
-		position: relative;
-		padding: var(--input-p, 0);
-		border-radius: 5px;
-		outline: 0;
-		min-width: 50px;
-		width: var(--input-w, 50px);
-		font-size: var(--input-font-size, 1rem);
-		font-weight: var(--input-font-weight, 400);
-		text-align: var(--input-text-al, center);
-		text-decoration: none;
-		color: var(--on-surface);
-		background-color: transparent;
-		transition:
-			outline 0.2s,
-			border-color 0.2s;
-		cursor: pointer;
-
-		&-wrapper {
-			position: relative;
-			display: flex;
-			gap: 10px;
-			width: var(--input-w-w, auto);
-
-			&.borderless {
-				& .input {
-					border: 0;
-					border-radius: 0;
-
-					&:focus {
-						outline: 0;
-					}
-				}
-
-				&::before {
-					content: '';
-					position: absolute;
-					bottom: -2px;
-					width: 100%;
-					opacity: 0.5;
-					outline: 1px dashed var(--on-surface);
-					background-color: var(--on-surface);
-				}
-			}
-
-			&.disabled {
-				opacity: 0.5;
-			}
-
-			&.filled {
-				& .input {
-					background-color: var(--surface-container-highest);
-
-					&:focus {
-						border-color: var(--primary);
-					}
-
-					&:hover:not(:focus):not(:disabled) {
-						border-color: white;
-					}
-				}
-			}
-
-			&::after {
-				content: attr(data-suffix);
-				position: absolute;
-				top: 52%;
-				right: 10px;
-				z-index: 999;
-				translate: 0 -50%;
-				font-size: 0.9rem;
-				text-transform: capitalize;
-				opacity: 0.7;
-			}
-		}
-
-		&:focus {
-			z-index: 999;
-			outline: 3px solid var(--outline-variant);
-			border-color: transparent;
-		}
-
-		&:hover:not(:focus):not(:disabled) {
-			border-color: white;
-		}
-
-		&::selection {
-			background-color: var(--primary-60);
-		}
-
-		&::-webkit-inner-spin-button {
-			display: none;
-		}
-	}
-</style>
+<Input
+	{id}
+	{type}
+	{value}
+	{placeholder}
+	{disabled}
+	bind:ref
+	{onkeydown}
+	{oninput}
+	{onblur}
+	class={className}
+/>
