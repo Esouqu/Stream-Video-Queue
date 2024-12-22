@@ -1,20 +1,18 @@
 <script>
 	import { fly } from 'svelte/transition';
+	import Badge from './ui/badge/badge.svelte';
 </script>
 
-<div class="auto-indicator" transition:fly={{ y: 10, duration: 200 }}>Авто</div>
+<div class="auto-indicator" transition:fly={{ y: 10, duration: 200 }}>
+	<Badge class="px-1 py-[0.125rem] leading-none">Авто</Badge>
+</div>
 
 <style lang="scss">
 	.auto-indicator {
 		position: absolute;
-		top: -10px;
+		top: -0.75rem;
 		left: 50%;
-		z-index: 999;
+		z-index: 3;
 		translate: -50% 0;
-		padding: 0px 5px;
-		border-radius: 5px;
-		font-size: 0.9rem;
-		color: var(--on-surface);
-		background-color: var(--primary-50);
 	}
 </style>

@@ -1,35 +1,48 @@
 <script lang="ts">
+	import '../app.css';
+	import appManager from '$lib/scripts/AppManager.svelte';
 	import { page } from '$app/stores';
-	import centrifugo from '$lib/centrifugo';
-	import chat from '$lib/chat';
-	import initializeSubscriptions from '$lib/subscriptionBus';
-	import twitchApi from '$lib/twitchApi';
-	import { onMount } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
+	import VideoPlayer from '$lib/components/VideoPlayer.svelte';
+	import { TooltipProvider } from '$lib/components/ui/tooltip';
+	import Votes from '$lib/components/Votes.svelte';
+	import twitchApi from '$lib/api/twitchApi';
+	import { updateLocalStorageVersion } from '$lib/utils';
 
-	let twitchChannel = $page.data.twitchChannel;
-	let donationAlertsUser = $page.data.donationAlertsUser;
+	interface Props {
+		children: Snippet;
+	}
+
+	let { children }: Props = $props();
+
+	let twitchUser = $page.data.twitchUserData;
+	let donationalertsUser = $page.data.donationAlertsUserData;
 
 	onMount(() => {
-		if (twitchChannel) {
-			twitchApi.validateTokenWithInterval();
-			chat.initialize(twitchChannel.login);
+		updateLocalStorageVersion(1);
+
+		if (twitchUser) {
+			twitchApi.validateTokenEveryHour();
+			appManager.twitchChatSocket.connect(twitchUser.login);
 		}
 
-		if (donationAlertsUser) {
-			centrifugo.connect(donationAlertsUser);
+		if (donationalertsUser) {
+			appManager.centrifugoSocket.connect(donationalertsUser);
 		}
-
-		initializeSubscriptions();
 	});
 </script>
 
-<div class="layout-wrapper">
-	<slot />
-</div>
+<TooltipProvider delayDuration={0}>
+	<div class="relative grid h-full w-full grid-cols-[auto_25.6rem]">
+		<div class="m-4 flex flex-col justify-center gap-4">
+			<VideoPlayer />
+			{#if appManager.poll.isEnabled}
+				<div class="relative flex w-full flex-1 items-center justify-center">
+					<Votes />
+				</div>
+			{/if}
+		</div>
 
-<style lang="scss">
-	.layout-wrapper {
-		position: relative;
-		display: contents;
-	}
-</style>
+		{@render children()}
+	</div>
+</TooltipProvider>

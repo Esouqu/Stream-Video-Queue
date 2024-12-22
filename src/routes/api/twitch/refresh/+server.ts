@@ -7,7 +7,7 @@ import { type RequestHandler } from "@sveltejs/kit";
 export const POST: RequestHandler = async ({ cookies }) => {
   const refreshToken = cookies.get(TWITCH_REFRESH_TOKEN);
 
-  if (!refreshToken) return new Response('No refresh token is available', { status: 400 });
+  if (!refreshToken) return new Response('Refresh token is required', { status: 400 });
 
   try {
     const response = await fetch('https://id.twitch.tv/oauth2/token', {
@@ -19,18 +19,15 @@ export const POST: RequestHandler = async ({ cookies }) => {
         client_secret: TWITCH_SECRET_KEY,
         refresh_token: refreshToken
       })
-    }).then((res) => res);
+    });
 
-    if (response.status === 400) {
+    if (!response.ok) {
       cookies.delete(TWITCH_SESSION, { path: '/' });
       cookies.delete(TWITCH_REFRESH_TOKEN, { path: '/' });
+      return new Response('Refresh token is invalid', { status: response.status });
+    }
 
-      location.reload();
-
-      return new Response('Refresh token is invalid', { status: 400 })
-    };
-
-    const tokenData = await response.json().then((data: IAuthTokenData) => data);
+    const tokenData: IAuthTokenData = await response.json();
 
     cookies.set(TWITCH_SESSION, tokenData.access_token, {
       path: '/',
@@ -40,17 +37,11 @@ export const POST: RequestHandler = async ({ cookies }) => {
     cookies.set(TWITCH_REFRESH_TOKEN, tokenData.refresh_token, {
       path: '/',
       secure: !dev,
-      expires: new Date(Date.now() + 30 * 1000 * 60 * 60 * 24),
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
     return new Response(JSON.stringify(tokenData), { status: 200 });
-  } catch (err: unknown) {
-    const error = err as { response: { status: number } };
-
-    if (error.response?.status === 401) {
-      return new Response('The twitch refresh token is invalid', { status: error.response.status });
-    } else {
-      return new Response('Something went wrong', { status: 500 });
-    }
+  } catch {
+    return new Response('Something went wrong', { status: 500 });
   }
 };

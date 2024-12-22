@@ -1,15 +1,22 @@
 import { DONATIONALERTS_SESSION } from "$env/static/private";
-import type { IDonationAlertsUserData } from "$lib/interfaces";
 import type { RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ cookies }) => {
-  const session = cookies.get(DONATIONALERTS_SESSION);
+  const donationAlertsSession = cookies.get(DONATIONALERTS_SESSION);
 
-  if (!session) return new Response(JSON.stringify('No DonationAlerts session available'), { status: 401 });
+  if (!donationAlertsSession) {
+    return new Response(JSON.stringify('No DonationAlerts session available'), { status: 401 });
+  }
 
-  const user = await fetch('https://www.donationalerts.com/api/v1/user/oauth', {
-    headers: { 'Authorization': `Bearer ${session}` }
-  }).then((res) => res.json()).then((data: { data: IDonationAlertsUserData }) => data.data);
+  const response = await fetch('https://www.donationalerts.com/api/v1/user/oauth', {
+    headers: { Authorization: `Bearer ${donationAlertsSession}` },
+  });
 
-  return new Response(JSON.stringify(user), { status: 200 });
+  if (!response.ok) {
+    return new Response(JSON.stringify('Failed to get user data'), { status: response.status });
+  }
+
+  const { data: userData } = await response.json();
+
+  return new Response(JSON.stringify(userData), { status: 200 });
 };

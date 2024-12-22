@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 7%;
+    /* --card: 240 5.88% 10%; */
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 348 100% 50%;
+    --primary-foreground: 0 85.7% 97.3%;
+    --secondary: 0 0% 98%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 40%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+
+    height: 100vh;
+    overflow: hidden;
+
+    &.grabbing {
+      cursor: grabbing;
+
+      &>* {
+        pointer-events: none;
+      }
+    }
+  }
+
+  @media screen and (min-width: 2560px) {
+    html {
+      font-size: 133%;
+    }
+  }
+}
