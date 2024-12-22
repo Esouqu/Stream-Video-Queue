@@ -6,11 +6,8 @@
 	import VideoPlayer from '$lib/components/VideoPlayer.svelte';
 	import { TooltipProvider } from '$lib/components/ui/tooltip';
 	import Votes from '$lib/components/Votes.svelte';
-	import DevKit from '$lib/components/dev/DevKit.svelte';
-	import { dev } from '$app/environment';
 	import twitchApi from '$lib/api/twitchApi';
 	import { updateLocalStorageVersion } from '$lib/utils';
-	import Todo from '$lib/components/dev/Todo.svelte';
 
 	interface Props {
 		children: Snippet;
@@ -42,12 +39,6 @@
 			{#if appManager.poll.isEnabled}
 				<div class="relative flex w-full flex-1 items-center justify-center">
 					<Votes />
-					{#if dev}
-						<div class="absolute right-4">
-							<DevKit />
-							<Todo />
-						</div>
-					{/if}
 				</div>
 			{/if}
 		</div>
