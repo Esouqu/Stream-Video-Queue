@@ -71,7 +71,7 @@
 	</TooltipTrigger>
 
 	<Portal>
-		<TooltipContent side="left" sideOffset={48} class="max-w-xs">
+		<TooltipContent side="left" sideOffset={48} class="max-w-xs bg-zinc-900">
 			<div>
 				<p><span class="text-sm font-medium">Название</span>: {title}</p>
 				<p><span class="text-sm font-medium">Канал</span>: {channelTitle}</p>

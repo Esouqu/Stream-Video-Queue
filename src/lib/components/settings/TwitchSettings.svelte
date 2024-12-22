@@ -45,13 +45,13 @@
 				{#snippet content()}
 					<SettingWrapper
 						title="Оставить"
-						description={`Ключевое слово за продолжение просмотра.\nНе используйте специальные символы!`}
+						description={`Ключевое слово за продолжение просмотра.\nИспользуйте только буквы и цифры!`}
 					>
 						<Input id="keep-keyword" type="text" bind:value={appManager.poll.keepKeyword} />
 					</SettingWrapper>
 					<SettingWrapper
 						title="Пропустить"
-						description={`Ключевое слово за пропуск текущего видео.\nНе используйте специальные символы!`}
+						description={`Ключевое слово за пропуск текущего видео.\nИспользуйте только буквы и цифры!`}
 					>
 						<Input id="skip-keyword" type="text" bind:value={appManager.poll.skipKeyword} />
 					</SettingWrapper>
@@ -65,10 +65,9 @@
 								if (typeof val === 'number') appManager.poll.neededVotes = val;
 							}}
 						/>
-						<!-- <Input id="twitch-votes" type="number" bind:value={appManager.poll.neededVotes} /> -->
 					</SettingWrapper>
 					<SettingWrapper
-						title="Пропуск видео"
+						title="Автопропуск"
 						description="Пропускать текущее видео по достижению нужного количества голосов"
 					>
 						<Switch bind:checked={appManager.poll.shouldAutoSkip} />

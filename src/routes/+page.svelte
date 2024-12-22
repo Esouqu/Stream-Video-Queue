@@ -17,6 +17,7 @@
 	import { slide } from 'svelte/transition';
 	import MultipleSelect from '$lib/components/MultipleSelect.svelte';
 	import Settings from '$lib/components/settings/Settings.svelte';
+	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
 
 	let scrollElement: HTMLDivElement | null = $state(null);
 	let queueItems = $derived(appManager.queue.items);
@@ -121,19 +122,33 @@
 			</Button>
 
 			<div class="flex">
-				<Toggle bind:pressed={appManager.queue.shouldPlayRandomly}>
-					<ShuffleIcon />
-				</Toggle>
-				<Toggle class="relative" bind:pressed={appManager.queue.shouldHideWatched}>
-					<EyeOffIcon />
-					{#if currentItems && queueItems && appManager.queue.shouldHideWatched}
-						<span
-							class="absolute right-[-0.25rem] top-[-0.25rem] flex min-w-6 justify-center p-0.5 text-xs"
-						>
-							{queueItems.length - currentItems.length}
-						</span>
-					{/if}
-				</Toggle>
+				<Tooltip disableHoverableContent delayDuration={300}>
+					<TooltipTrigger>
+						{#snippet child({ props })}
+							<Toggle {...props} bind:pressed={appManager.queue.shouldPlayRandomly}>
+								<ShuffleIcon />
+							</Toggle>
+						{/snippet}
+					</TooltipTrigger>
+					<TooltipContent class="bg-zinc-900">Воспроизводить случайно</TooltipContent>
+				</Tooltip>
+				<Tooltip disableHoverableContent delayDuration={300}>
+					<TooltipTrigger>
+						{#snippet child({ props })}
+							<Toggle class="relative" {...props} bind:pressed={appManager.queue.shouldHideWatched}>
+								<EyeOffIcon />
+								{#if currentItems && queueItems && appManager.queue.shouldHideWatched}
+									<span
+										class="absolute right-[-0.25rem] top-[-0.25rem] flex min-w-6 justify-center p-0.5 text-xs"
+									>
+										{queueItems.length - currentItems.length}
+									</span>
+								{/if}
+							</Toggle>
+						{/snippet}
+					</TooltipTrigger>
+					<TooltipContent class="bg-zinc-900">Скрывать просмотренное</TooltipContent>
+				</Tooltip>
 			</div>
 		</div>
 		<div>
