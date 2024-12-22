@@ -1,31 +1,25 @@
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ fetch }) => {
+  const fetchUserData = async (url: string, refreshUrl: string) => {
+    const response = await fetch(url);
+
+    if (response.status === 401) {
+      await fetch(refreshUrl, { method: 'POST' });
+      const refreshedResponse = await fetch(url);
+      return refreshedResponse.status === 200 ? refreshedResponse.json() : null;
+    }
+
+    return response.status === 200 ? response.json() : null;
+  };
+
   const [twitchUserData, donationAlertsUserData] = await Promise.all([
-    (async () => {
-      const response = await fetch('/api/twitch/user');
-
-      if (response.status === 401) {
-        await fetch('/api/twitch/refresh', { method: 'POST' });
-        return (await fetch('/api/twitch/user')).json();
-      }
-
-      return response.json();
-    })(),
-    (async () => {
-      const response = await fetch('/api/donationalerts/user');
-
-      if (response.status === 401) {
-        await fetch('/api/donationalerts/refresh', { method: 'POST' });
-        return (await fetch('/api/donationalerts/user')).json();
-      }
-
-      return response.json();
-    })(),
+    fetchUserData('/api/twitch/user', '/api/twitch/refresh'),
+    fetchUserData('/api/donationalerts/user', '/api/donationalerts/refresh')
   ]);
 
   return {
     twitchUserData,
     donationAlertsUserData,
-  }
+  };
 }
