@@ -1,1 +1,0 @@
-import{h as e,a as o,t as r}from"../chunks/disclose-version.Cz5Qo27d.js";import"../chunks/legacy._zovnSf6.js";import{$ as i}from"../chunks/runtime.Ctm-79fp.js";var p=r("<div>redirect</div>");function s(t){var a=p();e(d=>{i.title="Twitch - Redirect"}),o(t,a)}export{s as component};

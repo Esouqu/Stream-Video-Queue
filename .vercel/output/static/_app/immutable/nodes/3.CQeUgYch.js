@@ -1,1 +1,0 @@
-import{h as a,a as e,t as r}from"../chunks/disclose-version.Cz5Qo27d.js";import"../chunks/legacy._zovnSf6.js";import{$ as i}from"../chunks/runtime.Ctm-79fp.js";var p=r("<div>redirect</div>");function s(t){var o=p();a(d=>{i.title="DA - Redirect - Auction"}),e(t,o)}export{s as component};
