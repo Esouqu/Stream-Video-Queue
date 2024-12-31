@@ -4,7 +4,7 @@ import { PUBLIC_TWITCH_CLIENT_ID } from "$env/static/public";
 import type { IAuthTokenData } from "$lib/interfaces";
 import { type RequestHandler } from "@sveltejs/kit";
 
-export const POST: RequestHandler = async ({ cookies }) => {
+export const POST: RequestHandler = async ({ cookies, fetch }) => {
   const refreshToken = cookies.get(TWITCH_REFRESH_TOKEN);
 
   if (!refreshToken) return new Response('Refresh token is required', { status: 400 });

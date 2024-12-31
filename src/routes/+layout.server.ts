@@ -1,16 +1,24 @@
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ fetch }) => {
-  const fetchUserData = async (url: string, refreshUrl: string) => {
-    const response = await fetch(url);
+  const fetchUserData = async (url: string, refreshUrl: string): Promise<Record<string, unknown> | null> => {
+    try {
+      const response = await fetch(url);
 
-    if (response.status === 401) {
-      await fetch(refreshUrl, { method: 'POST' });
-      const refreshedResponse = await fetch(url);
-      return refreshedResponse.status === 200 ? refreshedResponse.json() : null;
+      if (response.status === 401) {
+        await fetch(refreshUrl, { method: 'POST' });
+        const refreshedResponse = await fetch(url);
+        if (refreshedResponse.status !== 200) return null;
+        return refreshedResponse.json();
+      }
+
+      if (response.status !== 200) return null;
+
+      return response.json();
+    } catch (error) {
+      console.error('[load]', error);
+      return null;
     }
-
-    return response.status === 200 ? response.json() : null;
   };
 
   const [twitchUserData, donationAlertsUserData] = await Promise.all([
@@ -19,7 +27,8 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
   ]);
 
   return {
-    twitchUserData,
-    donationAlertsUserData,
+    twitchUserData: twitchUserData ?? {},
+    donationAlertsUserData: donationAlertsUserData ?? {},
+    id: crypto.randomUUID(),
   };
-}
+};

@@ -4,7 +4,7 @@ import { PUBLIC_DONATIONALERTS_CLIENT_ID } from "$env/static/public";
 import type { IDonationAlertsRefreshToken } from "$lib/interfaces";
 import { type RequestHandler } from "@sveltejs/kit";
 
-export const POST: RequestHandler = async ({ cookies }) => {
+export const POST: RequestHandler = async ({ cookies, fetch }) => {
   const refreshToken = cookies.get(DONATIONALERTS_REFRESH_TOKEN);
   const scope = 'oauth-user-show oauth-donation-subscribe';
 

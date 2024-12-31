@@ -5,7 +5,7 @@ import type { IAuthTokenData } from "$lib/interfaces";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ url, cookies }) => {
+export const load: PageServerLoad = async ({ url, cookies, fetch }) => {
   const code = url.searchParams.get('code');
   const redirectUrl = dev ? 'http://localhost:5173/redirect/twitch' : 'https://stream-video-queue.vercel.app/redirect/twitch';
   const tokenUrl = 'https://id.twitch.tv/oauth2/token';

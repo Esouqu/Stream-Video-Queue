@@ -7,7 +7,7 @@ interface ISocketTokenData {
   }[]
 }
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, fetch }) => {
   const session = cookies.get(DONATIONALERTS_SESSION);
   const body = await request.json();
 

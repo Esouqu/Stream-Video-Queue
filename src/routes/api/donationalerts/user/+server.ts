@@ -1,7 +1,7 @@
 import { DONATIONALERTS_SESSION } from "$env/static/private";
 import type { RequestHandler } from "@sveltejs/kit";
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ cookies, fetch }) => {
   const donationAlertsSession = cookies.get(DONATIONALERTS_SESSION);
 
   if (!donationAlertsSession) {

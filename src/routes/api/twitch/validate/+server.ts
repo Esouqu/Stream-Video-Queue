@@ -2,7 +2,7 @@ import { TWITCH_REFRESH_TOKEN, TWITCH_SESSION } from "$env/static/private";
 import type { ITwitchValidation } from "$lib/interfaces";
 import type { RequestHandler } from "@sveltejs/kit";
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ cookies, fetch }) => {
   const twitchSession = cookies.get(TWITCH_SESSION);
   const twitchRefreshToken = cookies.get(TWITCH_REFRESH_TOKEN);
 

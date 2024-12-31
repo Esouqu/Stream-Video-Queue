@@ -3,7 +3,7 @@ import { PUBLIC_TWITCH_CLIENT_ID } from "$env/static/public";
 import type { ITwitchUserData } from "$lib/interfaces";
 import type { RequestHandler } from "@sveltejs/kit";
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ cookies, fetch }) => {
   const twitchSession = cookies.get(TWITCH_SESSION);
 
   if (!twitchSession) {
