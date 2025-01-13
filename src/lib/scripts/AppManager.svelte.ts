@@ -186,6 +186,7 @@ class AppManager {
   private _onCurrentQueueItemChange() {
     this._loadVideo(this.queue.current);
     this._setRemainingSeconds();
+    this.poll.resetCounter();
   }
 
   private _onTimerStateChange() {
@@ -213,7 +214,6 @@ class AppManager {
     const isEnoughVotes = this.poll.isEnoughVotes;
 
     if (isChatConnected && isEnoughVotes && shouldAutoSkip) {
-      this.poll.resetCounter();
       this.queue.next();
     }
   }
