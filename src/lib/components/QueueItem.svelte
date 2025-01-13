@@ -59,7 +59,9 @@
 				<p class="line-clamp-2 overflow-hidden text-ellipsis text-start text-sm font-medium">
 					{title}
 				</p>
-				<p class="text-ellipsis text-start text-xs text-muted-foreground">{channelTitle}</p>
+				<p class="line-clamp-1 text-ellipsis text-start text-xs text-muted-foreground">
+					{channelTitle}
+				</p>
 				<p class="text-ellipsis text-start text-xs text-muted-foreground">
 					Добавил {submittedBy[0]}
 					{#if submittedBy.length > 1}

@@ -21,12 +21,12 @@
 	onMount(() => {
 		updateLocalStorageVersion(1);
 
-		if (twitchUser) {
+		if (twitchUser?.id) {
 			twitchApi.validateTokenEveryHour();
 			appManager.twitchChatSocket.connect(twitchUser.login);
 		}
 
-		if (donationalertsUser) {
+		if (donationalertsUser?.id) {
 			appManager.centrifugoSocket.connect(donationalertsUser);
 		}
 	});

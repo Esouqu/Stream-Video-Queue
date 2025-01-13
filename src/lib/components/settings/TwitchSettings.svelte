@@ -10,11 +10,11 @@
 	import SettingSection from './SettingSection.svelte';
 	import { Switch } from '../ui/switch';
 
-	let twitchChannel = $state($page.data.twitchUserData);
+	let twitchUser = $state($page.data.twitchUserData);
 
 	function onLogout() {
 		fetch('/api/twitch/logout');
-		twitchChannel = undefined;
+		twitchUser = undefined;
 	}
 
 	function onAuth() {
@@ -26,12 +26,12 @@
 	<TwitchIcon color="#9147ff" />
 {/snippet}
 
-<SettingSection isExtended={!!twitchChannel}>
+<SettingSection isExtended={!!twitchUser?.id}>
 	{#snippet header()}
-		<Integration title="Twitch" username={twitchChannel?.display_name} {icon} {onAuth} {onLogout} />
+		<Integration title="Twitch" username={twitchUser?.display_name} {icon} {onAuth} {onLogout} />
 	{/snippet}
 	{#snippet content()}
-		{#if twitchChannel}
+		{#if twitchUser?.id}
 			<SettingCard isExtended={appManager.poll.isEnabled}>
 				{#snippet header()}
 					<SettingWrapper

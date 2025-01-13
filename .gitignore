@@ -10,3 +10,4 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 todo.txt
 src/lib/components/dev
+src/lib/components/update-note
