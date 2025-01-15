@@ -21,6 +21,7 @@ class Poll {
 
     if (!isUserVoted) {
       this._counter.keep++;
+      this._votedUsers.add(username);
     }
   }
 
@@ -29,6 +30,7 @@ class Poll {
 
     if (!isUserVoted) {
       this._counter.skip++;
+      this._votedUsers.add(username);
     }
   }
 
