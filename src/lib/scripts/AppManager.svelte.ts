@@ -147,10 +147,11 @@ class AppManager {
   private _getVideoSkipPrice() {
     if (!this.queue.current) return 0;
 
-    const { skipPrice, isSkipDynamic } = this.donationSettings;
-    const dynamicSkipValue = skipPrice / 100 * this.queue.current.donationAmount;
+    const { skipPrice, isSkipDynamic, requestPrice } = this.donationSettings;
+    const { donationAmount } = this.queue.current;
+    const dynamicSkipValue = skipPrice / 100 * donationAmount;
 
-    return isSkipDynamic ? dynamicSkipValue : skipPrice;
+    return isSkipDynamic ? dynamicSkipValue < 1 ? requestPrice : dynamicSkipValue : skipPrice;
   }
 
   private async _loadVideo(queueItem: IQueueItem | null) {
