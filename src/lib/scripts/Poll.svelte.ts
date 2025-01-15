@@ -7,6 +7,7 @@ class Poll {
     keepKeyword: 'Оставить',
     skipKeyword: 'Пропустить',
     shouldAutoSkip: false,
+    canChangeVote: false
   }, 'pollSettings');
 
   private _counter = $state({ keep: 0, skip: 0 });
@@ -14,24 +15,29 @@ class Poll {
   public currentPercent = $derived.by(this.calculateProgressBarPercentage.bind(this));
   public isEnoughVotes = $derived(this.difference >= this._settings.value.neededVotes);
 
-  private _votedUsers = new Set();
+  private _votedUsers = new Map<string, { vote: 'keep' | 'skip' }>();
 
-  public addKeep(username: string) {
-    const isUserVoted = this._votedUsers.has(username);
+  private _vote(username: string, vote: 'keep' | 'skip') {
+    const user = this._votedUsers.get(username);
 
-    if (!isUserVoted) {
-      this._counter.keep++;
-      this._votedUsers.add(username);
+    if (user && this.canChangeVote) {
+      if (user.vote !== vote) {
+        this._counter[user.vote]--;
+        this._counter[vote]++;
+        this._votedUsers.set(username, { vote });
+      }
+    } else if (!user) {
+      this._counter[vote]++;
+      this._votedUsers.set(username, { vote });
     }
   }
 
-  public addSkip(username: string) {
-    const isUserVoted = this._votedUsers.has(username);
+  public addKeep(username: string) {
+    this._vote(username, 'keep');
+  }
 
-    if (!isUserVoted) {
-      this._counter.skip++;
-      this._votedUsers.add(username);
-    }
+  public addSkip(username: string) {
+    this._vote(username, 'skip');
   }
 
   public resetCounter() {
@@ -58,6 +64,8 @@ class Poll {
   set skipKeyword(val: string) { this._settings.value.skipKeyword = val; }
   get shouldAutoSkip() { return this._settings.value.shouldAutoSkip; }
   set shouldAutoSkip(val: boolean) { this._settings.value.shouldAutoSkip = val; }
+  get canChangeVote() { return this._settings.value.canChangeVote; }
+  set canChangeVote(val: boolean) { this._settings.value.canChangeVote = val; }
 }
 
 export default Poll;

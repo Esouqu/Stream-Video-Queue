@@ -125,7 +125,9 @@ class AppManager {
 
     if (isSkipEnabled && roundedAmount === this.videoSkipPrice) {
       this.queue.next();
-    } else if (canRequest) {
+    }
+
+    if (canRequest) {
       if (roundedAmount >= requestPrice) {
         this.addVideo(username, donation.message, roundedAmount);
       }

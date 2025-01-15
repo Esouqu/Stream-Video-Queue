@@ -29,7 +29,7 @@ export class LocalStore<T> {
       const deserializedValue = this._deserialize(item);
 
       if (deserializedValue) {
-        this.value = deserializedValue;
+        this.value = { ...this.value, ...deserializedValue };
       }
     } else {
       localStorage.setItem(this._key, this._serialize(this.value));

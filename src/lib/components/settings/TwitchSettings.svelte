@@ -72,6 +72,12 @@
 					>
 						<Switch bind:checked={appManager.poll.shouldAutoSkip} />
 					</SettingWrapper>
+					<SettingWrapper
+						title="Повторное голосование"
+						description="Дает зрителю возможность переголосовать за другой вариант"
+					>
+						<Switch bind:checked={appManager.poll.canChangeVote} />
+					</SettingWrapper>
 				{/snippet}
 			</SettingCard>
 		{/if}
