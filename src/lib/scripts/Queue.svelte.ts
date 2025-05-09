@@ -44,8 +44,8 @@ class Queue {
     }
   }
 
-  public async remove(item: IQueueItem) {
-    await db.queueItems.delete(item.id);
+  public async remove(itemId: number) {
+    await db.queueItems.delete(itemId);
   }
 
   public clear() {

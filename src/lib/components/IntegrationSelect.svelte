@@ -2,8 +2,15 @@
 	import { Badge } from './ui/badge';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select';
 
+	interface SelectItemProps {
+		value: string;
+		label: string;
+		color: string;
+		disabled?: boolean;
+	}
+
 	interface Props {
-		items: { label: string; value: string; disabled?: boolean }[];
+		items: SelectItemProps[];
 		value?: string[];
 		onValueChange?: (value: string[]) => void;
 	}
@@ -12,21 +19,19 @@
 
 	let selectedLabel = $derived(
 		value.length
-			? items.filter((item) => value.includes(item.value)).map((item) => item.label)
+			? items.filter((item) => value.includes(item.value)).map((item) => item)
 			: 'Закрыта'
 	);
 </script>
 
 <Select type="multiple" allowDeselect={false} bind:value {onValueChange}>
-	<SelectTrigger>
+	<SelectTrigger class="flex-1">
 		{#if Array.isArray(selectedLabel)}
 			<div class="flex gap-1">
-				{#each selectedLabel as label}
-					<Badge
-						variant="outline"
-						class="hover:bg-muted {label === 'Twitch' ? 'bg-purple-500/50' : 'bg-orange-500/50'}"
-						>{label}</Badge
-					>
+				{#each selectedLabel as { label, color }}
+					<Badge class={color}>
+						{label}
+					</Badge>
 				{/each}
 			</div>
 		{:else}

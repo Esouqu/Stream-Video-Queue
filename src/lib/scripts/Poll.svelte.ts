@@ -41,7 +41,8 @@ class Poll {
   }
 
   public resetCounter() {
-    this._counter = { keep: 0, skip: 0 };
+    this._counter.keep = 0;
+    this._counter.skip = 0;
     this._votedUsers.clear();
   }
 

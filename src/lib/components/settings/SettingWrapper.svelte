@@ -19,7 +19,8 @@
 >
 	<div class="flex w-full flex-col justify-center space-y-1">
 		<span
-			class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+			class="font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 data-[sub-header=true]:text-sm"
+			data-sub-header={!isHeader}
 		>
 			{title}
 		</span>
@@ -31,16 +32,3 @@
 	</div>
 	{@render children?.()}
 </div>
-
-<style lang="scss">
-	// [data-disabled='true'] {
-	// 	opacity: 0.5;
-	// 	pointer-events: none;
-	// }
-
-	// [data-header='true'] {
-	// 	display: flex;
-	// 	width: 100%;
-	// 	gap: 1rem;
-	// }
-</style>

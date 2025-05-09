@@ -1,11 +1,8 @@
 <script lang="ts">
 	import appManager from '$lib/scripts/AppManager.svelte';
 	import Queue from '$lib/components/Queue.svelte';
-	import Draggable from '$lib/components/Draggable.svelte';
 	import QueueItem from '$lib/components/QueueItem.svelte';
 	import SkipForward from 'lucide-svelte/icons/skip-forward';
-	import AutoIndicator from '$lib/components/AutoIndicator.svelte';
-	import { Separator } from '$lib/components/ui/separator';
 	import { Button } from '$lib/components/ui/button';
 	import DeleteQueue from '$lib/components/DeleteQueue.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -15,7 +12,7 @@
 	import { INTEGRATION, SOCKET_STATE } from '$lib/enums';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { slide } from 'svelte/transition';
-	import MultipleSelect from '$lib/components/MultipleSelect.svelte';
+	import IntegrationSelect from '$lib/components/IntegrationSelect.svelte';
 	import Settings from '$lib/components/settings/Settings.svelte';
 	import { Tooltip, TooltipContent, TooltipTrigger } from '$lib/components/ui/tooltip';
 
@@ -26,102 +23,98 @@
 	let currentItemIndex = $derived(appManager.queue.currentIndex);
 	let selectItems = $derived([
 		{
-			label: 'DonationAlerts',
-			value: INTEGRATION.DONATIONALERTS,
-			disabled: appManager.centrifugoSocket.state !== SOCKET_STATE.OPEN
-		},
-		{
 			label: 'Twitch',
+			color: 'bg-purple-500/50',
 			value: INTEGRATION.TWITCH,
 			disabled: appManager.twitchChatSocket.state !== SOCKET_STATE.OPEN
+		},
+		{
+			label: 'DonationAlerts',
+			color: 'bg-orange-500/50',
+			value: INTEGRATION.DONATIONALERTS,
+			disabled: appManager.centrifugoSocket.state !== SOCKET_STATE.OPEN
 		}
 	]);
 </script>
 
 <svelte:head>
-	<title
-		>{appManager.queue.current?.title
+	<title>
+		{appManager.queue.current?.title
 			? `${appManager.queue.current.title} - QueueTube`
-			: 'QueueTube'}</title
-	>
+			: 'QueueTube'}
+	</title>
 </svelte:head>
 
-<div class="relative flex flex-col overflow-hidden border-l">
-	<div class="flex flex-col items-center p-4">
+<div
+	class="relative m-4 ml-0 flex flex-col overflow-hidden rounded-lg bg-elevation-1 shadow-[0_4px_6px_hsl(0deg_0%_0%_/_15%)]"
+>
+	<div class="relative flex flex-col items-center bg-elevation-2 px-4 py-2">
 		<div class="flex w-full flex-col gap-1">
-			<span class="text-sm font-medium">
+			<span class="text-sm font-medium text-muted-foreground">
 				Очередь
-				{#if queueItems && unseenQueueItems}
-					<Badge variant="outline">{unseenQueueItems.length} / {queueItems.length}</Badge>
-				{/if}
+				<Badge class="bg-transparent px-2 text-muted-foreground hover:bg-transparent">
+					{unseenQueueItems?.length || 0} / {queueItems?.length || 0}
+				</Badge>
 			</span>
-			<MultipleSelect items={selectItems} bind:value={appManager.enabledIntegrations} />
+			<div class="flex items-center gap-2">
+				<IntegrationSelect items={selectItems} bind:value={appManager.enabledIntegrations} />
+				<Settings />
+			</div>
 		</div>
 
 		{#if appManager.enabledIntegrations.includes(INTEGRATION.DONATIONALERTS)}
-			<div class="mt-4 flex w-full items-center gap-2" transition:slide={{ duration: 200 }}>
+			<div
+				class="flex w-full items-center gap-2 bg-elevation-2 py-3"
+				transition:slide={{ duration: 200 }}
+			>
 				<Badge
-					class="w-full justify-between rounded-full border bg-zinc-800 text-sm hover:bg-muted"
+					variant="secondary"
+					class="flex w-full justify-center rounded-lg p-2 text-sm font-semibold"
 				>
-					<span>Заказать</span>
-					<span>{appManager.donationSettings.requestPrice} RUB</span>
+					Заказать — {appManager.donationSettings.requestPrice} RUB
 				</Badge>
 				{#if appManager.donationSettings.isSkipEnabled}
 					<Badge
-						class="w-full justify-between rounded-full border bg-zinc-800 text-sm hover:bg-muted"
+						variant="secondary"
+						class="flex w-full justify-center rounded-lg p-2 text-sm font-semibold"
 					>
-						<span>Пропустить</span>
-						<span>{appManager.videoSkipPrice} RUB</span>
+						Скип — {appManager.videoSkipPrice} RUB
 					</Badge>
 				{/if}
 			</div>
 		{/if}
 	</div>
 
-	<Separator />
-
 	{#if !currentItems || currentItemIndex === undefined}
 		<div class="flex h-full items-center justify-center">
-			<Spinner --spinner-size="2rem" />
+			<Spinner size={42} />
 		</div>
 	{:else}
 		<Queue items={currentItems} {currentItemIndex} bind:scrollElement>
 			{#snippet children(item)}
 				{@const isCurrentVideo = appManager.queue.current?.id === item.id}
 
-				<Draggable
+				<QueueItem
+					{...item}
 					isSelected={isCurrentVideo}
-					isWatched={item.isWatched}
-					onSwipe={() => appManager.queue.remove(item)}
-				>
-					<QueueItem
-						{...item}
-						isSelected={isCurrentVideo}
-						onclick={() => !isCurrentVideo && appManager.queue.setCurrent(item)}
-					/>
-				</Draggable>
+					onclick={() => !isCurrentVideo && appManager.queue.setCurrent(item)}
+				/>
 			{/snippet}
 		</Queue>
 	{/if}
 
-	<Separator />
-
-	<div class="flex justify-between p-4">
-		<div class="flex items-center gap-1">
+	<div class="flex justify-between bg-elevation-2 p-2">
+		<div class="flex">
 			<Button
-				class="relative col-start-3 justify-self-end"
-				variant="outline"
+				class="relative col-start-3 mr-3 justify-self-end from-primary to-purple-500 data-[autoskip=true]:bg-gradient-to-r"
+				data-autoskip={appManager.poll.shouldAutoSkip && appManager.poll.isEnabled}
 				disabled={queueItems && queueItems.length < 2}
 				onclick={() => appManager.queue.next()}
 			>
-				{#if appManager.poll.shouldAutoSkip && appManager.poll.isEnabled}
-					<AutoIndicator />
-				{/if}
 				<SkipForward />
 				<span>Следующее</span>
 			</Button>
-
-			<div class="flex">
+			<div class="flex items-center">
 				<Tooltip disableHoverableContent delayDuration={300}>
 					<TooltipTrigger>
 						{#snippet child({ props })}
@@ -130,7 +123,7 @@
 							</Toggle>
 						{/snippet}
 					</TooltipTrigger>
-					<TooltipContent class="bg-zinc-900">Воспроизводить случайно</TooltipContent>
+					<TooltipContent>Воспроизводить случайно</TooltipContent>
 				</Tooltip>
 				<Tooltip disableHoverableContent delayDuration={300}>
 					<TooltipTrigger>
@@ -147,13 +140,10 @@
 							</Toggle>
 						{/snippet}
 					</TooltipTrigger>
-					<TooltipContent class="bg-zinc-900">Скрывать просмотренное</TooltipContent>
+					<TooltipContent>Скрывать просмотренное</TooltipContent>
 				</Tooltip>
 			</div>
 		</div>
-		<div>
-			<DeleteQueue disabled={(appManager.queue.items?.length || 0) < 1} />
-			<Settings />
-		</div>
+		<DeleteQueue />
 	</div>
 </div>

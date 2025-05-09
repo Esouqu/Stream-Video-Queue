@@ -11,7 +11,7 @@
 	const contacts = [
 		{ href: 'https://github.com/Esouqu/Stream-Video-Queue', title: 'GitHub' },
 		{ href: 'https://t.me/esouqu', title: 'Telegram' },
-		{ href: 'https://boosty.to/esouqu/donate', title: 'Поддержать' }
+		{ href: 'https://www.donationalerts.com/r/esouqu', title: 'Поддержать' }
 	];
 </script>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import appManager from '$lib/scripts/AppManager.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import Input from '$lib/components/Input.svelte';
 	import SettingWrapper from './SettingWrapper.svelte';
 	import { goto } from '$app/navigation';
@@ -10,7 +10,7 @@
 	import SettingSection from './SettingSection.svelte';
 	import { Switch } from '../ui/switch';
 
-	let twitchUser = $state($page.data.twitchUserData);
+	let twitchUser = page.data.twitchUserData;
 
 	function onLogout() {
 		fetch('/api/twitch/logout');

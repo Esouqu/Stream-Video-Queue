@@ -1,32 +1,14 @@
-<div class="circle-wrapper">
-	<div class="circle"></div>
+<script lang="ts">
+	interface Props {
+		size?: number;
+	}
+
+	const { size = 24 } = $props();
+</script>
+
+<div class="flex w-full items-center justify-center">
+	<div
+		class="h-6 w-6 animate-spin rounded-full border-solid border-b-transparent border-l-transparent border-r-primary border-t-primary"
+		style="border-width: {size / 10}px; width: {size}px; height: {size}px;"
+	></div>
 </div>
-
-<style lang="scss">
-	.circle {
-		height: var(--spinner-size, 25px);
-		width: var(--spinner-size, 25px);
-		border-color: hsl(var(--primary)) hsl(var(--primary)) transparent transparent;
-		border-width: calc(var(--spinner-size) / 10);
-		border-style: solid;
-		border-image: initial;
-		border-radius: 50%;
-		animation: 1s linear 0s infinite normal none running rotate;
-
-		&-wrapper {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			width: 100%;
-		}
-	}
-
-	@keyframes rotate {
-		0% {
-			transform: rotate(0);
-		}
-		100% {
-			transform: rotate(360deg);
-		}
-	}
-</style>

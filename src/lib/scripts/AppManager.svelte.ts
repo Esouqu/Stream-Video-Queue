@@ -123,11 +123,11 @@ class AppManager {
     const username = donation.username ?? 'Аноним';
     const canRequest = this.enabledIntegrations.includes(INTEGRATION.DONATIONALERTS);
 
-    if (isSkipEnabled && roundedAmount === this.videoSkipPrice) {
-      this.queue.next();
-    }
-
     if (canRequest) {
+      if (isSkipEnabled && roundedAmount === this.videoSkipPrice) {
+        this.queue.next();
+      }
+
       if (roundedAmount >= requestPrice) {
         this.addVideo(username, donation.message, roundedAmount);
       }

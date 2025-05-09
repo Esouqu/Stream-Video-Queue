@@ -22,7 +22,6 @@
 	{:else}
 		<div class="flex w-full items-center justify-between gap-2">
 			<div class="flex items-center gap-2">
-				<!-- {@render icon()} -->
 				<div>
 					<h2 class="text-lg font-medium leading-none">{title}</h2>
 					<span class="text-xs text-muted-foreground">
@@ -30,7 +29,7 @@
 					</span>
 				</div>
 			</div>
-			<Button variant="outline" onclick={onLogout}>Выйти</Button>
+			<Button variant="ghost" onclick={onLogout}>Отвязать</Button>
 		</div>
 	{/if}
 </div>

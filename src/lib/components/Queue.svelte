@@ -48,7 +48,10 @@
 			const endIndex = Math.max(startIndex, clampedEndIndex);
 
 			visibleItems = mappedItems.slice(startIndex, endIndex);
-			minHeight = Math.max(scrollElement.offsetHeight, itemHeight * mappedItems.length);
+			minHeight = Math.max(
+				scrollElement.offsetHeight,
+				itemHeight * mappedItems.length + remToPx(0.5)
+			);
 		}
 	});
 
@@ -83,37 +86,19 @@
 
 <svelte:window bind:innerHeight={windowHeight} {onresize} />
 
-<ScrollArea class="relative flex h-full p-2" bind:ref={scrollElement} {onscroll}>
-	<div class="queue-list" style="grid-auto-rows: {itemHeight}px; height: {minHeight}px;">
+<ScrollArea class="relative flex h-full" bind:ref={scrollElement} {onscroll}>
+	<div
+		class="grid grid-flow-row py-1 transition-[height] duration-200"
+		style="grid-auto-rows: {itemHeight}px; height: {minHeight}px;"
+	>
 		{#each visibleItems as item (item.id)}
 			<div class="flex" style="grid-row: {item.position};" animate:flip={{ duration: 200 }}>
 				{@render children(item)}
 			</div>
 		{:else}
-			<div class="queue-list-empty">
+			<div class="absolute top-1/2 -translate-y-1/2 flex justify-center items-center w-full h-full">
 				<p class="text-lg font-medium text-muted-foreground">Очередь пуста</p>
 			</div>
 		{/each}
 	</div>
 </ScrollArea>
-
-<style lang="scss">
-	.queue {
-		&-list {
-			display: grid;
-			grid-auto-flow: row;
-			transition: height 0.2s;
-
-			&-empty {
-				position: absolute;
-				top: 50%;
-				translate: 0 -50%;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				width: 100%;
-				height: 100%;
-			}
-		}
-	}
-</style>

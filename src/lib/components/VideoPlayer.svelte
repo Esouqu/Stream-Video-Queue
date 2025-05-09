@@ -12,28 +12,8 @@
 	});
 </script>
 
-<div class="youtube-player-container border">
-	<div class="youtube-player" bind:this={playerElement}></div>
+<div
+	class="relative aspect-video w-full overflow-hidden rounded-2xl bg-background shadow-[0_0_5rem_0_rgba(255_255_255_/_5%)]"
+>
+	<div class="absolute inset-0 h-full w-full" bind:this={playerElement}></div>
 </div>
-
-<style lang="scss">
-	.youtube-player {
-		position: absolute;
-		top: 0;
-		left: 0;
-		bottom: 0;
-		right: 0;
-		width: 100%;
-		height: 100%;
-
-		&-container {
-			position: relative;
-			border-radius: 1rem;
-			width: 100%;
-			aspect-ratio: 16 / 9;
-			box-shadow: 0 0 5rem 0px rgba(255 255 255 / 5%);
-			background-color: hsl(var(--background));
-			overflow: hidden;
-		}
-	}
-</style>

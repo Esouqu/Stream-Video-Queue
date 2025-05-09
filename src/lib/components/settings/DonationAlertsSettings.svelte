@@ -1,7 +1,7 @@
 <script lang="ts">
 	import appManager from '$lib/scripts/AppManager.svelte';
 	import Input from '$lib/components/Input.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import SettingWrapper from './SettingWrapper.svelte';
 	import Integration from '../Integration.svelte';
 	import DonationAlertsIcon from '../icons/DonationAlertsIcon.svelte';
@@ -9,8 +9,9 @@
 	import SettingCard from './SettingCard.svelte';
 	import SettingSection from './SettingSection.svelte';
 	import { Switch } from '../ui/switch';
+	import Select from '../Select.svelte';
 
-	let donationAlertsUser = $state($page.data.donationAlertsUserData);
+	let donationAlertsUser = page.data.donationAlertsUserData;
 
 	function onLogout() {
 		fetch('/api/donationalerts/logout');
@@ -58,7 +59,6 @@
 					</SettingWrapper>
 				{/snippet}
 			</SettingCard>
-
 			<SettingCard isExtended={appManager.donationSettings.isSkipEnabled}>
 				{#snippet header()}
 					<SettingWrapper
@@ -75,7 +75,7 @@
 				{#snippet content()}
 					<SettingWrapper
 						title="Динамическая стоимость"
-						description="Стоимостью пропуска будет являться указанный процент от стоимости текущего видео"
+						description="Процент от стоимости текущего видео"
 					>
 						<Switch bind:checked={appManager.donationSettings.isSkipDynamic} />
 					</SettingWrapper>
@@ -87,6 +87,33 @@
 							type="number"
 							placeholder="Значение"
 							bind:value={appManager.donationSettings.skipPrice}
+						/>
+					</SettingWrapper>
+				{/snippet}
+			</SettingCard>
+
+			<SettingCard isExtended={appManager.timer.isEnabled}>
+				{#snippet header()}
+					<SettingWrapper
+						title="Таймер"
+						description="Ограничить время воспроизведения видео"
+						isHeader
+					>
+						<Switch bind:checked={appManager.timer.isEnabled} />
+					</SettingWrapper>
+				{/snippet}
+				{#snippet content()}
+					<SettingWrapper title="Стоимость за секунду">
+						<Input id="timer-value" bind:value={appManager.timer.pricePerSecond} />
+					</SettingWrapper>
+					<SettingWrapper title="По окончанию таймера">
+						<Select
+							items={[
+								{ label: 'Ничего', value: 'none' },
+								{ label: 'Пауза', value: 'pause' },
+								{ label: 'Следующее видео', value: 'next' }
+							]}
+							bind:value={appManager.timer.onStateFinishedAction}
 						/>
 					</SettingWrapper>
 				{/snippet}

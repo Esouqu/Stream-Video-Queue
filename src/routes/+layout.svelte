@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import appManager from '$lib/scripts/AppManager.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { onMount, type Snippet } from 'svelte';
 	import VideoPlayer from '$lib/components/VideoPlayer.svelte';
 	import { TooltipProvider } from '$lib/components/ui/tooltip';
@@ -15,8 +15,8 @@
 
 	let { children }: Props = $props();
 
-	let twitchUser = $page.data.twitchUserData;
-	let donationalertsUser = $page.data.donationAlertsUserData;
+	let twitchUser = page.data.twitchUserData;
+	let donationalertsUser = page.data.donationAlertsUserData;
 
 	onMount(() => {
 		updateLocalStorageVersion(1);
@@ -34,10 +34,10 @@
 
 <TooltipProvider delayDuration={0}>
 	<div class="relative grid h-full w-full grid-cols-[auto_25.6rem]">
-		<div class="m-4 flex flex-col justify-center gap-4">
+		<div class="m-4 flex max-h-[calc(100vh-2rem)] flex-col justify-center gap-4">
 			<VideoPlayer />
 			{#if appManager.poll.isEnabled}
-				<div class="relative flex w-full flex-1 items-center justify-center">
+				<div class="relative flex w-full items-center justify-center">
 					<Votes />
 				</div>
 			{/if}

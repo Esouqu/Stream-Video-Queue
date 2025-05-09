@@ -14,12 +14,6 @@
 	} from '$lib/components/ui/alert-dialog';
 	import { buttonVariants } from './ui/button';
 
-	interface Props {
-		disabled?: boolean;
-	}
-
-	const { disabled }: Props = $props();
-
 	let isAlertOpened = $state(false);
 
 	function onAlertAction() {
@@ -31,17 +25,16 @@
 <AlertDialog bind:open={isAlertOpened}>
 	<AlertDialogTrigger
 		class={buttonVariants({
-			variant: 'outline',
+			variant: 'ghost',
 			size: 'icon'
 		})}
-		{disabled}
 	>
 		<TrashcanIcon />
 	</AlertDialogTrigger>
 
 	<AlertDialogContent>
 		<AlertDialogHeader>
-			<AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+			<AlertDialogTitle>Удалить все видео?</AlertDialogTitle>
 			<AlertDialogDescription>
 				Это действие необратимо. Нажимая "Удалить", вы навсегда удалите все видео из очереди.
 			</AlertDialogDescription>

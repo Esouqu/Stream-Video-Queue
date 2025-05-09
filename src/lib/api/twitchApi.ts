@@ -20,14 +20,14 @@ class TwitchApi {
       method: 'POST'
     }).then((res) => res);
 
-    return response.status === 200 ? true : false;
+    return response.status === 200;
   }
 
   public async validateToken() {
     const response = await fetch('/api/twitch/validate')
       .then((res) => res);
 
-    return response.status === 200 ? true : false;
+    return response.status === 200;
   }
 
   public async getUser() {
