@@ -64,21 +64,21 @@
 
 		{#if appManager.enabledIntegrations.includes(INTEGRATION.DONATIONALERTS)}
 			<div
-				class="flex w-full items-center gap-2 bg-elevation-2 py-3"
+				class="flex w-full items-center gap-2 bg-elevation-2 pb-2 pt-4"
 				transition:slide={{ duration: 200 }}
 			>
 				<Badge
 					variant="secondary"
-					class="flex w-full justify-center rounded-lg p-2 text-sm font-semibold"
+					class="flex w-full justify-center rounded-lg p-2 text-sm font-medium"
 				>
 					Заказать — {appManager.donationSettings.requestPrice} RUB
 				</Badge>
 				{#if appManager.donationSettings.isSkipEnabled}
 					<Badge
 						variant="secondary"
-						class="flex w-full justify-center rounded-lg p-2 text-sm font-semibold"
+						class="flex w-full justify-center rounded-lg p-2 text-sm font-medium"
 					>
-						Скип — {appManager.videoSkipPrice} RUB
+						Пропустить — {appManager.videoSkipPrice} RUB
 					</Badge>
 				{/if}
 			</div>

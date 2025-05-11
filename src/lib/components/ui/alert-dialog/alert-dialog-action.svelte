@@ -12,6 +12,6 @@
 
 <AlertDialogPrimitive.Action
 	bind:ref
-	class={cn(buttonVariants({ variant: 'destructive' }), className)}
+	class={cn(buttonVariants(), className, 'bg-primary/50')}
 	{...restProps}
 />

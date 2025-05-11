@@ -5,9 +5,9 @@
 	import { onMount, type Snippet } from 'svelte';
 	import VideoPlayer from '$lib/components/VideoPlayer.svelte';
 	import { TooltipProvider } from '$lib/components/ui/tooltip';
-	import Votes from '$lib/components/Votes.svelte';
 	import twitchApi from '$lib/api/twitchApi';
 	import { updateLocalStorageVersion } from '$lib/utils';
+	import Votes from '$lib/components/Votes.svelte';
 
 	interface Props {
 		children: Snippet;
@@ -34,10 +34,10 @@
 
 <TooltipProvider delayDuration={0}>
 	<div class="relative grid h-full w-full grid-cols-[auto_25.6rem]">
-		<div class="m-4 flex max-h-[calc(100vh-2rem)] flex-col justify-center gap-4">
+		<div class="m-4 flex max-h-[calc(100vh-2rem)] flex-col justify-center">
 			<VideoPlayer />
 			{#if appManager.poll.isEnabled}
-				<div class="relative flex w-full items-center justify-center">
+				<div class="flex h-[3.5rem] w-full items-center justify-center">
 					<Votes />
 				</div>
 			{/if}

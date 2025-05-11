@@ -8,7 +8,7 @@
 </script>
 
 <div
-	class="relative flex w-[27rem] flex-col items-center justify-center gap-1"
+	class="relative flex w-[27rem] select-none flex-col items-center justify-center gap-1 rounded-lg bg-elevation-2 px-4 py-2"
 	transition:fly={{ y: 100 }}
 >
 	<div class="flex w-full justify-between gap-4 text-sm font-medium">
@@ -33,6 +33,6 @@
 	<div
 		class="relative w-full after:absolute after:left-[50%] after:top-0 after:h-full after:w-[0.125rem] after:translate-x-[-50%] after:bg-primary"
 	>
-		<Progress max={100} value={appManager.poll.currentPercent} class="h-1 w-full" />
+		<Progress class="h-1 w-full" max={100} value={appManager.poll.currentPercent} />
 	</div>
 </div>

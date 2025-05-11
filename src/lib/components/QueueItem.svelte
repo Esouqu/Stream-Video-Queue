@@ -72,7 +72,7 @@
 	<TooltipTrigger>
 		{#snippet child({ props })}
 			<div
-				class="group relative flex w-full items-center rounded-lg from-primary to-45% duration-300 hover:bg-foreground/10 hover:bg-muted active:bg-transparent data-[selected=true]:bg-gradient-to-r data-[dragged=true]:transition-none"
+				class="group relative flex w-full items-center rounded-lg from-primary to-[11rem] bg-[-11rem_0] bg-no-repeat duration-300 hover:bg-foreground/10 active:bg-transparent data-[selected=true]:bg-gradient-to-r data-[selected=true]:bg-[0_0] data-[dragged=true]:transition-none"
 				data-selected={isSelected}
 				data-watched={isWatched}
 				data-dragged={isDragging}
@@ -80,17 +80,17 @@
 				{...props}
 			>
 				{#if isSelected}
-					<div class="px-2.5" in:fly={{ x: -50, duration: 300 }}>
+					<div class="px-2" in:fly={{ x: -50, duration: 300 }}>
 						<Play size="1rem" fill="#e5e7eb" strokeWidth="0" />
 					</div>
 				{:else}
 					<button
-						class="drag-handler relative h-full cursor-grab px-2.5 text-muted-foreground transition-colors hover:text-foreground"
+						class="drag-handler relative h-full cursor-grab px-2 text-muted-foreground transition-colors hover:text-foreground"
 					>
 						<GripVertical size="1rem" />
 					</button>
 					<div
-						class="absolute -left-full top-1/2 flex h-6 w-full -translate-y-1/2 items-center justify-end bg-destructive pr-6 text-sm font-medium text-destructive-foreground"
+						class="absolute -left-full top-1/2 flex h-6 w-full -translate-y-1/2 items-center justify-end bg-primary/50 pr-6 text-sm font-medium text-primary-foreground"
 					>
 						{#if isReachedEnd}
 							<span transition:fade={{ duration: 200 }}> Удалить </span>
@@ -98,7 +98,7 @@
 					</div>
 				{/if}
 				<button
-					class="flex w-full items-center gap-2 pr-4 group-data-[selected=true]:!opacity-100 group-data-[watched=true]:opacity-35"
+					class="flex w-full items-center gap-2 pr-4 transition-opacity group-data-[selected=true]:!opacity-100 group-data-[watched=true]:opacity-35"
 					{onclick}
 				>
 					<div

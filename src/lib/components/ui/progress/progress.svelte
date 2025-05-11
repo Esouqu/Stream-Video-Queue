@@ -13,7 +13,7 @@
 
 <ProgressPrimitive.Root
 	bind:ref
-	class={cn('relative h-6 w-full overflow-hidden rounded-full bg-muted', className)}
+	class={cn('relative h-6 w-full overflow-hidden rounded-full bg-secondary', className)}
 	{value}
 	{max}
 	{...restProps}
