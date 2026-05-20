@@ -11,11 +11,12 @@
 	};
 
 	let message = $state('');
+	let value = $state(100);
 
 	const { anchor }: Props = $props();
 
 	function addMessage() {
-		appStore.onChatMessage('esouqu', { username: 'esouqu' }, message);
+		appStore.onMessage({ name: 'esouqu', message, source: 'twitch', value });
 		message = '';
 	}
 </script>
@@ -29,6 +30,7 @@
 			<div class="space-y-2">
 				<div class="font-semibold">Чат</div>
 				<div class="flex w-full items-center">
+					<Input type="number" placeholder="Сумма" bind:value />
 					<Input placeholder="Сообщение" bind:value={message} onenter={addMessage} />
 					<Button variant="ghost" class="ml-auto" onclick={addMessage}>Отправить</Button>
 				</div>

@@ -7,7 +7,6 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
-	import { Switch } from '$lib/components/ui/switch';
 	import appStore from '$lib/stores/AppStore.svelte';
 </script>
 
@@ -32,7 +31,7 @@
 		</CardContent>
 	</Card>
 
-	<Card class="relative grid auto-rows-auto grid-cols-[1fr_11rem] gap-4 p-4">
+	<!-- <Card class="relative grid auto-rows-auto grid-cols-[1fr_11rem] gap-4 p-4">
 		<CardHeader class="p-0">
 			<CardTitle>Удалять просмотренное</CardTitle>
 			<CardDescription>
@@ -42,5 +41,5 @@
 		<CardContent class="flex justify-end p-0">
 			<Switch id="delete-watched" bind:checked={appStore.twitchQueue.shouldDequeue} />
 		</CardContent>
-	</Card>
+	</Card> -->
 </div>

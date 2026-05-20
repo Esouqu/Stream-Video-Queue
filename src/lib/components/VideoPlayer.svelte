@@ -21,8 +21,8 @@
 	});
 
 	$effect(() => {
-		if (appStore.twitchQueue.current) {
-			appStore.loadVideo(appStore.twitchQueue.current);
+		if (appStore.queue.current) {
+			appStore.loadVideo(appStore.queue.current);
 
 			untrack(() => {
 				appStore.poll.reset();

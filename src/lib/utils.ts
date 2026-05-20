@@ -12,6 +12,19 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+export function formatCurrencyNumber(number: number): string {
+	if (number === 0) return "0";
+
+	const formatter = Intl.NumberFormat("ru-RU", {
+		style: "currency",
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 0,
+		currency: "RUB",
+	});
+
+	return formatter.format(number);
+}
+
 export function msToHHMMSS(ms: number) {
 	const hour = Math.floor(ms / 3600000);
 	const min = Math.floor((ms % 3600000) / 60000);

@@ -4,12 +4,19 @@ export type RGB = {
 	b: number;
 }
 
-export type MessageSource = 'twitch' | 'donationalerts' | 'donatepay';
+export type MessageSource = 'twitch' | 'kick' | 'donationalerts' | 'donatepay';
+export type SocketState = 'not-exists' | 'connecting' | 'open' | 'closed';
 
-export type Message = {
-	username: string;
+export type SocketConnectionData = {
+	roomId: string | number;
+	socketToken?: string;
+}
+
+export type SocketMessage = {
+	name: string;
 	message: string;
 	value: number;
+	source: MessageSource;
 }
 
 export type QueueItemData = {
@@ -28,6 +35,8 @@ export type QueueItemData = {
 	submittedBy: string[];
 	message: string;
 	value: number;
+	sortOrder: number;
+	isActive: boolean;
 	// source: MessageSource;
 	color: number[];
 	isWatched: boolean;

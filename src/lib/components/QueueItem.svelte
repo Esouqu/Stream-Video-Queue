@@ -70,16 +70,21 @@
 			src={item.thumbnail}
 			alt="video thumbnail"
 		/>
-		<Badge
-			class="absolute right-1 bottom-1 rounded border-transparent bg-background/70 px-1 py-0 data-[live=true]:bg-destructive"
-			data-live={item.isLive}
-		>
-			{#if item.isLive}
-				LIVE
-			{:else if item.duration}
-				{item.duration}
+		<div class="absolute right-1 bottom-1 left-1 flex justify-end gap-1">
+			{#if item.value > 0}
+				<Badge class="rounded border-transparent bg-destructive px-1 py-0">₽</Badge>
 			{/if}
-		</Badge>
+			<Badge
+				class="rounded border-transparent bg-background/70 px-1 py-0 data-[live=true]:bg-destructive"
+				data-live={item.isLive}
+			>
+				{#if item.isLive}
+					LIVE
+				{:else if item.duration}
+					{item.duration}
+				{/if}
+			</Badge>
+		</div>
 	</div>
 	<div class="flex w-full flex-col">
 		<div class="flex w-full gap-2">

@@ -1,17 +1,18 @@
 import youtubeApi from "$lib/api/youtubeApi";
-import db from "$lib/db";
-import type { QueueItemData } from "$lib/types";
+import dexieDB from "$lib/db";
+import type { QueueItemData, SocketMessage } from "$lib/types";
 import type { VideoData } from "$lib/api/types";
 import { extractYoutubeVideoData, formatYoutubeDuration } from "$lib/utils";
 import QueueStore from "./QueueStore.svelte";
 import PollStore from "./PollStore.svelte";
-import type tmi from 'tmi.js';
 import RandomColor from "./RandomColorStore";
 import { browser } from "$app/environment";
 import { toast } from "svelte-sonner";
 import YouTubePlayerStore from "./YoutubePlayerStore.svelte";
 import { PersistedState } from "runed";
 import CountdownTimerStore from "./CountdownTimerStore.svelte";
+import { SvelteMap } from "svelte/reactivity";
+import type MessageSocket from "./MessageSocket.svelte";
 
 type EnoughVotesAction = 'none' | 'warning' | 'skip';
 
@@ -32,9 +33,10 @@ type QueueItemParams = {
 
 class AppStore {
 	readonly youtubePlayer = new YouTubePlayerStore();
-	readonly twitchQueue = new QueueStore<QueueItemData>('twitchQueue');
+	readonly queue = new QueueStore(dexieDB);
 	readonly poll = new PollStore();
 	readonly autoSkipTimer = new CountdownTimerStore();
+	private _sockets = new SvelteMap<string, MessageSocket>();
 
 	private _randomColor = new RandomColor();
 	private _isLoadingItems = $state(true);
@@ -79,16 +81,28 @@ class AppStore {
 		this._initialize();
 	}
 
+	public removeSocket(socketId: string) {
+		const socket = this._sockets.get(socketId);
+		socket?.disconnect();
+
+		this._sockets.delete(socketId);
+	}
+
+	public addSocket(socket: MessageSocket) {
+		socket.onMessage(this.onMessage.bind(this));
+		this._sockets.set(socket.id, socket);
+	}
+
 	public async removeVideo(video: QueueItemData) {
-		// await db.removeQueueItem(video);
-		this.twitchQueue.dequeue(video);
+		await this.queue.dequeue(video);
 		toast.message("Видео удалено из очереди", {
 			description: video.title,
 		});
 	}
 
-	public async addVideo(username: string, message: string, value = 0) {
-		if (!message) return;
+	public async addVideo(username: string, message: string, value: number) {
+		const replacedMessage = message.replace(this._videoRequestPrefix, '').trim();
+		if (!replacedMessage) return;
 
 		const data = extractYoutubeVideoData(message);
 		if (!data) {
@@ -96,13 +110,8 @@ class AppStore {
 			return;
 		};
 
-		const existingItem = await db.getQueueItem(data.videoId);
-
-		if (existingItem) {
-			await db.updateQueueItem(existingItem, username);
-			// this.twitchQueue.updatePriotity(existingItem);
-			return;
-		}
+		const existingItem = await this.queue.isExisting(data.videoId);
+		if (existingItem) return;
 
 		try {
 			const videoData = await youtubeApi.getVideo(data.videoId);
@@ -114,8 +123,7 @@ class AppStore {
 				...data
 			});
 
-			const id = await db.addQueueItem(newItem);
-			this.twitchQueue.enqueue({ id, ...newItem });
+			await this.queue.enqueue(newItem);
 
 			toast.message("Видео добавлено", {
 				description: videoData.snippet.title,
@@ -125,18 +133,17 @@ class AppStore {
 		}
 	}
 
-	public onChatMessage(_channel: string, tags: tmi.ChatUserstate, message: string) {
-		const username = tags['display-name'] || tags.username || 'unknown';
+	public onMessage({ name, message, value }: SocketMessage) {
 		const canRequest = message.startsWith(this._videoRequestPrefix);
-		const isQueueFull = this.queueLimit && this.twitchQueue.size >= this.queueLimit;
+		const isQueueFull = this.queueLimit && this.queue.size >= this.queueLimit;
 		const canVote = this.poll.isEnabled;
 
 		if (canRequest && !isQueueFull) {
-			this.addVideo(username, message.replace('!rq', '').trim());
+			this.addVideo(name, message, value);
 		}
 
 		if (canVote) {
-			this.poll.addVote(username, message);
+			this.poll.addVote(name, message);
 		}
 	}
 
@@ -158,7 +165,7 @@ class AppStore {
 	}
 
 	private _onAutoSkipTimerFinished() {
-		this.twitchQueue.next();
+		this.queue.next();
 		this.autoSkipTimer.reset();
 	}
 
@@ -166,7 +173,7 @@ class AppStore {
 		if (this.enoughVotesAction === 'none') return;
 
 		if (this.enoughVotesAction === 'skip') {
-			this.twitchQueue.next();
+			this.queue.next();
 			this.poll.reset();
 
 			return;
@@ -185,10 +192,10 @@ class AppStore {
 	}
 
 	private _onVideoEnded() {
-		if (!this.shouldLoop) this.twitchQueue.next();
+		if (!this.shouldLoop) this.queue.next();
 	}
 
-	private _composeQueueItem(params: QueueItemParams): Omit<QueueItemData, 'id'> {
+	private _composeQueueItem(params: QueueItemParams): Omit<QueueItemData, 'id' | 'sortOrder'> {
 		const color = this._randomColor.get().array();
 		const isLive = params.videoData.snippet.liveBroadcastContent === 'live';
 		const duration = params.videoData.contentDetails.duration;
@@ -205,6 +212,7 @@ class AppStore {
 			startSeconds: params.startSeconds,
 			message: params.message,
 			value: params.value,
+			isActive: false,
 			submittedBy: [params.username],
 			color,
 			isWatched: false,
@@ -213,11 +221,8 @@ class AppStore {
 
 	private async _initialize() {
 		if (browser) {
-			// load items from indexeddb
 			this._isLoadingItems = true;
-			const items = await db.getQueueItems();
-			this.twitchQueue.setItems(items);
-			// this.twitchQueue.setItems(this._getRandomItems());
+			await this.queue.initialize();
 			this._isLoadingItems = false;
 
 			// connect events

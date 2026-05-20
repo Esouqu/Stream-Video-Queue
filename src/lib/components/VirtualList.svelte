@@ -87,13 +87,13 @@
 	{onscroll}
 >
 	{#if header}
-		<div class="pointer-events-none sticky top-0 z-10 space-y-2" bind:clientHeight={headerHeight}>
+		<div class="pointer-events-none space-y-2" bind:clientHeight={headerHeight}>
 			{@render header()}
 		</div>
 	{/if}
 
 	<div
-		class="grid grid-flow-row px-2 transition-[height] duration-200"
+		class="relative grid grid-flow-row px-2 transition-[height] duration-200"
 		style="grid-auto-rows: {itemHeight}px; height: {minHeight}px;"
 	>
 		{#each visibleItems as item (item.id)}

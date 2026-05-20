@@ -31,8 +31,8 @@
 		class?: string;
 		onRemoveClick?: () => void;
 		onInfoClick?: () => void;
-		onSkipBackwardClick?: () => void;
-		onSkipForwardClick?: () => void;
+		onSkipBackwardClick?: () => Promise<void>;
+		onSkipForwardClick?: () => Promise<void>;
 	};
 
 	let circleClientWidth = $state(0);
@@ -59,7 +59,7 @@
 	);
 
 	// TODO:
-	// make gradient to be a single color when clicked on pause/play
+	// make gradient to be same color as current when clicked on pause/play
 
 	function play(e: ButtonMouseEvent) {
 		e.stopPropagation();
@@ -73,15 +73,15 @@
 		animateCircle(e);
 	}
 
-	function skipBackward(e: ButtonMouseEvent) {
+	async function skipBackward(e: ButtonMouseEvent) {
 		e.stopPropagation();
-		onSkipBackwardClick?.();
+		await onSkipBackwardClick?.();
 		animateCircle(e);
 	}
 
-	function skipForward(e: ButtonMouseEvent) {
+	async function skipForward(e: ButtonMouseEvent) {
 		e.stopPropagation();
-		onSkipForwardClick?.();
+		await onSkipForwardClick?.();
 		animateCircle(e);
 	}
 
@@ -123,7 +123,7 @@
 <div
 	bind:this={panelRef}
 	class={cn(
-		`pointer-events-auto relative flex shrink-0 overflow-hidden rounded-md shadow-md ring ring-(--panel-color) backdrop-blur-md transition-colors duration-700`,
+		`pointer-events-auto relative z-10 flex shrink-0 overflow-hidden rounded-md shadow-md ring ring-(--panel-color) backdrop-blur-md transition-colors duration-700`,
 		className
 	)}
 	style="--panel-color: rgb({rgb[0]} {rgb[1]} {rgb[2]} / 0.3); background: linear-gradient(0deg, oklch(0 0 0 / 0.3) 10%, transparent), var(--panel-color);"
@@ -142,7 +142,7 @@
 				<RepeatIcon />
 			</Toggle>
 			<div class="flex items-center gap-2">
-				<Button variant="ghost" disabled={appStore.twitchQueue.index < 1} onclick={skipBackward}>
+				<Button variant="ghost" disabled={appStore.queue.size < 1} onclick={skipBackward}>
 					<SkipBackwardIcon />
 				</Button>
 				<Button
@@ -158,11 +158,11 @@
 						<PlayIcon class="size-full" />
 					{/if}
 				</Button>
-				<Button variant="ghost" onclick={skipForward}>
+				<Button variant="ghost" disabled={appStore.queue.size < 1} onclick={skipForward}>
 					<SkipForwardIcon />
 				</Button>
 			</div>
-			<Toggle size="icon" tooltip="Случайный порядок" bind:pressed={isShuffled}>
+			<Toggle size="icon" tooltip="Добавлять в случайном порядке" bind:pressed={isShuffled}>
 				<ShuffleIcon />
 			</Toggle>
 		</div>

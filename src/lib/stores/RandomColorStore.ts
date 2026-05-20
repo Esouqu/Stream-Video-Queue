@@ -1,24 +1,24 @@
 import Color from "color";
-import QueueStore from "./QueueStore.svelte";
+import { PersistedState } from "runed";
 
 class RandomColor {
 	private _colors = [
-		{ id: 'red', color: Color('#fb2c36') }, // red
-		{ id: 'green', color: Color('#00c951') }, // green
-		{ id: 'blue', color: Color('#2b7fff') }, // blue
-		{ id: 'indigo', color: Color('#615fff') }, // indigo
-		{ id: 'purple', color: Color('#ad46ff') }, // purple
-		{ id: 'pink', color: Color('#f6339a') }, // pink
+		Color('#fb2c36'),
+		Color('#00c951'),
+		Color('#2b7fff'),
+		Color('#615fff'),
+		Color('#ad46ff'),
+		Color('#f6339a'),
 	];
-	private _queue = new QueueStore('randomColors', this._colors);
+	private _current = new PersistedState('currentColorIndex', 0);
 
 	public get() {
-		const item = this._queue.current;
-		if (!item) throw new Error('No current item in queue');
+		const color = this._colors[this._current.current];
+		if (!color) throw new Error('');
 
-		this._queue.next();
+		this._current.current = (this._current.current + 1) % this._colors.length;
 
-		return item.color;
+		return color;
 	}
 }
 

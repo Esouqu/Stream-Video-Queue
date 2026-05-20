@@ -6,6 +6,8 @@
 	import donationAlertsApi from '$lib/api/donationalertsApi.svelte';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import DonationAlertsSocket from '$lib/stores/DonationAlertsSocket.svelte';
+	import appStore from '$lib/stores/AppStore.svelte';
 
 	let { children } = $props();
 
@@ -17,13 +19,13 @@
 		const user = await donationAlertsApi.getUser();
 
 		if (user) {
-			// const donationAlertsSocket = new DonationAlertsSocket({
-			// 	id: user.id,
-			// 	socketToken: user.socket_connection_token
-			// });
+			const donationAlertsSocket = new DonationAlertsSocket({
+				roomId: user.id,
+				socketToken: user.socket_connection_token
+			});
 
 			donationAlertsApi.setUser(user);
-			// appManager.addSocket(donationAlertsSocket);
+			appStore.addSocket(donationAlertsSocket);
 		}
 	}
 </script>
