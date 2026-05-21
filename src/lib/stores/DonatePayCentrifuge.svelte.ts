@@ -26,11 +26,9 @@ class DonatePayCentrifuge extends MessageSocket {
 	private _CENTRIFUGO_URL = 'wss://centrifugo.donatepay.ru:443/connection/websocket';
 	private _TOKEN_ENDPOINT = 'https://donatepay.ru/api/v2/socket/token';
 	private _centrifuge?: Centrifuge;
-	private _roomId: string;
 
 	constructor({ roomId }: SocketConnectionData) {
-		super('donatepay', 'bg-green-500');
-		this._roomId = `$public:${roomId}`;
+		super('donatepay', 'bg-green-500', `$public:${roomId}`);
 	}
 
 	public disconnect() {
@@ -61,7 +59,7 @@ class DonatePayCentrifuge extends MessageSocket {
 				const username = data.notification.vars.name ?? 'Аноним';
 				const amount = Math.round(data.notification.vars.sum);
 
-				for (const handler of this._donationListeners) {
+				for (const handler of this._messageListeners) {
 					handler({
 						name: username,
 						value: amount,

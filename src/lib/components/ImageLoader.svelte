@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { cn } from '$lib/utils';
@@ -13,46 +12,42 @@
 
 	const { src, alt, class: className, ...restProps }: Props = $props();
 
-	let loadedSrc: string | undefined = $state();
-	let error = $state('');
+	const imageResult = $derived.by(loadImage);
 
-	onMount(() => {
-		loadImage(src)
-			.then((img) => (loadedSrc = img.src))
-			.catch((err) => {
-				error = err.message;
-				console.error(err);
-			});
-	});
+	function loadImage() {
+		return new Promise<string | null>((resolve) => {
+			if (!src) return resolve(null);
 
-	function loadImage(url: string) {
-		return new Promise<HTMLImageElement>((resolve, reject) => {
 			const img = new Image();
-			img.onload = () => resolve(img);
-			img.onerror = () => reject();
-			img.src = url;
+			img.onload = () => resolve(src);
+			img.onerror = () => resolve(null);
+			img.src = src;
 		});
 	}
 </script>
 
 <div class={cn('relative flex h-full w-full shrink-0 select-none', className)} {...restProps}>
-	{#if loadedSrc}
-		<div class="w-full" in:fade>
-			<img
-				data-slot="loader-image"
-				src={loadedSrc}
-				class="size-full object-cover"
-				{alt}
-				draggable={false}
-			/>
-		</div>
-	{:else if error}
-		<div
-			class="flex size-full items-center justify-center rounded-lg bg-input text-sm font-semibold text-muted-foreground"
-		>
-			<GalleryIcon class="size-10 text-input" />
-		</div>
-	{:else}
+	{#await imageResult}
 		<Skeleton class="size-full" />
-	{/if}
+	{:then image}
+		{#if image}
+			<div in:fade|global>
+				<img
+					data-slot="loader-image"
+					src={image}
+					class="w-full object-cover"
+					{alt}
+					draggable={false}
+				/>
+			</div>
+		{:else}
+			<div
+				data-slot="image-loader-placeholder"
+				class="flex size-full items-center justify-center rounded-lg bg-input text-sm font-semibold text-muted-foreground"
+				in:fade|global
+			>
+				<GalleryIcon class="size-full max-w-10 text-input" />
+			</div>
+		{/if}
+	{/await}
 </div>

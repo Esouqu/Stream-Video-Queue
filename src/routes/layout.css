@@ -9,6 +9,7 @@
 	--foreground: oklch(0.95 0 0);
 	--elevation-1: oklch(0.174 0.000 0.0);
 	--elevation-2: oklch(0.236 0.000 0.0);
+	--elevation-3: oklch(0.33 0.000 0.0);
 	--card: oklch(0.236 0.000 0.0);
 	--card-foreground: oklch(0.95 0 0);
 	--popover: oklch(30.118% 0.00003 271.152);
@@ -53,6 +54,7 @@
 	--color-foreground: var(--foreground);
 	--color-elevation-1: var(--elevation-1);
 	--color-elevation-2: var(--elevation-2);
+	--color-elevation-3: var(--elevation-3);
 	--color-card: var(--card);
 	--color-card-foreground: var(--card-foreground);
 	--color-popover: var(--popover);
@@ -118,7 +120,7 @@
 	}
 
 	body {
-		@apply bg-background text-foreground font-[Google_Sans] selection:bg-primary/30 selection:text-accent-foreground;
+		@apply bg-background text-foreground font-[Google_Sans,system-ui,sans-serif] selection:bg-primary/30 selection:text-accent-foreground;
 	}
 
 	input[type="number"]::-webkit-outer-spin-button,

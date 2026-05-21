@@ -27,6 +27,11 @@
 			donationAlertsApi.setUser(user);
 			appStore.addSocket(donationAlertsSocket);
 		}
+
+		// const twitchSocket = new TwitchChatSocket({ roomId: '' });
+		// appStore.addSocket(twitchSocket);
+		// const kickSocket = new KickChatSocket({ roomId: '' });
+		// appStore.addSocket(kickSocket);
 	}
 </script>
 
@@ -36,6 +41,6 @@
 </svelte:head>
 
 <Toaster richColors closeButton />
-<TooltipProvider disableHoverableContent delayDuration={500}>
+<TooltipProvider disableHoverableContent ignoreNonKeyboardFocus delayDuration={500}>
 	{@render children()}
 </TooltipProvider>

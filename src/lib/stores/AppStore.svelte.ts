@@ -1,6 +1,6 @@
 import youtubeApi from "$lib/api/youtubeApi";
 import dexieDB from "$lib/db";
-import type { QueueItemData, SocketMessage } from "$lib/types";
+import type { MessageSource, QueueItemData, SocketMessage } from "$lib/types";
 import type { VideoData } from "$lib/api/types";
 import { extractYoutubeVideoData, formatYoutubeDuration } from "$lib/utils";
 import QueueStore from "./QueueStore.svelte";
@@ -10,16 +10,19 @@ import { browser } from "$app/environment";
 import { toast } from "svelte-sonner";
 import YouTubePlayerStore from "./YoutubePlayerStore.svelte";
 import { PersistedState } from "runed";
-import CountdownTimerStore from "./CountdownTimerStore.svelte";
+import TimerStore from "./TimerStore.svelte";
 import { SvelteMap } from "svelte/reactivity";
 import type MessageSocket from "./MessageSocket.svelte";
 
-type EnoughVotesAction = 'none' | 'warning' | 'skip';
+type SkipAction = 'none' | 'warning' | 'skip';
 
 type PersistedAppState = {
 	queueLimit: number | null;
+	payedTimerPricePerMinute: number;
+	prioritizedVideoPrice: number;
 	shouldLoop: boolean;
-	enoughVotesAction: EnoughVotesAction;
+	payedTimerEnabled: boolean;
+	autoSkipAction: SkipAction;
 }
 
 type QueueItemParams = {
@@ -35,16 +38,22 @@ class AppStore {
 	readonly youtubePlayer = new YouTubePlayerStore();
 	readonly queue = new QueueStore(dexieDB);
 	readonly poll = new PollStore();
-	readonly autoSkipTimer = new CountdownTimerStore();
-	private _sockets = new SvelteMap<string, MessageSocket>();
+	readonly autoSkipTimer = new TimerStore();
+	readonly payedTimer = new TimerStore('up');
 
+	readonly canVote = $derived(this.poll.isEnabled && this.queue.current);
+
+	private _sockets = new SvelteMap<string, MessageSocket>();
 	private _randomColor = new RandomColor();
 	private _isLoadingItems = $state(true);
 
 	private _persisted = new PersistedState<PersistedAppState>('appStore', {
 		queueLimit: null,
 		shouldLoop: false,
-		enoughVotesAction: 'warning',
+		payedTimerEnabled: false,
+		payedTimerPricePerMinute: 25,
+		prioritizedVideoPrice: 100,
+		autoSkipAction: 'warning',
 	});
 
 	private _videoRequestPrefix = '!rq';
@@ -57,12 +66,12 @@ class AppStore {
 		this._persisted.current.queueLimit = val;
 	}
 
-	get enoughVotesAction() {
-		return this._persisted.current.enoughVotesAction;
+	get autoSkipAction() {
+		return this._persisted.current.autoSkipAction;
 	}
 
-	set enoughVotesAction(val: EnoughVotesAction) {
-		this._persisted.current.enoughVotesAction = val;
+	set autoSkipAction(val: SkipAction) {
+		this._persisted.current.autoSkipAction = val;
 	}
 
 	get shouldLoop() {
@@ -73,6 +82,27 @@ class AppStore {
 		this._persisted.current.shouldLoop = val;
 	}
 
+	get payedTimerEnabled() {
+		return this._persisted.current.payedTimerEnabled;
+	}
+	set payedTimerEnabled(val: boolean) {
+		this._persisted.current.payedTimerEnabled = val;
+	}
+
+	get payedTimerPricePerMinute() {
+		return this._persisted.current.payedTimerPricePerMinute;
+	}
+	set payedTimerPricePerMinute(val: number) {
+		this._persisted.current.payedTimerPricePerMinute = val;
+	}
+
+	get prioritizedVideoPrice() {
+		return this._persisted.current.prioritizedVideoPrice
+	}
+	set prioritizedVideoPrice(val: number) {
+		this._persisted.current.prioritizedVideoPrice = val;
+	}
+
 	get isLoadingItems() {
 		return this._isLoadingItems;
 	}
@@ -81,37 +111,46 @@ class AppStore {
 		this._initialize();
 	}
 
-	public removeSocket(socketId: string) {
+	public removeSocket(socketId: MessageSource) {
 		const socket = this._sockets.get(socketId);
 		socket?.disconnect();
-
 		this._sockets.delete(socketId);
 	}
 
 	public addSocket(socket: MessageSocket) {
-		socket.onMessage(this.onMessage.bind(this));
+		socket.onMessage(this.onSocketMessage.bind(this));
 		this._sockets.set(socket.id, socket);
 	}
 
+	public async clearQueue() {
+		try {
+			await this.queue.clear();
+			toast.message("Очередь очищена");
+		} catch (err) {
+			toast.error('Не очистить очередь', { description: (err as Error).message });
+		}
+	}
+
 	public async removeVideo(video: QueueItemData) {
-		await this.queue.dequeue(video);
-		toast.message("Видео удалено из очереди", {
-			description: video.title,
-		});
+		try {
+			await this.queue.dequeue(video);
+			toast.message("Видео удалено из очереди", {
+				description: video.title,
+			});
+		} catch (err) {
+			toast.error('Не удалось удалить видео', { description: (err as Error).message });
+		}
 	}
 
 	public async addVideo(username: string, message: string, value: number) {
-		const replacedMessage = message.replace(this._videoRequestPrefix, '').trim();
-		if (!replacedMessage) return;
-
 		const data = extractYoutubeVideoData(message);
 		if (!data) {
-			console.error(`No video data found in message: "${message}"`);
+			console.warn(`No video data found in message: "${message}"`);
 			return;
 		};
 
-		const existingItem = await this.queue.isExisting(data.videoId);
-		if (existingItem) return;
+		const existingItem = await this.queue.getItemByVideoId(data.videoId);
+		if (existingItem && value === 0) return;
 
 		try {
 			const videoData = await youtubeApi.getVideo(data.videoId);
@@ -129,20 +168,38 @@ class AppStore {
 				description: videoData.snippet.title,
 			});
 		} catch (err) {
-			toast((err as Error).message);
+			toast.error('Не удалось добавить видео', {
+				description: (err as Error).message
+			});
 		}
 	}
 
-	public onMessage({ name, message, value }: SocketMessage) {
-		const canRequest = message.startsWith(this._videoRequestPrefix);
+	public onSocketMessage({ name, message, value }: SocketMessage) {
 		const isQueueFull = this.queueLimit && this.queue.size >= this.queueLimit;
-		const canVote = this.poll.isEnabled;
+		const isPaid = value > 0;
 
-		if (canRequest && !isQueueFull) {
-			this.addVideo(name, message, value);
+		// for paid messaged
+		if (isPaid) {
+			// we dont need prefix and can't vote
+			if (!isQueueFull) {
+				this.addVideo(name, message, value);
+			} else {
+				toast.warning('Видео не было добавлено', { description: 'Очередь заполнена!' })
+			}
+
+			return;
 		}
 
-		if (canVote) {
+		// for chat messages
+		// checking for prefix and register vote
+		const hasPrefix = message.startsWith(this._videoRequestPrefix);
+		const messageWithoutPrefix = message.replace(this._videoRequestPrefix, '').trim();
+
+		if (hasPrefix && messageWithoutPrefix && !isQueueFull) {
+			this.addVideo(name, messageWithoutPrefix, value);
+		}
+
+		if (this.canVote) {
 			this.poll.addVote(name, message);
 		}
 	}
@@ -153,8 +210,8 @@ class AppStore {
 		await this.youtubePlayer.load(videoId, startSeconds);
 	}
 
-	public resetVotes() {
-		this.poll.reset();
+	public resetVotes(isManual = false) {
+		this.poll.reset(isManual);
 		this.autoSkipTimer.reset();
 		this.youtubePlayer.play();
 	}
@@ -164,22 +221,17 @@ class AppStore {
 		this.autoSkipTimer.reset();
 	}
 
-	private _onAutoSkipTimerFinished() {
-		this.queue.next();
-		this.autoSkipTimer.reset();
-	}
+	private _activateAutoSkipAction() {
+		if (this.autoSkipTimer.isRunning || this.autoSkipAction === 'none') return;
 
-	private _onEnoughVotes() {
-		if (this.enoughVotesAction === 'none') return;
-
-		if (this.enoughVotesAction === 'skip') {
+		if (this.autoSkipAction === 'skip') {
 			this.queue.next();
 			this.poll.reset();
 
 			return;
 		}
 
-		if (this.enoughVotesAction === 'warning') {
+		if (this.autoSkipAction === 'warning') {
 			this.youtubePlayer.pause();
 			this.autoSkipTimer.start(7000);
 
@@ -187,12 +239,38 @@ class AppStore {
 		}
 	}
 
+	private _onAutoSkipTimerFinished() {
+		this.queue.next();
+		this.autoSkipTimer.reset();
+	}
+
 	private _onVideoUnstarted() {
 		this.autoSkipTimer.reset();
+
+		if (this.payedTimerEnabled) {
+			const price = this.queue.current?.value;
+			if (price) {
+				const minutes = price / this.payedTimerPricePerMinute;
+				this.payedTimer.reset();
+				this.payedTimer.setTime(minutes * 60 * 1000);
+			}
+		}
 	}
 
 	private _onVideoEnded() {
 		if (!this.shouldLoop) this.queue.next();
+	}
+
+	private _onVideoPause() {
+		if (this.payedTimerEnabled) {
+			this.payedTimer.pause();
+		}
+	}
+
+	private _onVideoPlay() {
+		if (this.payedTimerEnabled) {
+			this.payedTimer.start();
+		}
 	}
 
 	private _composeQueueItem(params: QueueItemParams): Omit<QueueItemData, 'id' | 'sortOrder'> {
@@ -215,7 +293,6 @@ class AppStore {
 			isActive: false,
 			submittedBy: [params.username],
 			color,
-			isWatched: false,
 		}
 	}
 
@@ -225,11 +302,14 @@ class AppStore {
 			await this.queue.initialize();
 			this._isLoadingItems = false;
 
-			// connect events
 			this.youtubePlayer.on('unstarted', this._onVideoUnstarted.bind(this));
+			this.youtubePlayer.on('play', this._onVideoPlay.bind(this));
+			this.youtubePlayer.on('pause', this._onVideoPause.bind(this));
 			this.youtubePlayer.on('ended', this._onVideoEnded.bind(this));
+
 			this.autoSkipTimer.on('finished', this._onAutoSkipTimerFinished.bind(this));
-			this.poll.on('finished', this._onEnoughVotes.bind(this));
+			this.payedTimer.on('finished', this._activateAutoSkipAction.bind(this));
+			this.poll.on('finished', this._activateAutoSkipAction.bind(this));
 		}
 	}
 

@@ -28,8 +28,8 @@ class YouTubePlayerStore extends VideoPlayer<YTPType> {
 					this.emit('error', error);
 				});
 			} catch (err) {
-				console.log(err)
-				toast((err as Error).message);
+				console.log(err);
+				toast('Не получилось инициализировать плеер', { description: (err as Error).message });
 			}
 
 		}

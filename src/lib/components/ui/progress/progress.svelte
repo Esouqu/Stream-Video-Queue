@@ -2,13 +2,20 @@
 	import { Progress as ProgressPrimitive } from 'bits-ui';
 	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
 
+	type Props = WithoutChildrenOrChild<ProgressPrimitive.RootProps> & {
+		reversed?: boolean;
+	};
+
 	let {
 		ref = $bindable(null),
 		class: className,
 		max = 100,
 		value,
+		reversed = false,
 		...restProps
-	}: WithoutChildrenOrChild<ProgressPrimitive.RootProps> = $props();
+	}: Props = $props();
+
+	const progressPercent = $derived((100 * (value ?? 0)) / (max ?? 1));
 </script>
 
 <ProgressPrimitive.Root
@@ -25,6 +32,6 @@
 	<div
 		data-slot="progress-indicator"
 		class="h-full w-full flex-1 bg-primary transition-all"
-		style="transform: translateX(-{100 - (100 * (value ?? 0)) / (max ?? 1)}%)"
+		style="transform: translateX(-{reversed ? progressPercent : 100 - progressPercent}%)"
 	></div>
 </ProgressPrimitive.Root>

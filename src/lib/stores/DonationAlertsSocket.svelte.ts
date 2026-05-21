@@ -23,12 +23,10 @@ interface DonationAlertsDonationMessage {
 
 class DonationAlertsSocket extends MessageSocket {
 	private _socket: WebSocket | undefined;
-	private _roomId: string;
 	private _socketToken: string | undefined;
 
 	constructor({ roomId, socketToken }: SocketConnectionData) {
-		super('donationalerts', 'bg-amber-500');
-		this._roomId = `$alerts:donation_${roomId}`;
+		super('donationalerts', 'bg-amber-500', `$alerts:donation_${roomId}`);
 		this._socketToken = socketToken;
 	}
 
@@ -90,7 +88,7 @@ class DonationAlertsSocket extends MessageSocket {
 				const username = donation.username ?? 'Аноним';
 				const amount = Math.round(donation.amount_in_user_currency);
 
-				for (const handler of this._donationListeners) {
+				for (const handler of this._messageListeners) {
 					handler({
 						name: username,
 						value: amount,

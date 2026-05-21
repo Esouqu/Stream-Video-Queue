@@ -1,96 +1,68 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
 	import CogIcon from '../icons/CogIcon.svelte';
 	import { buttonVariants } from '../ui/button';
-	import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 	import { ScrollArea } from '../ui/scroll-area';
-	import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-	import DonationSettings from './components/DonationSettings.svelte';
-	import QueueSettings from './components/QueueSettings.svelte';
-	import ChatSettings from './components/ChatSettings.svelte';
+	import DonationSection from './components/DonationSection.svelte';
+	import QueueSection from './components/QueueSection.svelte';
+	import ChatSection from './components/ChatSection.svelte';
+	import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card';
+	import IntegrationsSection from './components/IntegrationsSection.svelte';
+	import InfoIcon from '../icons/InfoIcon.svelte';
+	import Links from '../Links.svelte';
+	import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
+	import { Separator } from '../ui/separator';
 
-	const tabs = [
-		{ title: 'Чат', value: 'chat', component: ChatSettings },
-		{ title: 'Донат', value: 'donation', component: DonationSettings },
-		{ title: 'Очередь', value: 'queue', component: QueueSettings }
+	const settingsSections = [
+		{ title: 'Интеграции', component: IntegrationsSection },
+		{ title: 'Чат', component: ChatSection },
+		{ title: 'Донат', component: DonationSection },
+		{ title: 'Очередь', component: QueueSection }
 	];
-
-	let currentTabId = $state(0);
-	let direction = $state(1);
-
-	let itemsSizes: (HTMLElement | null)[] = $state(new Array(tabs.length).fill(null));
-	let prevWidthSum = $derived(
-		itemsSizes.reduce(
-			(acc, item, idx) => (currentTabId > idx ? acc + (item?.offsetWidth ?? 0) : acc),
-			0
-		)
-	);
-	let spanWidth = $derived(itemsSizes[currentTabId]?.offsetWidth);
-
-	function getValue() {
-		return currentTabId.toString();
-	}
-
-	function setValue(v: string) {
-		direction = currentTabId < parseInt(v) ? 1 : -1;
-		currentTabId = parseInt(v);
-	}
 </script>
 
-<Dialog>
-	<DialogTrigger class={buttonVariants({ variant: 'ghost', size: 'icon' })}>
+<Sheet>
+	<SheetTrigger class={buttonVariants({ variant: 'ghost', size: 'icon' })}>
 		<CogIcon />
-	</DialogTrigger>
-
-	<DialogContent
-		class="flex h-185 w-170 flex-col gap-0 border-border/50 p-0"
-		closeButtonClass="top-6 right-6"
-	>
+	</SheetTrigger>
+	<SheetContent class="w-150">
 		<ScrollArea class="h-full w-full gap-0 overflow-hidden">
-			<DialogHeader>
-				<DialogTitle>Настройки</DialogTitle>
-			</DialogHeader>
-			<Tabs class="overflow-hidden bg-none" bind:value={getValue, setValue}>
-				<TabsList class="mx-auto h-auto bg-card p-2">
-					<div
-						class="relative grid h-full w-full items-center"
-						style="grid-template-columns: repeat({tabs.length}, 1fr);"
-					>
-						{#each tabs as { title }, idx (title)}
-							<TabsTrigger
-								bind:ref={itemsSizes[idx]}
-								class="relative z-20 w-23 shrink gap-4 px-3 text-muted-foreground transition-colors duration-200 select-none hover:text-foreground data-[state=active]:bg-transparent data-[state=active]:text-background"
-								value={idx.toString()}
-							>
-								{title}
-							</TabsTrigger>
-						{/each}
-						{#if spanWidth}
-							<span
-								class="pointer-events-none absolute top-0 left-0 z-10 h-full translate-y-1/2 rounded-sm bg-primary py-2 transition-all duration-300"
-								style="width: {spanWidth}px; translate: {prevWidthSum}px 0;"
-								in:fade={{ duration: 250 }}
-							></span>
-						{/if}
-					</div>
-				</TabsList>
+			<SheetHeader>
+				<SheetTitle>Настройки</SheetTitle>
+			</SheetHeader>
 
-				<div class="grid px-6">
-					{#each tabs as tab, idx (tab.value)}
-						{#if currentTabId === idx}
-							<div
-								class="col-start-1 row-start-1"
-								in:fly={{ x: 300 * direction, duration: 300 }}
-								out:fly={{ x: -300 * direction, duration: 300 }}
-							>
-								<TabsContent class="py-4" value={idx.toString()}>
-									<tab.component />
-								</TabsContent>
-							</div>
-						{/if}
-					{/each}
-				</div>
-			</Tabs>
+			<div class="space-y-6 px-6 pb-6">
+				<Card class="relative grid auto-rows-auto gap-x-4 gap-y-0 bg-blue-400/20 p-4">
+					<CardHeader class="flex gap-2 p-0">
+						<InfoIcon class="size-5 text-blue-300" />
+						<div class="space-y-1">
+							<CardTitle class="text-blue-300">Добавление видео</CardTitle>
+							<CardDescription class="text-blue-400/80">
+								В чате: <span class="bg-neutral-900 p-0.5 px-1 text-sm font-semibold">
+									!rq &lt;ссылка на видео&gt;
+								</span>;
+								<b>или</b>
+
+								в донате:
+								<span class="bg-neutral-900 p-0.5 px-1 text-sm font-semibold">
+									&lt;ссылка на видео&gt;
+								</span>.
+							</CardDescription>
+						</div>
+					</CardHeader>
+				</Card>
+
+				{#each settingsSections as section (section.title)}
+					<div class="space-y-2">
+						<div class="flex w-full items-center gap-4">
+							<h2 class="text-xl font-semibold">{section.title}</h2>
+							<Separator class="w-full shrink" />
+						</div>
+						<section.component />
+					</div>
+				{/each}
+
+				<Links />
+			</div>
 		</ScrollArea>
-	</DialogContent>
-</Dialog>
+	</SheetContent>
+</Sheet>

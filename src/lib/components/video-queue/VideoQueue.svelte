@@ -1,42 +1,19 @@
 <script lang="ts">
 	import VirtualList from '../VirtualList.svelte';
-	import ControlPanel from './components/ControlPanel.svelte';
-	import QueueItem from '../QueueItem.svelte';
+	import QueueItem from './components/QueueItem.svelte';
 	import appStore from '$lib/stores/AppStore.svelte';
 	import type { QueueItemData } from '$lib/types';
-	import { slide } from 'svelte/transition';
-	import { Spinner } from '../ui/spinner';
-	import Votes from '../votes/Votes.svelte';
 	import SkipForwardIcon from '../icons/SkipForwardIcon.svelte';
-	import { formatCurrencyNumber } from '$lib/utils';
-	import Settings from '../settings/Settings.svelte';
-	import { Toggle } from '../ui/toggle';
-	import VoteIcon from '../icons/VoteIcon.svelte';
-	import DevTools from '../DevTools.svelte';
-	import { buttonVariants } from '../ui/button';
-	import TrashIcon from '../icons/TrashIcon.svelte';
-	import {
-		AlertDialog,
-		AlertDialogAction,
-		AlertDialogCancel,
-		AlertDialogContent,
-		AlertDialogDescription,
-		AlertDialogFooter,
-		AlertDialogHeader,
-		AlertDialogTitle,
-		AlertDialogTrigger
-	} from '../ui/alert-dialog';
+	import QueueHeader from './components/QueueHeader.svelte';
+	import { slide } from 'svelte/transition';
+	import ControlPanel from './components/ControlPanel.svelte';
+	import EmptyQueueItem from './components/EmptyQueueItem.svelte';
+	import ClearQueueButton from '../ClearQueueButton.svelte';
 
 	const itemHeight = 102;
-	const itemsBuffer = 6;
+	const itemsBuffer = 10;
 
 	let viewportRef = $state<HTMLDivElement | null>(null);
-	let isAlertOpened = $state(false);
-
-	function onAlertAction() {
-		appStore.queue.clear();
-		isAlertOpened = false;
-	}
 
 	function onItemSelect(item: QueueItemData) {
 		appStore.queue.select(item);
@@ -45,109 +22,67 @@
 </script>
 
 <div
-	class="relative m-4 ml-0 flex w-100 shrink-0 flex-col items-center overflow-hidden rounded-md bg-muted shadow-sm"
+	class="relative m-4 ml-0 flex w-100 shrink-0 flex-col items-center overflow-hidden rounded-md bg-elevation-2 shadow-sm"
 >
-	<div class="flex w-full flex-col justify-between gap-2 p-1">
-		<div class="flex items-center justify-between px-2 font-semibold text-muted-foreground">
-			<div class="flex">
-				<Toggle size="icon" tooltip="Голосование" bind:pressed={appStore.poll.isEnabled}>
-					<VoteIcon />
-				</Toggle>
-				<div class="flex">
-					<DevTools />
-				</div>
-			</div>
-			Очередь ({appStore.queue.size})
-			<Settings />
-		</div>
-	</div>
+	<QueueHeader />
 
 	<VirtualList
 		bind:viewportRef
-		class="w-full overflow-hidden bg-elevation-2"
+		class="w-full overflow-hidden"
 		items={appStore.queue.upcoming}
 		{itemHeight}
 		{itemsBuffer}
 	>
 		{#snippet header()}
 			<div class="py-2">
-				{#if appStore.queue.current}
-					<div class="flex shrink-0 overflow-hidden px-2" transition:slide>
-						<div
-							class="pointer-events-auto relative flex w-full shrink-0 flex-col justify-between overflow-hidden rounded-md border bg-neutral-700/30 p-2 font-semibold shadow-md backdrop-blur-md transition-colors duration-700"
-						>
-							<div class="text-sm text-muted-foreground">Приоритетный заказ</div>
-							<div class="text-lg">{formatCurrencyNumber(150)}</div>
-						</div>
-					</div>
-					{#if appStore.queue.current && appStore.poll.isEnabled}
-						<div class="mt-2 flex shrink-0 overflow-hidden px-2" transition:slide>
-							<Votes />
-						</div>
-					{/if}
-					<div class="pointer-events-none mt-2 px-2" transition:slide>
-						<ControlPanel
-							currentItem={appStore.queue.current}
-							videoPlayer={appStore.youtubePlayer}
-							onSkipBackwardClick={async () => await appStore.queue.previous()}
-							onSkipForwardClick={async () => await appStore.queue.next()}
-							onRemoveClick={() =>
-								appStore.queue.current && appStore.removeVideo(appStore.queue.current)}
-							bind:isShuffled={appStore.queue.shouldInsertRandomly}
-						/>
-					</div>
-				{/if}
+				<div class="pointer-events-none px-2" transition:slide>
+					<ControlPanel
+						currentItem={appStore.queue.current}
+						videoPlayer={appStore.youtubePlayer}
+						onSkipBackwardClick={() => appStore.queue.previous()}
+						onSkipForwardClick={() => appStore.queue.next()}
+						onRemoveClick={() =>
+							appStore.queue.current && appStore.removeVideo(appStore.queue.current)}
+						bind:isShuffled={appStore.queue.shouldInsertRandomly}
+					/>
+				</div>
 			</div>
 		{/snippet}
-		{#snippet children(item)}
+
+		{#snippet child(item)}
 			<QueueItem
 				{item}
 				onSelect={(item) => onItemSelect(item)}
 				onRemoveClick={() => appStore.removeVideo(item)}
 			/>
 		{/snippet}
+
 		{#snippet empty()}
-			<div class="text-center text-lg font-semibold text-muted-foreground">
-				{#if appStore.isLoadingItems}
-					<Spinner class="size-10" />
-				{:else if appStore.queue.current}
-					Очередь закончилась.<br />
-					<span class="text-sm"
-						>Нажмите <SkipForwardIcon class="inline size-4" />, чтобы начать сначала</span
-					>
-				{:else}
-					Очередь пуста
-				{/if}
-			</div>
+			{#if appStore.isLoadingItems}
+				<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+				{#each { length: 5 } as _, idx (idx)}
+					<EmptyQueueItem />
+				{/each}
+			{:else if appStore.queue.isEmpty}
+				<div
+					class="absolute inset-0 flex size-full flex-col items-center justify-center gap-1 text-center font-semibold text-muted-foreground"
+				>
+					<span class="text-lg">Очередь пуста.</span>
+				</div>
+			{:else if appStore.queue.currentIndex + 1 === appStore.queue.size}
+				<div
+					class="absolute inset-0 flex size-full flex-col items-center justify-center gap-1 text-center font-semibold text-muted-foreground"
+				>
+					<div class="flex flex-col">
+						<span class="text-lg">Очередь закончилась.</span>
+						<span class="text-sm">
+							Можете начать сначала, нажав <SkipForwardIcon class="inline size-4" />.
+						</span>
+					</div>
+					<div>или</div>
+					<ClearQueueButton size="sm" />
+				</div>
+			{/if}
 		{/snippet}
 	</VirtualList>
-
-	<div class="absolute right-2 bottom-2">
-		<AlertDialog bind:open={isAlertOpened}>
-			<AlertDialogTrigger
-				class={buttonVariants({ variant: 'ghost', size: 'icon' })}
-				disabled={appStore.queue.isEmpty}
-			>
-				<TrashIcon />
-			</AlertDialogTrigger>
-
-			<AlertDialogContent class="w-113">
-				<AlertDialogHeader>
-					<AlertDialogTitle>Вы уверены?</AlertDialogTitle>
-					<AlertDialogDescription class="whitespace-pre-line">
-						Нажимая «Удалить», вы <b>навсегда</b> удалите все видео.
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel>Отмена</AlertDialogCancel>
-					<AlertDialogAction
-						class={buttonVariants({ variant: 'destructive' })}
-						onclick={onAlertAction}
-					>
-						Удалить
-					</AlertDialogAction>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
-	</div>
 </div>

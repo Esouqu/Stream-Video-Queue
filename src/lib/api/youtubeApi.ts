@@ -30,7 +30,7 @@ class YoutubeApi {
 			throw new Error(`Видео с ID "${id}" не найдено`);
 		}
 
-		console.log(data.items[0])
+		// console.log(data.items[0])
 		return data.items[0];
 	}
 }

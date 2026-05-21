@@ -5,7 +5,7 @@
 	import SkipForwardIcon from '$lib/components/icons/SkipForwardIcon.svelte';
 	import { createTimeline } from 'animejs';
 	import ShuffleIcon from '$lib/components/icons/ShuffleIcon.svelte';
-	import QueueItem from '$lib/components/QueueItem.svelte';
+	import QueueItem from '$lib/components/video-queue/components/QueueItem.svelte';
 	import { type QueueItemData } from '$lib/types';
 	import { fade } from 'svelte/transition';
 	import { cn } from '$lib/utils';
@@ -15,6 +15,11 @@
 	import PauseIcon from '$lib/components/icons/PauseIcon.svelte';
 	import type VideoPlayerStore from '$lib/stores/VideoPlayerStore.svelte';
 	import appStore from '$lib/stores/AppStore.svelte';
+	import { Progress } from '$lib/components/ui/progress';
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import NumberFormatter from '$lib/utils/NumberFormatter';
+	import EmptyQueueItem from './EmptyQueueItem.svelte';
 
 	type ButtonMouseEvent =
 		| (MouseEvent & {
@@ -25,14 +30,14 @@
 		  });
 
 	type Props = {
-		currentItem: QueueItemData;
 		videoPlayer: VideoPlayerStore<T>;
+		currentItem?: QueueItemData;
 		isShuffled?: boolean;
 		class?: string;
 		onRemoveClick?: () => void;
 		onInfoClick?: () => void;
-		onSkipBackwardClick?: () => Promise<void>;
-		onSkipForwardClick?: () => Promise<void>;
+		onSkipBackwardClick?: () => void;
+		onSkipForwardClick?: () => void;
 	};
 
 	let circleClientWidth = $state(0);
@@ -51,11 +56,17 @@
 		onSkipForwardClick
 	}: Props = $props();
 
-	const rgb = $derived(currentItem.color);
+	const rgb = $derived(currentItem ? currentItem.color : [0, 0, 0]);
 	const prevRgb = new Previous(() => rgb);
 	const firstGradientStep = $derived(`rgb(${rgb[0]} ${rgb[1]} ${rgb[2]} / 0.4)`);
 	const secondGradientStep = $derived(
 		`rgb(${prevRgb.current?.[0]} ${prevRgb.current?.[1]} ${prevRgb.current?.[2]} / 0.4)`
+	);
+	const formattedPayedTimerTime = $derived(
+		NumberFormatter.formatTimerValue(appStore.payedTimer.current, appStore.payedTimer.startTime)
+	);
+	const formattedPayedTimerStartTime = $derived(
+		NumberFormatter.formatTimerValue(appStore.payedTimer.startTime, appStore.payedTimer.startTime)
 	);
 
 	// TODO:
@@ -75,13 +86,13 @@
 
 	async function skipBackward(e: ButtonMouseEvent) {
 		e.stopPropagation();
-		await onSkipBackwardClick?.();
+		onSkipBackwardClick?.();
 		animateCircle(e);
 	}
 
 	async function skipForward(e: ButtonMouseEvent) {
 		e.stopPropagation();
-		await onSkipForwardClick?.();
+		onSkipForwardClick?.();
 		animateCircle(e);
 	}
 
@@ -100,8 +111,12 @@
 				ease: 'outQuad',
 				onBegin: ({ targets }) => {
 					for (const target of targets) {
-						target.style.top = `${relativeY - circleClientHeight / 2}px`;
-						target.style.left = `${relativeX - circleClientWidth / 2}px`;
+						target.style = `
+							--c1: ${firstGradientStep};
+							--c2: ${secondGradientStep};
+							top: ${relativeY - circleClientHeight / 2}px;
+							left: ${relativeX - circleClientWidth / 2}px;
+						`;
 					}
 				}
 			})
@@ -118,26 +133,38 @@
 				opacity: 0
 			});
 	}
+
+	onMount(() => {
+		if (browser) {
+			appStore.payedTimer.start(100000);
+		}
+	});
 </script>
 
 <div
 	bind:this={panelRef}
 	class={cn(
-		`pointer-events-auto relative z-10 flex shrink-0 overflow-hidden rounded-md shadow-md ring ring-(--panel-color) backdrop-blur-md transition-colors duration-700`,
+		`group pointer-events-auto relative z-10 flex shrink-0 overflow-hidden rounded-md shadow-md ring ring-(--panel-color) backdrop-blur-md transition-colors duration-700`,
 		className
 	)}
 	style="--panel-color: rgb({rgb[0]} {rgb[1]} {rgb[2]} / 0.3); background: linear-gradient(0deg, oklch(0 0 0 / 0.3) 10%, transparent), var(--panel-color);"
 >
-	<div class="relative z-30 flex w-full flex-col justify-center gap-2">
-		<div class="p-2 pb-0 text-sm font-semibold text-muted-foreground">Текущее видео</div>
+	<div class="relative z-30 flex w-full flex-col justify-center gap-3">
+		<div class="p-2 pt-3 pb-0 text-sm font-semibold text-muted-foreground">
+			Текущее видео [{appStore.queue.currentIndex + 1} / {appStore.queue.size}]
+		</div>
 
-		{#key currentItem}
-			<div in:fade={{ duration: 700 }}>
-				<QueueItem class="py-0" isCurrent item={currentItem} {onRemoveClick} {onInfoClick} />
-			</div>
-		{/key}
+		{#if currentItem}
+			{#key currentItem}
+				<div in:fade={{ duration: 700 }}>
+					<QueueItem class="py-0" isCurrent item={currentItem} {onRemoveClick} {onInfoClick} />
+				</div>
+			{/key}
+		{:else}
+			<EmptyQueueItem />
+		{/if}
 
-		<div class="mx-auto mb-2 flex items-center gap-2">
+		<div class="mx-auto mb-3 flex items-center gap-2">
 			<Toggle size="icon" tooltip="Повтор видео" bind:pressed={appStore.shouldLoop}>
 				<RepeatIcon />
 			</Toggle>
@@ -166,6 +193,34 @@
 				<ShuffleIcon />
 			</Toggle>
 		</div>
+
+		{#if appStore.payedTimer.isRunning}
+			<div class="pointer-events-none absolute inset-0 -z-1 size-full" transition:fade>
+				<Progress
+					class="size-full rounded-none bg-transparent **:data-[slot=progress-indicator]:bg-white/5 **:data-[slot=progress-indicator]:transition-none"
+					value={appStore.payedTimer.current}
+					max={appStore.payedTimer.startTime}
+				/>
+			</div>
+			<div
+				class="pointer-events-none absolute bottom-0 left-0 -z-1 w-full opacity-0 transition-opacity group-hover:opacity-100"
+				transition:fade
+			>
+				<div class="mb-1 flex justify-between px-2 text-sm font-semibold text-muted-foreground">
+					<div>
+						{formattedPayedTimerTime}
+					</div>
+					<div>
+						{formattedPayedTimerStartTime}
+					</div>
+				</div>
+				<Progress
+					class="h-1 w-full rounded-none bg-white/10 **:data-[slot=progress-indicator]:bg-white/20 **:data-[slot=progress-indicator]:transition-none"
+					value={appStore.payedTimer.current}
+					max={appStore.payedTimer.startTime}
+				/>
+			</div>
+		{/if}
 	</div>
 
 	<div
@@ -173,6 +228,5 @@
 		bind:clientWidth={circleClientWidth}
 		bind:clientHeight={circleClientHeight}
 		class="pointer-events-none absolute z-20 size-200 rounded-full bg-radial from-(--c1) from-15% via-(--c2) opacity-0"
-		style="--c1: {firstGradientStep}; --c2: {secondGradientStep};"
 	></div>
 </div>

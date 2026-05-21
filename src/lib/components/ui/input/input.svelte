@@ -1,13 +1,14 @@
 <script lang="ts" module>
 	import { cn, type WithElementRef } from '$lib/utils.js';
 	import type { HTMLInputAttributes, HTMLInputTypeAttribute } from 'svelte/elements';
+	import { fade } from 'svelte/transition';
 	import { type VariantProps, tv } from 'tailwind-variants';
 
 	export const inputVariants = tv({
 		base: 'flex h-10 w-full min-w-0 rounded-lg border-2 outline-none border-input px-3 py-2 text-base transition-all duration-300 selection:bg-primary/30 selection:text-accent-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 outline-input hover:border-neutral-500 focus-visible:border-neutral-500',
 		variants: {
 			variant: {
-				default: 'bg-elevation-1/40 focus-visible:bg-neutral-700 hover:bg-primary/10',
+				default: 'bg-elevation-1/40 focus-visible:bg-neutral-800',
 				outline: 'hover:bg-foreground/10 focus-visible:outline-input focus-visible:bg-neutral-900'
 			}
 		},
@@ -25,6 +26,7 @@
 	> & {
 		error?: string;
 		variant?: InputVariant;
+		suffix?: string;
 		onenter?: (e: KeyboardEvent & { currentTarget: EventTarget & HTMLInputElement }) => void;
 	};
 </script>
@@ -35,6 +37,7 @@
 		value = $bindable(),
 		variant = 'default',
 		type,
+		suffix,
 		files = $bindable(),
 		class: className,
 		error,
@@ -45,15 +48,11 @@
 		...restProps
 	}: Props = $props();
 
-	let isFocused = $state(false);
-
 	function onFocus(e: FocusEvent & { currentTarget: EventTarget & HTMLInputElement }) {
-		isFocused = true;
 		onfocus?.(e);
 	}
 
 	function onBlur(e: FocusEvent & { currentTarget: EventTarget & HTMLInputElement }) {
-		isFocused = false;
 		onblur?.(e);
 	}
 
@@ -80,7 +79,7 @@
 	/>
 {:else}
 	<div
-		class="relative flex flex-col"
+		class="relative flex h-fit flex-col items-center"
 		class:w-full={className?.includes('w-full')}
 		class:size-full={className?.includes('size-full')}
 	>
@@ -97,14 +96,15 @@
 			{...restProps}
 		/>
 
-		<!-- {#if suffix}
+		{#if suffix && value !== null && value !== ''}
 			<span
-				class="pointer-events-none absolute top-1/2 right-4 z-20 -translate-y-1/2 text-muted-foreground data-[suffix-size=sm]:right-3 data-[suffix-size=sm]:text-sm"
-				data-suffix-size={suffixSize}
+				class="pointer-events-none absolute top-1/2 right-4 z-20 -translate-y-1/2 font-semibold text-muted-foreground"
+				transition:fade={{ duration: 250 }}
 			>
 				{suffix}
 			</span>
-		{/if} -->
+		{/if}
+
 		{#if error}
 			<span class="text-sm font-semibold text-destructive">{error}</span>
 		{/if}

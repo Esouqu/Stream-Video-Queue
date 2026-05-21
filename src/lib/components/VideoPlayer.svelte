@@ -2,14 +2,18 @@
 	import appStore from '$lib/stores/AppStore.svelte';
 	import { onMount, untrack } from 'svelte';
 	import { Spinner } from './ui/spinner';
-	import { msToHHMMSS } from '$lib/utils';
 	import { Button } from './ui/button';
 	import { fade } from 'svelte/transition';
+	import NumberFormatter from '$lib/utils/NumberFormatter';
 
 	let playerElement = $state<HTMLDivElement>();
 
-	const shouldShowWarning = $derived(
-		appStore.poll.isEnoughVotes && appStore.autoSkipTimer.isRunning
+	const shouldShowWarning = $derived(appStore.autoSkipTimer.isRunning);
+	const formattedTime = $derived(
+		NumberFormatter.formatTimerValue(
+			appStore.autoSkipTimer.current,
+			appStore.autoSkipTimer.startTime
+		)
 	);
 
 	onMount(() => {
@@ -53,8 +57,9 @@
 			transition:fade
 		>
 			<div class="text-xl font-semibold">Видео будет пропущено</div>
-			<div class="font-semibold text-muted-foreground tabular-nums">
-				Автопропуск через {msToHHMMSS(appStore.autoSkipTimer.current)} сек.
+			<div>
+				<span class="font-semibold text-muted-foreground">Автопропуск через</span>
+				<span class="font-semibold tabular-nums">{formattedTime}</span>
 			</div>
 			<Button variant="secondary" class="mt-4" onclick={clearWarning}>Оставить видео</Button>
 		</div>

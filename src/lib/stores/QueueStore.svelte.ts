@@ -16,11 +16,12 @@ class QueueStore {
 	private _midDistance = 0.00001;
 	private _db: DBSchema;
 
+	readonly currentIndex = $derived(this._items.findIndex((item) => item.isActive));
 	readonly current? = $derived(this._items.find((item) => item.isActive));
-	readonly upcoming = $derived(this._items.slice(this._items.findIndex((item) => item.isActive) + 1));
+	readonly upcoming = $derived(this._items.slice(this.currentIndex + 1));
 
-	constructor(adapter: DBSchema) {
-		this._db = adapter;
+	constructor(db: DBSchema) {
+		this._db = db;
 	}
 
 	get size() {
@@ -96,19 +97,9 @@ class QueueStore {
 		await this._db.queueItems.clear();
 	}
 
-	public async isExisting(videoId: string) {
+	public async getItemByVideoId(videoId: string) {
 		return await this._db.queueItems.where({ videoId }).first();
 	}
-
-	// public async updateQueueItem(item: QueueItemData, username: string) {
-	// 	const hasUserSubmittedBefore = item.submittedBy.includes(username);
-
-	// 	if (hasUserSubmittedBefore) return;
-
-	// 	return await this._db.queueItems.update(item.id, {
-	// 		submittedBy: [...item.submittedBy, username]
-	// 	});
-	// }
 
 	private async _insertItemWithConditionalSkip(newItemData: RawQueueItem, anchorId: number) {
 		let needDefrag = false;
@@ -156,7 +147,7 @@ class QueueStore {
 
 			// Fallback if the table is entirely empty
 			if (!firstItem || !lastItem) {
-				return await this._db.queueItems.add({ ...newItemData, sortOrder: 10 });
+				return await this._db.queueItems.add({ ...newItemData, sortOrder: 10, isActive: true });
 			}
 
 			if (atEnd) {
@@ -164,11 +155,7 @@ class QueueStore {
 				return await this._db.queueItems.add({ ...newItemData, sortOrder: finalOrder });
 			}
 
-			if (anchorId === undefined) {
-				throw new Error("An anchorId must be provided when atEnd is false.");
-			}
-
-			const anchorItem = await this._getAnchorOrThrow(anchorId);
+			const anchorItem = anchorId ? await this._getAnchorOrThrow(anchorId) : firstItem;
 			const subsequentItems = await this._getSubsequentItems(anchorItem.sortOrder);
 
 			// Find the valid starting boundary by skipping all consecutive positive items
@@ -268,6 +255,8 @@ class QueueStore {
 	}
 
 	private _updateItems(items: QueueItemData[]) {
+		// this._items = items;
+
 		// Map new items by ID for fast lookup
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const newItemMap = new Map(items.map((item) => [item.id, item]));
@@ -289,6 +278,7 @@ class QueueStore {
 				if (JSON.stringify(currentItems[currentIndex]) !== JSON.stringify(newItem)) {
 					currentItems[currentIndex] = newItem;
 				}
+				// Object.assign(currentItems[currentIndex], newItem)
 			} else {
 				// Insert new item at its correct sorted position
 				currentItems.splice(index, 0, newItem);

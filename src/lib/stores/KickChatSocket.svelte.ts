@@ -2,11 +2,11 @@ import tmi from 'tmi.js';
 import MessageSocket from './MessageSocket.svelte';
 import type { SocketConnectionData } from '$lib/types';
 
-class TwitchChatSocket extends MessageSocket {
+class KickChatSocket extends MessageSocket {
 	private _socket?: tmi.Client;
 
 	constructor({ roomId }: SocketConnectionData) {
-		super('twitch', 'bg-purple-500', `${roomId}`);
+		super('twitch', 'bg-lime-500', `${roomId}`);
 	}
 
 	public changeChannelId(channelId: string) {
@@ -27,7 +27,7 @@ class TwitchChatSocket extends MessageSocket {
 					name: username,
 					message: message,
 					value: 0,
-					source: 'twitch'
+					source: 'kick'
 				});
 			}
 		});
@@ -42,4 +42,4 @@ class TwitchChatSocket extends MessageSocket {
 	}
 }
 
-export default TwitchChatSocket;
+export default KickChatSocket;

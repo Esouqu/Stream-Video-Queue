@@ -1,15 +1,16 @@
 <script lang="ts">
 	import type { QueueItemData } from '$lib/types';
-	import { cn, formatViews, timeAgo } from '$lib/utils';
+	import { cn } from '$lib/utils';
 	import { fly, type FlyParams } from 'svelte/transition';
-	import DotsIcon from './icons/DotsIcon.svelte';
-	import InfoIcon from './icons/InfoIcon.svelte';
-	import TrashIcon from './icons/TrashIcon.svelte';
-	import ImageLoader from './ImageLoader.svelte';
-	import { buttonVariants } from './ui/button';
-	import { Badge } from './ui/badge';
-	import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-	import { Command, CommandItem, CommandList } from './ui/command';
+	import DotsIcon from '$lib/components/icons/DotsIcon.svelte';
+	import InfoIcon from '$lib/components/icons/InfoIcon.svelte';
+	import TrashIcon from '$lib/components/icons/TrashIcon.svelte';
+	import ImageLoader from '$lib/components/ImageLoader.svelte';
+	import { buttonVariants } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
+	import { Command, CommandItem, CommandList } from '$lib/components/ui/command';
+	import NumberFormatter from '$lib/utils/NumberFormatter';
 
 	type Props = {
 		item: QueueItemData;
@@ -32,6 +33,8 @@
 	}: Props = $props();
 
 	const flyParams = $derived.by<FlyParams>(getFlyParams);
+	const viewCount = $derived(NumberFormatter.formatViews(parseInt(item.viewCount)));
+	const publishedAt = $derived(NumberFormatter.timeAgo(item.publishedAt));
 
 	function handleRemoveClick() {
 		onRemoveClick?.();
@@ -68,16 +71,15 @@
 		<ImageLoader
 			class="relative aspect-video h-auto w-38.5 flex-none overflow-hidden rounded-sm"
 			src={item.thumbnail}
-			alt="video thumbnail"
+			alt={item.title}
 		/>
 		<div class="absolute right-1 bottom-1 left-1 flex justify-end gap-1">
 			{#if item.value > 0}
-				<Badge class="rounded border-transparent bg-destructive px-1 py-0">₽</Badge>
+				<Badge class="px-1 py-0" variant="destructive">
+					{NumberFormatter.formatCurrency(item.value)}
+				</Badge>
 			{/if}
-			<Badge
-				class="rounded border-transparent bg-background/70 px-1 py-0 data-[live=true]:bg-destructive"
-				data-live={item.isLive}
-			>
+			<Badge class="px-1 py-0" variant={item.isLive ? 'destructive' : 'secondary'}>
 				{#if item.isLive}
 					LIVE
 				{:else if item.duration}
@@ -136,7 +138,7 @@
 			class="mt-0.75 line-clamp-1 flex items-center gap-0.5 text-xs text-ellipsis text-muted-foreground"
 		>
 			<!-- <EyeIcon class="inline size-3.5" /> -->
-			{formatViews(parseInt(item.viewCount))} • {timeAgo(item.publishedAt)}
+			{viewCount} • {publishedAt}
 		</div>
 	</div>
 </div>

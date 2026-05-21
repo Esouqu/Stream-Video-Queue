@@ -12,87 +12,8 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-export function formatCurrencyNumber(number: number): string {
-	if (number === 0) return "0";
-
-	const formatter = Intl.NumberFormat("ru-RU", {
-		style: "currency",
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 0,
-		currency: "RUB",
-	});
-
-	return formatter.format(number);
-}
-
-export function msToHHMMSS(ms: number) {
-	const hour = Math.floor(ms / 3600000);
-	const min = Math.floor((ms % 3600000) / 60000);
-	const sec = Math.floor((ms % 60000) / 1000);
-
-	return sec;
-	// return [
-	// 	String(hour).padStart(2, '0'),
-	// 	String(min).padStart(2, '0'),
-	// 	String(sec).padStart(2, '0')
-	// ].join(':');
-}
-
-export function formatDate(date: Date) {
-	const currentYear = new Date().getFullYear();
-	const dateYear = date.getFullYear();
-
-	return date.toLocaleDateString('ru-RU', {
-		day: 'numeric',
-		month: 'long',
-		year: dateYear === currentYear ? undefined : 'numeric',
-	});
-}
-
-export function formatViews(views: number) {
-	const formatter = new Intl.NumberFormat('ru', { notation: 'compact' });
-	return `${formatter.format(views)}`;
-}
-
-export function formatNumberWithSuffix(number: number) {
-	if (number === 0) return "0";
-
-	const suffixes = ['', ' тыс.', ' млн', ' млрд'];
-	const exp = Math.floor(Math.log10(number) / 3);
-	const suffix = suffixes[exp];
-	const num = number / 10 ** (exp * 3);
-
-	const float = num.toFixed(0);
-	return (float.endsWith('.0') ? num.toFixed(0) : float) + suffix;
-}
-
-type TimeInterval = {
-	label: Intl.RelativeTimeFormatUnit;
-	seconds: number;
-}
-
-export function timeAgo(date: string) {
-	const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-	const rtf = new Intl.RelativeTimeFormat('ru', { numeric: 'auto' });
-
-	const intervals: TimeInterval[] = [
-		{ label: 'year', seconds: 31536000 },
-		{ label: 'month', seconds: 2592000 },
-		{ label: 'week', seconds: 604800 },
-		{ label: 'day', seconds: 86400 },
-		{ label: 'hour', seconds: 3600 },
-		{ label: 'minute', seconds: 60 },
-		{ label: 'second', seconds: 1 },
-	];
-
-	for (const interval of intervals) {
-		const count = Math.floor(seconds / interval.seconds);
-		if (count >= 1) {
-			return rtf.format(-count, interval.label);
-		}
-	}
-
-	return rtf.format(0, 'second'); // "now"
+export function clamp(value: number, min: number, max: number) {
+	return Math.max(min, Math.min(max, value));
 }
 
 export function randInt(min: number, max: number) {

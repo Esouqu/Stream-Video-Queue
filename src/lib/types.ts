@@ -39,7 +39,6 @@ export type QueueItemData = {
 	isActive: boolean;
 	// source: MessageSource;
 	color: number[];
-	isWatched: boolean;
 }
 
 export type PlayerOptions = {

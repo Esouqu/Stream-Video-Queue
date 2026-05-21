@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Dialog as DialogPrimitive } from 'bits-ui';
 	import DialogPortal from './dialog-portal.svelte';
-	import XIcon from '@lucide/svelte/icons/x';
 	import type { Snippet } from 'svelte';
 	import * as Dialog from './index.js';
 	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
@@ -10,16 +9,13 @@
 	let {
 		ref = $bindable(null),
 		class: className,
-		closeButtonClass,
 		portalProps,
 		children,
-		showCloseButton = true,
 		...restProps
 	}: WithoutChildrenOrChild<DialogPrimitive.ContentProps> & {
 		portalProps?: WithoutChildrenOrChild<ComponentProps<typeof DialogPortal>>;
 		closeButtonClass?: string;
 		children: Snippet;
-		showCloseButton?: boolean;
 	} = $props();
 </script>
 
@@ -35,16 +31,5 @@
 		{...restProps}
 	>
 		{@render children?.()}
-		{#if showCloseButton}
-			<DialogPrimitive.Close
-				class={cn(
-					"absolute top-4 right-4 cursor-pointer rounded-xs opacity-70 transition-opacity outline-none hover:opacity-100 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-					closeButtonClass
-				)}
-			>
-				<XIcon class="size-4.5" strokeWidth="4" />
-				<span class="sr-only">Close</span>
-			</DialogPrimitive.Close>
-		{/if}
 	</DialogPrimitive.Content>
 </DialogPortal>
