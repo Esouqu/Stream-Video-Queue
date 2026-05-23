@@ -14,7 +14,7 @@
 	import PlayIcon from '$lib/components/icons/PlayIcon.svelte';
 	import PauseIcon from '$lib/components/icons/PauseIcon.svelte';
 	import type VideoPlayerStore from '$lib/stores/VideoPlayerStore.svelte';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 	import { Progress } from '$lib/components/ui/progress';
 	import NumberFormatter from '$lib/utils/NumberFormatter';
 	import EmptyQueueItem from './EmptyQueueItem.svelte';
@@ -61,10 +61,10 @@
 		`rgb(${prevRgb.current?.[0]} ${prevRgb.current?.[1]} ${prevRgb.current?.[2]} / 0.4)`
 	);
 	const formattedPaidTimerTime = $derived(
-		NumberFormatter.formatTimerValue(appStore.paidTimer.current, appStore.paidTimer.startTime)
+		NumberFormatter.formatTimerValue(G.paidTimer.current, G.paidTimer.startTime)
 	);
 	const formattedPaidTimerStartTime = $derived(
-		NumberFormatter.formatTimerValue(appStore.paidTimer.startTime, appStore.paidTimer.startTime)
+		NumberFormatter.formatTimerValue(G.paidTimer.startTime, G.paidTimer.startTime)
 	);
 
 	// TODO:
@@ -143,7 +143,7 @@
 >
 	<div class="relative z-30 flex w-full flex-col justify-center gap-3">
 		<div class="p-2 pt-3 pb-0 text-sm font-semibold text-muted-foreground">
-			Текущее видео [{appStore.queue.index + 1} / {appStore.queue.size}]
+			Текущее видео [{G.queue.index + 1} / {G.queue.size}]
 		</div>
 
 		{#if currentItem}
@@ -153,11 +153,11 @@
 		{/if}
 
 		<div class="mx-auto mb-3 flex items-center gap-2">
-			<Toggle size="icon" tooltip="Повтор видео" bind:pressed={appStore.shouldLoop}>
+			<Toggle size="icon" tooltip="Повтор видео" bind:pressed={G.shouldLoop}>
 				<RepeatIcon />
 			</Toggle>
 			<div class="flex items-center gap-2">
-				<Button variant="ghost" disabled={appStore.queue.size < 1} onclick={skipBackward}>
+				<Button variant="ghost" disabled={G.queue.size < 1} onclick={skipBackward}>
 					<SkipBackwardIcon />
 				</Button>
 				<Button
@@ -173,7 +173,7 @@
 						<PlayIcon class="size-full" />
 					{/if}
 				</Button>
-				<Button variant="ghost" disabled={appStore.queue.size < 1} onclick={skipForward}>
+				<Button variant="ghost" disabled={G.queue.size < 1} onclick={skipForward}>
 					<SkipForwardIcon />
 				</Button>
 			</div>
@@ -182,12 +182,12 @@
 			</Toggle>
 		</div>
 
-		{#if !appStore.paidTimer.isUnstarted}
+		{#if !G.paidTimer.isUnstarted}
 			<div class="pointer-events-none absolute inset-0 -z-1 size-full" transition:fade>
 				<Progress
 					class="size-full rounded-none bg-transparent **:data-[slot=progress-indicator]:bg-white/5 **:data-[slot=progress-indicator]:transition-none"
-					value={appStore.paidTimer.current}
-					max={appStore.paidTimer.startTime}
+					value={G.paidTimer.current}
+					max={G.paidTimer.startTime}
 				/>
 			</div>
 			<div
@@ -204,8 +204,8 @@
 				</div>
 				<Progress
 					class="h-1 w-full rounded-none bg-white/10 **:data-[slot=progress-indicator]:bg-white/20 **:data-[slot=progress-indicator]:transition-none"
-					value={appStore.paidTimer.current}
-					max={appStore.paidTimer.startTime}
+					value={G.paidTimer.current}
+					max={G.paidTimer.startTime}
 				/>
 			</div>
 		{/if}

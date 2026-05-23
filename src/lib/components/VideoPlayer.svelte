@@ -1,5 +1,5 @@
 <script lang="ts">
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 	import { onMount } from 'svelte';
 	import { Spinner } from './ui/spinner';
 	import { Button } from './ui/button';
@@ -8,40 +8,37 @@
 
 	let playerElement = $state<HTMLDivElement>();
 
-	const shouldShowWarning = $derived(appStore.autoSkipTimer.isRunning);
+	const shouldShowWarning = $derived(G.autoSkipTimer.isRunning);
 	const formattedTime = $derived(
-		NumberFormatter.formatTimerValue(
-			appStore.autoSkipTimer.current,
-			appStore.autoSkipTimer.startTime
-		)
+		NumberFormatter.formatTimerValue(G.autoSkipTimer.current, G.autoSkipTimer.startTime)
 	);
 
 	onMount(() => {
 		if (playerElement) {
-			appStore.youtubePlayer.initialize(playerElement);
+			G.youtubePlayer.initialize(playerElement);
 		}
 
-		return () => appStore.youtubePlayer.destroy();
+		return () => G.youtubePlayer.destroy();
 	});
 
 	$effect(() => {
-		if (appStore.queue.current) {
-			appStore.loadVideo(appStore.queue.current);
+		if (G.queue.current) {
+			G.loadVideo(G.queue.current);
 		} else {
-			appStore.youtubePlayer.stop();
+			G.youtubePlayer.stop();
 		}
 	});
 
 	function clearWarning(e: MouseEvent) {
 		e.stopPropagation();
-		appStore.resumeVideo();
+		G.resumeVideo();
 	}
 </script>
 
 <div
 	class="relative aspect-video w-full overflow-hidden rounded-2xl bg-elevation-2 shadow-[0_0_20px_rgb(255_255_255/10%)]"
 >
-	{#if !appStore.youtubePlayer.isReady && !appStore.youtubePlayer.error}
+	{#if !G.youtubePlayer.isReady && !G.youtubePlayer.error}
 		<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
 			<Spinner class="size-20" />
 		</div>

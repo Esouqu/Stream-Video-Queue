@@ -1,5 +1,5 @@
 import { toast } from 'svelte-sonner';
-import donationAlertsApi from '$lib/api/donationalertsApi.svelte';
+import donationAlertsApi from '$lib/api/donationalertsApi';
 import Integration from './Integration.svelte';
 
 interface DonationAlertsDonationMessage {
@@ -45,7 +45,7 @@ class DonationAlertsIntegration extends Integration {
 				let socketToken: string | undefined;
 
 				try {
-					const data = await donationAlertsApi.getSocketToken(this._socketRoomId, message.result.client);
+					const data = await donationAlertsApi.getSocketToken(message.result.client);
 
 					if (!data) {
 						throw new Error('No token received');

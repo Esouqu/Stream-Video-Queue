@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Switch } from '$lib/components/ui/switch';
 	import { Input } from '$lib/components/ui/input';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 	import { createValidator } from '$lib/utils/validation.svelte';
 	import {
 		Card,
@@ -19,18 +19,18 @@
 		.required()
 		.minLength(2, 'Минимум 2 символа')
 		.maxLength(12)
-		.onValid((value) => (appStore.poll.skipKeyword = value));
+		.onValid((value) => (G.poll.skipKeyword = value));
 
 	const keepKeywordValidator = createValidator()
 		.required()
 		.minLength(2, 'Минимум 2 символа')
 		.maxLength(12)
-		.onValid((value) => (appStore.poll.keepKeyword = value));
+		.onValid((value) => (G.poll.keepKeyword = value));
 
 	const neededVotesValidator = createValidator()
 		.required()
 		.numeric()
-		.onValid((value) => (appStore.poll.neededVotes = parseInt(value)));
+		.onValid((value) => (G.poll.neededVotes = parseInt(value)));
 
 	const pollTypeOptions = [
 		{ value: 'first', label: 'Первенство' },
@@ -38,7 +38,7 @@
 	];
 	// const currentPollTypeOption = $derived.by(getCurrentPollTypeOption)
 	// function getCurrentOption() {
-	// 	return enoughVotesActionOptions.find((option) => option.value === appStore.enoughVotesAction);
+	// 	return enoughVotesActionOptions.find((option) => option.value === G.enoughVotesAction);
 	// }
 </script>
 
@@ -55,10 +55,9 @@
 		<CardContent class="flex justify-end p-0">
 			<Switch
 				id="chat-sockets"
-				disabled={appStore.integrations.isChatConnecting}
+				disabled={G.integrations.isChatConnecting}
 				bind:checked={
-					() => appStore.integrations.isChatEnabled,
-					(val) => appStore.integrations.toggle(val, 'chat')
+					() => G.integrations.isChatEnabled, (val) => G.integrations.toggle(val, 'chat')
 				}
 			/>
 		</CardContent>
@@ -71,14 +70,10 @@
 					Возможность голосовать за продолжение или пропуск текущего видео.
 				</CardDescription>
 			</div>
-			<Switch
-				id="enable-voting"
-				aria-label="Enable voting"
-				bind:checked={appStore.poll.isEnabled}
-			/>
+			<Switch id="enable-voting" aria-label="Enable voting" bind:checked={G.poll.isEnabled} />
 		</CardHeader>
 
-		{#if appStore.poll.isEnabled}
+		{#if G.poll.isEnabled}
 			<div transition:slide>
 				<Separator class="mt-4" />
 				<CardContent class="flex flex-col gap-6 pt-6">
@@ -119,7 +114,7 @@
 							type="text"
 							placeholder="Слово"
 							error={keepKeywordValidator.error}
-							value={appStore.poll.keepKeyword}
+							value={G.poll.keepKeyword}
 							onenter={(e) => keepKeywordValidator.setValue(e.currentTarget.value)}
 							onfocusout={(e) => keepKeywordValidator.setValue(e.currentTarget.value)}
 						/>
@@ -135,7 +130,7 @@
 							type="text"
 							placeholder="Слово"
 							error={skipKeywordValidator.error}
-							value={appStore.poll.skipKeyword}
+							value={G.poll.skipKeyword}
 							onenter={(e) => skipKeywordValidator.setValue(e.currentTarget.value)}
 							onfocusout={(e) => skipKeywordValidator.setValue(e.currentTarget.value)}
 						/>
@@ -148,7 +143,7 @@
 							type="number"
 							placeholder="Значение"
 							error={neededVotesValidator.error}
-							value={appStore.poll.neededVotes}
+							value={G.poll.neededVotes}
 							onenter={(e) => neededVotesValidator.setValue(e.currentTarget.value)}
 							onfocusout={(e) => neededVotesValidator.setValue(e.currentTarget.value)}
 						/>
@@ -167,7 +162,7 @@
 								Возможность переголосовать за другой вариант.
 							</p>
 						</div>
-						<Switch id="allow-revoting" bind:checked={appStore.poll.canChangeVote} />
+						<Switch id="allow-revoting" bind:checked={G.poll.canChangeVote} />
 					</div>
 
 					<div class="grid grid-cols-[1fr_12rem] gap-4">
@@ -185,7 +180,7 @@
 							class="w-48"
 							placeholder="Без задержки"
 							suffix="сек."
-							bind:value={appStore.poll.secondsBeforeStart}
+							bind:value={G.poll.secondsBeforeStart}
 						/>
 					</div>
 				</CardContent>

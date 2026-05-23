@@ -9,7 +9,7 @@
 	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 
 	const enoughVotesActionOptions = [
 		{ value: 'none', label: 'Ничего' },
@@ -20,7 +20,7 @@
 	const currentOption = $derived.by(getCurrentOption);
 
 	function getCurrentOption() {
-		return enoughVotesActionOptions.find((option) => option.value === appStore.autoSkipAction);
+		return enoughVotesActionOptions.find((option) => option.value === G.autoSkipAction);
 	}
 </script>
 
@@ -31,7 +31,7 @@
 			<CardDescription>Действие, которое будет выполнено при автоскипе.</CardDescription>
 		</CardHeader>
 		<CardContent class="flex justify-end p-0">
-			<Select type="single" bind:value={appStore.autoSkipAction}>
+			<Select type="single" bind:value={G.autoSkipAction}>
 				<SelectTrigger id="enough-votes-action" class="w-full">
 					{currentOption?.label}
 				</SelectTrigger>
@@ -59,7 +59,7 @@
 				id="queue-limit"
 				type="number"
 				placeholder="Неограниченно"
-				bind:value={appStore.queue.limit}
+				bind:value={G.queue.limit}
 			/>
 		</CardContent>
 	</Card>

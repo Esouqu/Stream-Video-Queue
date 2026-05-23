@@ -1,20 +1,26 @@
-import type { User, Session } from 'better-auth';
+import type { Session } from '$lib/server/auth';
+import type { Account } from 'better-auth';
 
-// See https://svelte.dev/docs/kit/types#app.d.ts
-// for information about these interfaces
+type RequiredOnly<T> = {
+	[K in keyof T as undefined extends T[K] ? never : K]: T[K];
+};
+export type StrictAccount = RequiredOnly<Account>;
 declare global {
 	namespace App {
-		interface Locals {
-			user?: User;
-			session?: Session;
-		}
+		// interface Locals {
+
+		// }
 
 		// interface Error {}
-		// interface Locals {}
-		// interface PageData {}
-		// interface PageState {}
+		interface PageData {
+			user?: Session['user'];
+			accounts?: StrictAccount[];
+		}
+		interface PageState {
+			showSettings: boolean;
+		}
 		// interface Platform {}
 	}
 }
 
-export {};
+export { };

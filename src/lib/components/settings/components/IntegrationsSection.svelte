@@ -1,37 +1,61 @@
 <script lang="ts">
-	import ChatIntegration from '$lib/components/ChatIntegration.svelte';
-	import GalleryIcon from '$lib/components/icons/GalleryIcon.svelte';
 	import DonatePayApiDialog from '$lib/components/DonatePayApiDialog.svelte';
-	import DonationIntegration from '$lib/components/DonationIntegration.svelte';
-	import appStore from '$lib/stores/AppStore.svelte';
-	import TwitchIcon2 from '$lib/components/icons/TwitchIcon2.svelte';
+	import IntegrationButton from '$lib/components/IntegrationButton.svelte';
+	import G from '$lib/stores/G.svelte';
+	import { AVAILABLE_PROVIDERS } from '$lib/providers';
+	import { page } from '$app/state';
+	import { enhance } from '$app/forms';
+	import { authClient } from '$lib/auth-client';
+	import { invalidateAll } from '$app/navigation';
 
-	function updateIntegrations() {
-		// appStore.integrations.close();
-		appStore.integrations.update();
+	const isLoggedIn = $derived(!!page.data.user);
+	const isSingleAccount = $derived(page.data.accounts?.length === 1);
+
+	function isLinked(providerId: string) {
+		return page.data.accounts?.some((acc) => acc.providerId === providerId) ?? false;
+	}
+
+	async function unlink(providerId: string) {
+		if (isSingleAccount) {
+			await authClient.signOut();
+		} else {
+			await authClient.unlinkAccount({
+				providerId
+			});
+		}
+
+		invalidateAll();
+	}
+
+	async function signInSocial(providerId: string) {
+		if (!isLoggedIn) {
+			await authClient.signIn.social({
+				provider: providerId,
+				callbackURL: '/?settings=open'
+			});
+		} else {
+			await authClient.linkSocial({
+				provider: providerId,
+				callbackURL: '/?settings=open'
+			});
+		}
 	}
 </script>
 
-<DonatePayApiDialog bind:isOpen={appStore.isDonatePayApiKeyDialogOpen} />
+<DonatePayApiDialog bind:isOpen={G.isDonatePayApiKeyDialogOpen} />
 
-<div class="flex flex-col gap-2">
-	<ChatIntegration title="Twitch" bind:channel={appStore.twitchChannel}>
-		{#snippet icon()}
-			<TwitchIcon2 class="inline size-5 text-violet-500" />
-		{/snippet}
-	</ChatIntegration>
-
-	<ChatIntegration title="Kick" bind:channel={appStore.kickChannel}>
-		{#snippet icon()}
-			<GalleryIcon class="inline size-5 text-lime-500" />
-		{/snippet}
-	</ChatIntegration>
-
-	{#each appStore.integrations.donations as integration (integration.title)}
-		<DonationIntegration isLoggedIn={false} {...integration}>
-			{#snippet icon()}
-				<integration.icon class="inline size-5 {integration.color}" />
-			{/snippet}
-		</DonationIntegration>
-	{/each}
-</div>
+<form method="POST" action="?/signInSocial" use:enhance>
+	<div class="grid grid-cols-2 gap-2">
+		{#each AVAILABLE_PROVIDERS as integration (integration.id)}
+			<IntegrationButton
+				{integration}
+				onLink={signInSocial}
+				onUnlink={unlink}
+				isLinked={isLinked(integration.id)}
+			/>
+		{/each}
+	</div>
+	{#if page.form?.error}
+		<span>{page.form.error}</span>
+	{/if}
+</form>

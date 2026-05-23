@@ -2,7 +2,7 @@
 	import DashedCircleIcon from '@lucide/svelte/icons/circle-dashed';
 	import CheckIcon from '@lucide/svelte/icons/circle-check';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from './ui/select';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 	import { Spinner } from './ui/spinner';
 	import type Integration from '$lib/stores/integrations/Integration.svelte';
 
@@ -13,11 +13,11 @@
 </script>
 
 <Select type="multiple">
-	<SelectTrigger class="flex w-full" disabled={appStore.integrations.all.length < 1}>
+	<SelectTrigger class="flex w-full" disabled={G.integrations.all.length < 1}>
 		<div class="flex items-center gap-4">
 			Очередь
 			<div class="flex gap-2">
-				{#each appStore.integrations.all as socket (socket.id)}
+				{#each G.integrations.all as socket (socket.id)}
 					<socket.icon
 						class="data-[open=true]:{socket.color} {socket.color} transition-colors data-[open=false]:text-stone-500"
 						data-open={socket.isOpen}
@@ -27,7 +27,7 @@
 		</div>
 	</SelectTrigger>
 	<SelectContent side="bottom">
-		{#each appStore.integrations.all as socket (socket.id)}
+		{#each G.integrations.all as socket (socket.id)}
 			<SelectItem
 				noCheckmark
 				value={socket.id}

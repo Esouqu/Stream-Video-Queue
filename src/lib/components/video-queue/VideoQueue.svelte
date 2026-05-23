@@ -1,7 +1,7 @@
 <script lang="ts">
 	import VirtualList from '../VirtualList.svelte';
 	import QueueItem from './components/QueueItem.svelte';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 	import type { QueueItemData } from '$lib/types';
 	import SkipForwardIcon from '../icons/SkipForwardIcon.svelte';
 	import QueueHeader from './components/QueueHeader.svelte';
@@ -16,7 +16,7 @@
 	let viewportRef = $state<HTMLDivElement | null>(null);
 
 	function onItemSelect(item: QueueItemData) {
-		appStore.queue.select(item);
+		G.queue.select(item);
 		viewportRef?.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 </script>
@@ -29,7 +29,7 @@
 	<VirtualList
 		bind:viewportRef
 		class="w-full overflow-hidden"
-		items={appStore.queue.upcoming}
+		items={G.queue.upcoming}
 		{itemHeight}
 		{itemsBuffer}
 	>
@@ -37,13 +37,12 @@
 			<div class="py-2">
 				<div class="pointer-events-none px-2" transition:slide>
 					<ControlPanel
-						currentItem={appStore.queue.current}
-						videoPlayer={appStore.youtubePlayer}
-						onSkipBackwardClick={() => appStore.queue.previous()}
-						onSkipForwardClick={() => appStore.queue.next()}
-						onRemoveClick={() =>
-							appStore.queue.current && appStore.removeVideo(appStore.queue.current)}
-						bind:isShuffled={appStore.queue.shouldInsertRandomly}
+						currentItem={G.queue.current}
+						videoPlayer={G.youtubePlayer}
+						onSkipBackwardClick={() => G.queue.previous()}
+						onSkipForwardClick={() => G.queue.next()}
+						onRemoveClick={() => G.queue.current && G.removeVideo(G.queue.current)}
+						bind:isShuffled={G.queue.shouldInsertRandomly}
 					/>
 				</div>
 			</div>
@@ -53,23 +52,23 @@
 			<QueueItem
 				{item}
 				onSelect={(item) => onItemSelect(item)}
-				onRemoveClick={() => appStore.removeVideo(item)}
+				onRemoveClick={() => G.removeVideo(item)}
 			/>
 		{/snippet}
 
 		{#snippet empty()}
-			{#if appStore.isLoadingItems}
+			{#if G.isLoadingItems}
 				<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 				{#each { length: 5 } as _, idx (idx)}
 					<EmptyQueueItem />
 				{/each}
-			{:else if appStore.queue.isEmpty}
+			{:else if G.queue.isEmpty}
 				<div
 					class="absolute inset-0 flex size-full flex-col items-center justify-center gap-1 text-center font-semibold text-muted-foreground"
 				>
 					<span class="text-lg">Очередь пуста.</span>
 				</div>
-			{:else if appStore.queue.index + 1 === appStore.queue.size}
+			{:else if G.queue.index + 1 === G.queue.size}
 				<div
 					class="absolute inset-0 flex size-full flex-col items-center justify-center gap-2 text-center font-semibold text-muted-foreground"
 				>

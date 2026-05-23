@@ -1,6 +1,6 @@
 <script lang="ts">
-	import donatePayApi from '$lib/api/donatePayApi.svelte';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import donatePayApi from '$lib/api/donatePayApi';
+	import G from '$lib/stores/G.svelte';
 	import { cn } from '$lib/utils';
 	import { badgeVariants } from './ui/badge';
 	import { Button } from './ui/button';
@@ -29,7 +29,7 @@
 			});
 			donatePayApi.setApiKey(apiKey);
 
-			appStore.initializeIntegrations();
+			G.initializeIntegrations();
 			isOpen = false;
 		} else {
 			error = 'Неверный API ключ';

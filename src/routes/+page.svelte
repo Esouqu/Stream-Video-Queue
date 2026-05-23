@@ -1,13 +1,14 @@
 <script lang="ts">
 	import DevTools from '$lib/components/DevTools.svelte';
+	import Settings from '$lib/components/settings/Settings.svelte';
 	import VideoQueue from '$lib/components/video-queue/VideoQueue.svelte';
 	import VideoPlayer from '$lib/components/VideoPlayer.svelte';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 </script>
 
 <svelte:head>
-	{#if appStore.queue.current}
-		<title>{appStore.queue.current.title}</title>
+	{#if G.queue.current}
+		<title>{G.queue.current.title}</title>
 	{/if}
 </svelte:head>
 
@@ -20,3 +21,5 @@
 	</div>
 	<VideoQueue />
 </div>
+
+<Settings />

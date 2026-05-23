@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 	import ThumbUpIcon from '../icons/ThumbUpIcon.svelte';
 	import ThumbDownIcon from '../icons/ThumbDownIcon.svelte';
 	import { cn, randInt } from '$lib/utils';
@@ -19,8 +19,8 @@
 
 	const formattedTime = $derived(
 		NumberFormatter.formatTimerValue(
-			appStore.poll.votesBlockTimer.current,
-			appStore.poll.votesBlockTimer.startTime
+			G.poll.votesBlockTimer.current,
+			G.poll.votesBlockTimer.startTime
 		)
 	);
 
@@ -36,22 +36,22 @@
 		clearInterval(intervalId);
 
 		intervalId = window.setInterval(() => {
-			// const message = appStore.poll.skipKeyword;
-			const message = randInt(0, 2) === 0 ? appStore.poll.keepKeyword : appStore.poll.skipKeyword;
+			// const message = G.poll.skipKeyword;
+			const message = randInt(0, 2) === 0 ? G.poll.keepKeyword : G.poll.skipKeyword;
 			const name = crypto.randomUUID() as string;
-			appStore.onSocketMessage({ name, message, value: 0, source: 'twitch' });
+			G.onSocketMessage({ name, message, value: 0, source: 'twitch' });
 		}, 250);
 	}
 </script>
 
 <div class={cn('relative flex shrink-0 flex-col gap-2', className)}>
 	<div class="flex w-full justify-between text-sm font-semibold text-muted-foreground tabular-nums">
-		<div>Голосование ({appStore.poll.difference} из {appStore.poll.neededVotes})</div>
+		<div>Голосование ({G.poll.difference} из {G.poll.neededVotes})</div>
 		<Button
 			variant="ghost"
 			class="h-5 p-0"
-			disabled={!appStore.poll.isEnoughVotes}
-			onclick={() => appStore.resetVotes(true)}
+			disabled={!G.poll.isEnoughVotes}
+			onclick={() => G.resetVotes(true)}
 		>
 			<RefreshCwIcon class="size-4" />
 			Сбросить
@@ -59,27 +59,27 @@
 	</div>
 	<div class="flex w-full flex-col gap-1.5">
 		<VotesProgress
-			title={appStore.poll.keepKeyword}
+			title={G.poll.keepKeyword}
 			Icon={ThumbUpIcon}
-			value={appStore.poll.keepVotes}
-			total={appStore.poll.votes}
+			value={G.poll.keepVotes}
+			total={G.poll.votes}
 		/>
 		<VotesProgress
-			title={appStore.poll.skipKeyword}
+			title={G.poll.skipKeyword}
 			Icon={ThumbDownIcon}
-			value={appStore.poll.skipVotes}
-			total={appStore.poll.votes}
-			isHighlighted={appStore.poll.isEnoughVotes}
+			value={G.poll.skipVotes}
+			total={G.poll.votes}
+			isHighlighted={G.poll.isEnoughVotes}
 		/>
 	</div>
 
-	{#if appStore.poll.votesBlockTimer.isRunning || !appStore.canVote}
+	{#if G.poll.votesBlockTimer.isRunning || !G.canVote}
 		<div
 			class="absolute top-1/2 left-1/2 z-50 flex size-full -translate-1/2 items-center justify-center rounded-md bg-black/50 backdrop-blur-md select-none"
 			transition:fade
 		>
 			<div class="text-center font-semibold">
-				{#if appStore.poll.votesBlockTimer.isRunning}
+				{#if G.poll.votesBlockTimer.isRunning}
 					<span class="text-muted-foreground">Голосование начнется через</span>
 					<span class="tabular-nums">{formattedTime}</span>
 				{:else}

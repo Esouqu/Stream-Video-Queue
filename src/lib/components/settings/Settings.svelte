@@ -1,14 +1,14 @@
 <script lang="ts">
-	import CogIcon from '../icons/CogIcon.svelte';
-	import { buttonVariants } from '../ui/button';
 	import { ScrollArea } from '../ui/scroll-area';
 	import DonationSection from './components/DonationSection.svelte';
 	import QueueSection from './components/QueueSection.svelte';
 	import ChatSection from './components/ChatSection.svelte';
 	import IntegrationsSection from './components/IntegrationsSection.svelte';
 	import Links from '../Links.svelte';
-	import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
+	import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 	import { Separator } from '../ui/separator';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 
 	const settingsSections = [
 		{ title: 'Интеграции', component: IntegrationsSection },
@@ -16,12 +16,20 @@
 		{ title: 'Донат', component: DonationSection },
 		{ title: 'Очередь', component: QueueSection }
 	];
+
+	function onOpenChange(open: boolean) {
+		if (!open) {
+			const newUrl = new URL(page.url);
+			newUrl.searchParams.delete('settings');
+			// eslint-disable-next-line svelte/no-navigation-without-resolve
+			goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
+		}
+	}
+
+	$inspect(page.data);
 </script>
 
-<Sheet>
-	<SheetTrigger class={buttonVariants({ variant: 'ghost', size: 'icon' })}>
-		<CogIcon />
-	</SheetTrigger>
+<Sheet open={page.url.searchParams.get('settings') === 'open'} {onOpenChange}>
 	<SheetContent class="w-150">
 		<ScrollArea class="h-full w-full gap-0 overflow-hidden">
 			<SheetHeader>

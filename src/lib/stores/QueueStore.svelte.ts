@@ -1,4 +1,4 @@
-import type { DBSchema } from "$lib/db";
+import type { DBSchema } from "$lib/dexie";
 import type { QueueItemData } from "$lib/types";
 import EventEmitter from "$lib/utils/EventEmitter";
 import { liveQuery } from "dexie";

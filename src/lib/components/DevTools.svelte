@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 	import { toast } from 'svelte-sonner';
 	import { Button, buttonVariants } from './ui/button';
 	import { Input } from './ui/input';
@@ -22,7 +22,7 @@
 	const { anchor }: Props = $props();
 
 	function addMessage() {
-		appStore.onSocketMessage({ name: 'dev', message, source: 'twitch', value });
+		G.onSocketMessage({ name: 'dev', message, source: 'twitch', value });
 		message = '';
 	}
 
@@ -48,7 +48,7 @@
 			};
 			try {
 				await new Promise((resolve) => setTimeout(() => resolve(true), 50));
-				await appStore.queue.enqueue(newItem);
+				await G.queue.enqueue(newItem);
 
 				toast.message('Видео добавлено', {
 					description: newItem.title
@@ -84,7 +84,7 @@
 
 			try {
 				await new Promise((resolve) => setTimeout(() => resolve(true), 50));
-				await appStore.queue.enqueue(newItem);
+				await G.queue.enqueue(newItem);
 
 				toast.message('Видео добавлено', {
 					description: newItem.title

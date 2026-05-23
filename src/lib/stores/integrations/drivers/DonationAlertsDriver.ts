@@ -1,4 +1,4 @@
-import donationAlertsApi from "$lib/api/donationalertsApi.svelte";
+import donationAlertsApi from "$lib/api/donationalertsApi";
 import type { IConnectionDriver } from "$lib/interfaces";
 import type { SocketMessage } from "$lib/types";
 

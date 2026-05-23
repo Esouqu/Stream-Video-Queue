@@ -1,4 +1,4 @@
-import donatePayApi from "$lib/api/donatePayApi.svelte";
+import donatePayApi from "$lib/api/donatePayApi";
 import type { IConnectionDriver } from "$lib/interfaces";
 import type { SocketMessage } from "$lib/types";
 import Centrifuge from "centrifuge";

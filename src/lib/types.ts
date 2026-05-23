@@ -1,19 +1,14 @@
 import type { Component } from "svelte";
 
 export type IntegrationId = 'twitch' | 'kick' | 'donationalerts' | 'donatepay';
-export type IntegrationType = 'chat' | 'donation';
 export type SocketState = 'not-exists' | 'connecting' | 'open' | 'closed';
 
 export type IntegrationData = {
 	id: IntegrationId;
-	type: IntegrationType;
-	title: string;
+	name: string;
 	color: string;
 	icon: Component;
-	socketRoomId: string;
-	socketToken?: string;
-	onAuth?: () => void;
-	onLogout?: () => void;
+	isManual: boolean;
 }
 
 export type SocketMessage = {

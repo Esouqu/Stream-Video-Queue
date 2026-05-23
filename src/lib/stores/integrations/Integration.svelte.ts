@@ -17,8 +17,6 @@ class Integration {
 
 	private _state = $state<SocketState>('not-exists');
 	protected _messageListeners = new SvelteSet<MessageHandler>();
-	protected _socketRoomId: string;
-	protected _socketToken?: string;
 
 	protected driver: IConnectionDriver;
 	protected config: { roomId: string; token?: string };
@@ -29,8 +27,6 @@ class Integration {
 		this.title = data.title;
 		this.color = data.color;
 		this.icon = data.icon;
-		this._socketRoomId = data.socketRoomId;
-		this._socketToken = data.socketToken;
 		this.onAuth = data.onAuth;
 		this.onLogout = data.onLogout;
 

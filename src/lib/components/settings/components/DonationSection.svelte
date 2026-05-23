@@ -10,7 +10,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Switch } from '$lib/components/ui/switch';
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 	import { slide } from 'svelte/transition';
 </script>
 
@@ -27,10 +27,10 @@
 					Видео будут добавляться сразу после текущего.
 				</CardDescription>
 			</div>
-			<Switch id="timer-enable" bind:checked={appStore.paidTimerEnabled} />
+			<Switch id="timer-enable" bind:checked={G.paidTimerEnabled} />
 		</CardHeader>
 
-		{#if appStore.paidTimerEnabled}
+		{#if G.paidTimerEnabled}
 			<div transition:slide>
 				<Separator class="mt-4" />
 				<CardContent class="flex flex-col gap-6 pt-6">
@@ -43,7 +43,7 @@
 							type="number"
 							placeholder="Значение"
 							suffix="₽"
-							bind:value={appStore.prioritizedVideoPrice}
+							bind:value={G.prioritizedVideoPrice}
 						/>
 					</div>
 				</CardContent>
@@ -60,10 +60,10 @@
 					будет автоматически пропущено.</CardDescription
 				>
 			</div>
-			<Switch id="timer-enable" bind:checked={appStore.paidTimerEnabled} />
+			<Switch id="timer-enable" bind:checked={G.paidTimerEnabled} />
 		</CardHeader>
 
-		{#if appStore.paidTimerEnabled}
+		{#if G.paidTimerEnabled}
 			<div transition:slide>
 				<Separator class="mt-4" />
 				<CardContent class="flex flex-col gap-6 pt-6">
@@ -76,7 +76,7 @@
 							type="number"
 							placeholder="Значение"
 							suffix="₽/мин"
-							bind:value={appStore.paidTimerPricePerMinute}
+							bind:value={G.paidTimerPricePerMinute}
 						/>
 					</div>
 				</CardContent>

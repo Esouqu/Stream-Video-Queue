@@ -1,5 +1,5 @@
 <script lang="ts">
-	import appStore from '$lib/stores/AppStore.svelte';
+	import G from '$lib/stores/G.svelte';
 	import {
 		AlertDialog,
 		AlertDialogAction,
@@ -22,7 +22,7 @@
 	let isAlertOpened = $state(false);
 
 	function onAlertAction() {
-		appStore.clearQueue();
+		G.clearQueue();
 		isAlertOpened = false;
 	}
 </script>
@@ -30,7 +30,7 @@
 <AlertDialog bind:open={isAlertOpened}>
 	<AlertDialogTrigger
 		class={buttonVariants({ variant: 'destructive', size })}
-		disabled={appStore.queue.isEmpty}
+		disabled={G.queue.isEmpty}
 	>
 		Очистить
 	</AlertDialogTrigger>

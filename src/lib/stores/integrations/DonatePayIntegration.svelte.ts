@@ -1,5 +1,5 @@
 import Centrifuge from "centrifuge";
-import donatePayApi from "$lib/api/donatePayApi.svelte";
+import donatePayApi from "$lib/api/donatePayApi";
 import { toast } from "svelte-sonner";
 import Integration from "./Integration.svelte";
 
