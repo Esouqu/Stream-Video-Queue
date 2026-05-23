@@ -26,11 +26,46 @@
 		message = '';
 	}
 
+	function addWithInterval() {
+		setInterval(async () => {
+			const color = randomColor.get().array();
+			const newItem = {
+				channelTitle: 'Deko',
+				title: 'iridescent prod. deko ✧･ﾟ: *✧･ﾟ:*  OFFICIAL VIDEO',
+				thumbnail: 'https://i.ytimg.com/vi/ssXR5K2ZdrM/mqdefault.jpg',
+				duration: '1:40',
+				videoId: 'ssXR5K2ZdrM',
+				viewCount: '590151',
+				publishedAt: '2019-07-20T01:40:57Z',
+				isLive: false,
+				startSeconds: 0,
+				message:
+					'!rq https://www.youtube.com/watch?v=ssXR5K2ZdrM&list=RDssXR5K2ZdrM&start_radio=1&pp=oAcB',
+				value: 0,
+				isActive: false,
+				submittedBy: ['esouqu'],
+				color
+			};
+			try {
+				await new Promise((resolve) => setTimeout(() => resolve(true), 50));
+				await appStore.queue.enqueue(newItem);
+
+				toast.message('Видео добавлено', {
+					description: newItem.title
+				});
+			} catch (err) {
+				toast.error('Не удалось добавить видео', {
+					description: (err as Error).message
+				});
+			}
+		}, 1000);
+	}
+
 	async function addMultiple() {
 		for (let i = 0; i < addAmount; i++) {
 			const color = randomColor.get().array();
 			const newItem = {
-				channelTitle: `Deko ${i}`,
+				channelTitle: 'Deko',
 				title: 'iridescent prod. deko ✧･ﾟ: *✧･ﾟ:*  OFFICIAL VIDEO',
 				thumbnail: 'https://i.ytimg.com/vi/ssXR5K2ZdrM/mqdefault.jpg',
 				duration: '1:40',
@@ -48,7 +83,7 @@
 			};
 
 			try {
-				// await new Promise((resolve) => setTimeout(() => resolve(true), 50));
+				await new Promise((resolve) => setTimeout(() => resolve(true), 50));
 				await appStore.queue.enqueue(newItem);
 
 				toast.message('Видео добавлено', {
@@ -78,9 +113,14 @@
 				</div>
 			</div>
 			<div class="space-y-2">
-				<div class="flex w-full items-center">
-					<Input type="number" placeholder="Сумма" bind:value={addAmount} />
-					<Button variant="ghost" class="ml-auto" onclick={addMultiple}>Добавить</Button>
+				<div class="flex w-full flex-col items-center">
+					<Input type="number" placeholder="Сумма" class="shrink-0" bind:value={addAmount} />
+					<div class="flex gap-2">
+						<Button variant="ghost" class="ml-auto" onclick={addMultiple}>Добавить</Button>
+						<Button variant="ghost" class="ml-auto" onclick={addWithInterval}>
+							Добававлять с интервалом
+						</Button>
+					</div>
 				</div>
 			</div>
 		</PopoverContent>

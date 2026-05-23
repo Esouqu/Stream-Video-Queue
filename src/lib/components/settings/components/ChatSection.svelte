@@ -43,6 +43,26 @@
 </script>
 
 <div class="flex flex-col gap-4">
+	<Card class="relative grid auto-rows-auto grid-cols-[1fr_12rem] gap-4 p-4">
+		<CardHeader class="p-0">
+			<CardTitle>Обычный заказ</CardTitle>
+			<CardDescription>
+				В чате: <span class="bg-blue-900 px-1 font-semibold text-blue-300">
+					!rq &lt;ссылка на видео&gt;
+				</span>.
+			</CardDescription>
+		</CardHeader>
+		<CardContent class="flex justify-end p-0">
+			<Switch
+				id="chat-sockets"
+				disabled={appStore.integrations.isChatConnecting}
+				bind:checked={
+					() => appStore.integrations.isChatEnabled,
+					(val) => appStore.integrations.toggle(val, 'chat')
+				}
+			/>
+		</CardContent>
+	</Card>
 	<Card class="gap-0 overflow-hidden">
 		<CardHeader class="flex flex-row items-start justify-between">
 			<div class="flex flex-col gap-0.5">

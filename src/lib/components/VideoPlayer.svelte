@@ -1,6 +1,6 @@
 <script lang="ts">
 	import appStore from '$lib/stores/AppStore.svelte';
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 	import { Spinner } from './ui/spinner';
 	import { Button } from './ui/button';
 	import { fade } from 'svelte/transition';
@@ -27,11 +27,6 @@
 	$effect(() => {
 		if (appStore.queue.current) {
 			appStore.loadVideo(appStore.queue.current);
-
-			untrack(() => {
-				appStore.poll.reset();
-				appStore.autoSkipTimer.reset();
-			});
 		} else {
 			appStore.youtubePlayer.stop();
 		}

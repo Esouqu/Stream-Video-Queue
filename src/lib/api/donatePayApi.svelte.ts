@@ -15,6 +15,10 @@ type TokenResponse = {
 class DonatePayApi {
 	private _user = new PersistedState<DonatePayUser | null>('donatePayUser', null);
 
+	get user() {
+		return this._user.current;
+	}
+
 	public clearUser() {
 		this._user.current = null;
 	}
@@ -25,6 +29,7 @@ class DonatePayApi {
 
 	public logout() {
 		fetch('/api/donatepay/key', { method: 'DELETE' });
+		this.clearUser();
 	}
 
 	public async getToken(): Promise<TokenResponse> {
@@ -60,8 +65,6 @@ class DonatePayApi {
 			return (await response.json()) as { data: DonatePayUserData };
 		}
 	}
-
-	get user() { return this._user.current; }
 }
 
 const donatePayApi = new DonatePayApi();

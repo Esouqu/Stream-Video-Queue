@@ -1,22 +1,26 @@
-export type RGB = {
-	r: number;
-	g: number;
-	b: number;
-}
+import type { Component } from "svelte";
 
-export type MessageSource = 'twitch' | 'kick' | 'donationalerts' | 'donatepay';
+export type IntegrationId = 'twitch' | 'kick' | 'donationalerts' | 'donatepay';
+export type IntegrationType = 'chat' | 'donation';
 export type SocketState = 'not-exists' | 'connecting' | 'open' | 'closed';
 
-export type SocketConnectionData = {
-	roomId: string | number;
+export type IntegrationData = {
+	id: IntegrationId;
+	type: IntegrationType;
+	title: string;
+	color: string;
+	icon: Component;
+	socketRoomId: string;
 	socketToken?: string;
+	onAuth?: () => void;
+	onLogout?: () => void;
 }
 
 export type SocketMessage = {
 	name: string;
 	message: string;
 	value: number;
-	source: MessageSource;
+	source: IntegrationId;
 }
 
 export type QueueItemData = {

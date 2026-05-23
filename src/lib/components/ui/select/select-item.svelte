@@ -3,14 +3,19 @@
 	import { Select as SelectPrimitive } from 'bits-ui';
 	import { cn, type WithoutChild } from '$lib/utils.js';
 
+	type Props = WithoutChild<SelectPrimitive.ItemProps> & {
+		noCheckmark?: boolean;
+	};
+
 	let {
 		ref = $bindable(null),
 		class: className,
 		value,
 		label,
+		noCheckmark = false,
 		children: childrenProp,
 		...restProps
-	}: WithoutChild<SelectPrimitive.ItemProps> = $props();
+	}: Props = $props();
 </script>
 
 <SelectPrimitive.Item
@@ -25,7 +30,7 @@
 >
 	{#snippet children({ selected, highlighted })}
 		<span class="absolute end-2 flex size-3.5 items-center justify-center">
-			{#if selected}
+			{#if selected && !noCheckmark}
 				<CheckIcon class="size-4" />
 			{/if}
 		</span>

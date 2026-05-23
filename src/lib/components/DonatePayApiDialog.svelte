@@ -1,7 +1,6 @@
 <script lang="ts">
 	import donatePayApi from '$lib/api/donatePayApi.svelte';
 	import appStore from '$lib/stores/AppStore.svelte';
-	import DonatePayCentrifuge from '$lib/stores/DonatePayCentrifuge.svelte';
 	import { cn } from '$lib/utils';
 	import { badgeVariants } from './ui/badge';
 	import { Button } from './ui/button';
@@ -30,8 +29,7 @@
 			});
 			donatePayApi.setApiKey(apiKey);
 
-			const donatePaySocket = new DonatePayCentrifuge({ roomId: user.data.id });
-			appStore.addSocket(donatePaySocket);
+			appStore.initializeIntegrations();
 			isOpen = false;
 		} else {
 			error = 'Неверный API ключ';

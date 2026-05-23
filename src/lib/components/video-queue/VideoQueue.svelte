@@ -69,17 +69,16 @@
 				>
 					<span class="text-lg">Очередь пуста.</span>
 				</div>
-			{:else if appStore.queue.currentIndex + 1 === appStore.queue.size}
+			{:else if appStore.queue.index + 1 === appStore.queue.size}
 				<div
-					class="absolute inset-0 flex size-full flex-col items-center justify-center gap-1 text-center font-semibold text-muted-foreground"
+					class="absolute inset-0 flex size-full flex-col items-center justify-center gap-2 text-center font-semibold text-muted-foreground"
 				>
 					<div class="flex flex-col">
-						<span class="text-lg">Очередь закончилась.</span>
+						<span>Очередь закончилась.</span>
 						<span class="text-sm">
 							Можете начать сначала, нажав <SkipForwardIcon class="inline size-4" />.
 						</span>
 					</div>
-					<div>или</div>
 					<ClearQueueButton size="sm" />
 				</div>
 			{/if}

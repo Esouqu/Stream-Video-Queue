@@ -10,6 +10,10 @@
 	}
 
 	let { title, channel = $bindable(''), icon }: Props = $props();
+
+	function confirmInput(e: { currentTarget: EventTarget & HTMLInputElement }) {
+		channel = e.currentTarget.value;
+	}
 </script>
 
 <IntegrationBase>
@@ -23,8 +27,8 @@
 			type="text"
 			placeholder="Название канала"
 			value={channel}
-			onenter={(e) => (channel = e.currentTarget.value)}
-			onfocusout={(e) => (channel = e.currentTarget.value)}
+			onenter={confirmInput}
+			onfocusout={confirmInput}
 		/>
 	{/snippet}
 </IntegrationBase>

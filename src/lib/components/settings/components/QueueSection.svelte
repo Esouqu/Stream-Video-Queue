@@ -59,7 +59,7 @@
 				id="queue-limit"
 				type="number"
 				placeholder="Неограниченно"
-				bind:value={appStore.queueLimit}
+				bind:value={appStore.queue.limit}
 			/>
 		</CardContent>
 	</Card>

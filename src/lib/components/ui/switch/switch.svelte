@@ -17,7 +17,7 @@
 	bind:checked
 	data-slot="switch"
 	class={cn(
-		'group relative inline-flex h-8 w-13 shrink-0 cursor-pointer items-center overflow-hidden rounded-full border-2 border-input bg-elevation-1 transition-all duration-300 hover:border-neutral-500! disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-input',
+		'group relative inline-flex h-8 w-13 shrink-0 cursor-pointer items-center overflow-hidden rounded-full border-2 border-input bg-elevation-1 transition-all duration-300 hover:border-neutral-500 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-input',
 		className
 	)}
 	{...restProps}

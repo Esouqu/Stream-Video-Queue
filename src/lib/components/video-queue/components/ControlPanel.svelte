@@ -16,8 +16,6 @@
 	import type VideoPlayerStore from '$lib/stores/VideoPlayerStore.svelte';
 	import appStore from '$lib/stores/AppStore.svelte';
 	import { Progress } from '$lib/components/ui/progress';
-	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
 	import NumberFormatter from '$lib/utils/NumberFormatter';
 	import EmptyQueueItem from './EmptyQueueItem.svelte';
 
@@ -62,11 +60,11 @@
 	const secondGradientStep = $derived(
 		`rgb(${prevRgb.current?.[0]} ${prevRgb.current?.[1]} ${prevRgb.current?.[2]} / 0.4)`
 	);
-	const formattedPayedTimerTime = $derived(
-		NumberFormatter.formatTimerValue(appStore.payedTimer.current, appStore.payedTimer.startTime)
+	const formattedPaidTimerTime = $derived(
+		NumberFormatter.formatTimerValue(appStore.paidTimer.current, appStore.paidTimer.startTime)
 	);
-	const formattedPayedTimerStartTime = $derived(
-		NumberFormatter.formatTimerValue(appStore.payedTimer.startTime, appStore.payedTimer.startTime)
+	const formattedPaidTimerStartTime = $derived(
+		NumberFormatter.formatTimerValue(appStore.paidTimer.startTime, appStore.paidTimer.startTime)
 	);
 
 	// TODO:
@@ -133,12 +131,6 @@
 				opacity: 0
 			});
 	}
-
-	onMount(() => {
-		if (browser) {
-			appStore.payedTimer.start(100000);
-		}
-	});
 </script>
 
 <div
@@ -151,15 +143,11 @@
 >
 	<div class="relative z-30 flex w-full flex-col justify-center gap-3">
 		<div class="p-2 pt-3 pb-0 text-sm font-semibold text-muted-foreground">
-			Текущее видео [{appStore.queue.currentIndex + 1} / {appStore.queue.size}]
+			Текущее видео [{appStore.queue.index + 1} / {appStore.queue.size}]
 		</div>
 
 		{#if currentItem}
-			{#key currentItem}
-				<div in:fade={{ duration: 700 }}>
-					<QueueItem class="py-0" isCurrent item={currentItem} {onRemoveClick} {onInfoClick} />
-				</div>
-			{/key}
+			<QueueItem class="py-0" isCurrent item={currentItem} {onRemoveClick} {onInfoClick} />
 		{:else}
 			<EmptyQueueItem />
 		{/if}
@@ -194,12 +182,12 @@
 			</Toggle>
 		</div>
 
-		{#if appStore.payedTimer.isRunning}
+		{#if !appStore.paidTimer.isUnstarted}
 			<div class="pointer-events-none absolute inset-0 -z-1 size-full" transition:fade>
 				<Progress
 					class="size-full rounded-none bg-transparent **:data-[slot=progress-indicator]:bg-white/5 **:data-[slot=progress-indicator]:transition-none"
-					value={appStore.payedTimer.current}
-					max={appStore.payedTimer.startTime}
+					value={appStore.paidTimer.current}
+					max={appStore.paidTimer.startTime}
 				/>
 			</div>
 			<div
@@ -208,16 +196,16 @@
 			>
 				<div class="mb-1 flex justify-between px-2 text-sm font-semibold text-muted-foreground">
 					<div>
-						{formattedPayedTimerTime}
+						{formattedPaidTimerTime}
 					</div>
 					<div>
-						{formattedPayedTimerStartTime}
+						{formattedPaidTimerStartTime}
 					</div>
 				</div>
 				<Progress
 					class="h-1 w-full rounded-none bg-white/10 **:data-[slot=progress-indicator]:bg-white/20 **:data-[slot=progress-indicator]:transition-none"
-					value={appStore.payedTimer.current}
-					max={appStore.payedTimer.startTime}
+					value={appStore.paidTimer.current}
+					max={appStore.paidTimer.startTime}
 				/>
 			</div>
 		{/if}

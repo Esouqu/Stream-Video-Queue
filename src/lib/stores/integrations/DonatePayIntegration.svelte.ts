@@ -1,8 +1,7 @@
 import Centrifuge from "centrifuge";
 import donatePayApi from "$lib/api/donatePayApi.svelte";
 import { toast } from "svelte-sonner";
-import MessageSocket from "./MessageSocket.svelte";
-import type { SocketConnectionData } from "$lib/types";
+import Integration from "./Integration.svelte";
 
 interface DonatePayDonationMessage {
 	data: {
@@ -22,14 +21,10 @@ interface DonatePayDonationMessage {
 	};
 }
 
-class DonatePayCentrifuge extends MessageSocket {
+class DonatePayIntegration extends Integration {
 	private _CENTRIFUGO_URL = 'wss://centrifugo.donatepay.ru:443/connection/websocket';
 	private _TOKEN_ENDPOINT = 'https://donatepay.ru/api/v2/socket/token';
 	private _centrifuge?: Centrifuge;
-
-	constructor({ roomId }: SocketConnectionData) {
-		super('donatepay', 'bg-green-500', `$public:${roomId}`);
-	}
 
 	public disconnect() {
 		if (this._centrifuge) this._centrifuge.disconnect();
@@ -54,7 +49,7 @@ class DonatePayCentrifuge extends MessageSocket {
 
 			this._centrifuge.setToken(data.token);
 
-			this._centrifuge.subscribe(this._roomId, (message) => {
+			this._centrifuge.subscribe(this._socketRoomId, (message) => {
 				const { data } = message as DonatePayDonationMessage;
 				const username = data.notification.vars.name ?? 'Аноним';
 				const amount = Math.round(data.notification.vars.sum);
@@ -91,4 +86,4 @@ class DonatePayCentrifuge extends MessageSocket {
 	};
 }
 
-export default DonatePayCentrifuge;
+export default DonatePayIntegration;

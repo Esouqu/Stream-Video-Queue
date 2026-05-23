@@ -8,7 +8,7 @@ export type DBSchema = Dexie & {
 const dexieDB = new Dexie('Database') as DBSchema;
 
 dexieDB.version(1).stores({
-	queueItems: '++id, videoId, isActive, sortOrder',
+	queueItems: '++id, videoId, sortOrder',
 });
 console.log(`db version: ${dexieDB.verno}`);
 

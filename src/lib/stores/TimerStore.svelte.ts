@@ -110,7 +110,7 @@ class TimerStore extends EventEmitter<PlayerEvents> {
 	}
 
 	private _tick(frameTime: number) {
-		if (this.isFinished) return;
+		if (this.isFinished || this.isUnstarted) return;
 
 		const diff = (frameTime - this._startTimestamp);
 		const current = this._type === 'down' ? this._startTime - diff : diff;

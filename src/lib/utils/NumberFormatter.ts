@@ -16,6 +16,24 @@ class NumberFormatter {
 		currency: "RUB",
 	});
 
+	public static timeStringToMs(str: string) {
+		const parts = str.split(':').map(Number);
+
+		let hours = 0;
+		let minutes = 0;
+		let seconds = 0;
+
+		if (parts.length === 3) {
+			[hours, minutes, seconds] = parts;
+		} else if (parts.length === 2) {
+			[minutes, seconds] = parts;
+		} else if (parts.length === 1) {
+			[seconds] = parts;
+		}
+
+		return ((hours * 3600) + (minutes * 60) + seconds) * 1000;
+	}
+
 	public static formatTimerValue(ms: number, startMs = ms) {
 		let formatter = Intl.DateTimeFormat('ru-RU', {
 			second: '2-digit'

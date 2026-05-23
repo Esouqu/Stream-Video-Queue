@@ -1,7 +1,6 @@
 import { toast } from 'svelte-sonner';
 import donationAlertsApi from '$lib/api/donationalertsApi.svelte';
-import MessageSocket from './MessageSocket.svelte';
-import type { SocketConnectionData } from '$lib/types';
+import Integration from './Integration.svelte';
 
 interface DonationAlertsDonationMessage {
 	id: number;
@@ -21,19 +20,13 @@ interface DonationAlertsDonationMessage {
 	reason: string;
 }
 
-class DonationAlertsSocket extends MessageSocket {
+class DonationAlertsIntegration extends Integration {
 	private _socket: WebSocket | undefined;
-	private _socketToken: string | undefined;
-
-	constructor({ roomId, socketToken }: SocketConnectionData) {
-		super('donationalerts', 'bg-amber-500', `$alerts:donation_${roomId}`);
-		this._socketToken = socketToken;
-	}
 
 	public async connect() {
 		if (!this._socketToken) return;
 
-		this._state = 'connecting';
+		this.changeState('connecting');
 		this._socket = new WebSocket('wss://centrifugo.donationalerts.com/connection/websocket');
 
 		this._socket.addEventListener('open', () => {
@@ -52,7 +45,7 @@ class DonationAlertsSocket extends MessageSocket {
 				let socketToken: string | undefined;
 
 				try {
-					const data = await donationAlertsApi.getSocketToken(this._roomId, message.result.client);
+					const data = await donationAlertsApi.getSocketToken(this._socketRoomId, message.result.client);
 
 					if (!data) {
 						throw new Error('No token received');
@@ -65,14 +58,14 @@ class DonationAlertsSocket extends MessageSocket {
 						"Ошибка при подключении к DonationAlerts",
 						{ description: "Попробуйте еще раз." }
 					);
-					this._state = 'closed';
+					this.changeState('closed');
 					return;
 				}
 
 				this._socket?.send(
 					JSON.stringify({
 						params: {
-							channel: this._roomId,
+							channel: this._socketRoomId,
 							token: socketToken
 						},
 						method: 1,
@@ -80,10 +73,10 @@ class DonationAlertsSocket extends MessageSocket {
 					})
 				);
 
-				this._state = 'open';
+				this.changeState('open');
 			}
 
-			if (!message.result.type && message.result.channel === this._roomId) {
+			if (!message.result.type && message.result.channel === this._socketRoomId) {
 				const donation: DonationAlertsDonationMessage = message.result.data.data;
 				const username = donation.username ?? 'Аноним';
 				const amount = Math.round(donation.amount_in_user_currency);
@@ -100,19 +93,19 @@ class DonationAlertsSocket extends MessageSocket {
 		});
 
 		this._socket.addEventListener('close', () => {
-			this._state = 'closed';
+			this.changeState('closed');
 		});
 
 		this._socket.addEventListener('error', (event) => {
 			console.error('WebSocket error:', event);
-			this._state = 'closed';
+			this.changeState('closed');
 		});
 	}
 
 	public disconnect() {
 		this._socket?.close();
-		this._state = 'closed';
+		this.changeState('closed');
 	}
 }
 
-export default DonationAlertsSocket;
+export default DonationAlertsIntegration;

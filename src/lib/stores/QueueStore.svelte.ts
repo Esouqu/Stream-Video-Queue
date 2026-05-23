@@ -1,27 +1,47 @@
 import type { DBSchema } from "$lib/db";
 import type { QueueItemData } from "$lib/types";
+import EventEmitter from "$lib/utils/EventEmitter";
 import { liveQuery } from "dexie";
 import { PersistedState } from "runed";
 
 type RawQueueItem = Omit<QueueItemData, 'id' | 'sortOrder'>;
 type QueueStorePersisted = {
+	index: number;
 	shouldInsertRandomly: boolean;
+	limit: number | null;
+}
+type QueueStoreEvents = {
+	itemsChanged: {
+		newItem?: QueueItemData;
+	};
 }
 
-class QueueStore {
+class QueueStore extends EventEmitter<QueueStoreEvents> {
 	private _items = $state<QueueItemData[]>([]);
 	private _persisted = new PersistedState<QueueStorePersisted>('queueStore', {
+		index: 0,
 		shouldInsertRandomly: false,
+		limit: null,
 	});
 	private _midDistance = 0.00001;
 	private _db: DBSchema;
 
-	readonly currentIndex = $derived(this._items.findIndex((item) => item.isActive));
-	readonly current? = $derived(this._items.find((item) => item.isActive));
-	readonly upcoming = $derived(this._items.slice(this.currentIndex + 1));
+	// readonly currentIndex = $derived(this._items.findIndex((item) => item.isActive));
+	// readonly current? = $derived(this._items.find((item) => item.isActive));
+	// readonly upcoming = $derived(this._items.slice(this.currentIndex + 1));
+	readonly current? = $derived(this._items[this.index]);
+	readonly upcoming = $derived(this._items.slice(this.index + 1));
 
 	constructor(db: DBSchema) {
+		super();
 		this._db = db;
+	}
+
+	get index() {
+		return this._persisted.current.index;
+	}
+	set index(val: number) {
+		this._persisted.current.index = val;
 	}
 
 	get size() {
@@ -36,6 +56,18 @@ class QueueStore {
 		this._persisted.current.shouldInsertRandomly = value;
 	}
 
+	get limit() {
+		return this._persisted.current.limit;
+	}
+
+	set limit(val: number | null) {
+		this._persisted.current.limit = val;
+	}
+
+	get isFull() {
+		return this.limit && this.size >= this.limit;
+	}
+
 	get isEmpty() {
 		return this._items.length === 0;
 	}
@@ -48,40 +80,48 @@ class QueueStore {
 	public async previous() {
 		if (this.size <= 1 || !this.current) return;
 
-		let nextItem = await this._db.queueItems
-			.where('sortOrder').below(this.current.sortOrder)
-			.reverse()
-			.first();
+		this.index = (this.index - 1 + this.size) % this.size;
+		this.emit('itemsChanged', { newItem: this.current });
 
-		if (!nextItem) {
-			nextItem = await this._db.queueItems.orderBy('sortOrder').last();
-		}
+		// let nextItem = await this._db.queueItems
+		// 	.where('sortOrder').below(this.current.sortOrder)
+		// 	.reverse()
+		// 	.first();
 
-		if (nextItem) await this._updateActive(nextItem);
+		// if (!nextItem) {
+		// 	nextItem = await this._db.queueItems.orderBy('sortOrder').last();
+		// }
+
+		// if (nextItem) await this._updateActive(nextItem);
 	}
 
 	public async next() {
 		if (this.size <= 1 || !this.current) return;
 
-		let nextItem = await this._db.queueItems
-			.where('sortOrder').above(this.current.sortOrder)
-			.first();
+		this.index = (this.index + 1) % this.size;
+		this.emit('itemsChanged', { newItem: this.current });
 
-		if (!nextItem) {
-			nextItem = await this._db.queueItems.orderBy('sortOrder').first();
-		}
+		// let nextItem = await this._db.queueItems
+		// 	.where('sortOrder').above(this.current.sortOrder)
+		// 	.first();
 
-		if (nextItem) await this._updateActive(nextItem);
+		// if (!nextItem) {
+		// 	nextItem = await this._db.queueItems.orderBy('sortOrder').first();
+		// }
+
+		// if (nextItem) await this._updateActive(nextItem);
 	}
 
 	public async select(item: QueueItemData) {
-		await this._updateActive(item);
+		const itemIdx = this._items.findIndex((i) => i.id === item.id);
+
+		if (itemIdx > -1) {
+			this.index = itemIdx;
+			this.emit('itemsChanged', { newItem: this.current });
+		}
 	}
 
 	public async dequeue(item: QueueItemData) {
-		if (item.id === this.current?.id) {
-			await this.next();
-		}
 		await this._db.queueItems.delete(item.id);
 	}
 
@@ -94,6 +134,7 @@ class QueueStore {
 	}
 
 	public async clear() {
+		this.index = 0;
 		await this._db.queueItems.clear();
 	}
 
@@ -255,44 +296,35 @@ class QueueStore {
 	}
 
 	private _updateItems(items: QueueItemData[]) {
-		// this._items = items;
+		this._items = items;
 
-		// Map new items by ID for fast lookup
-		// eslint-disable-next-line svelte/prefer-svelte-reactivity
-		const newItemMap = new Map(items.map((item) => [item.id, item]));
-		const currentItems = this._items;
+		// // Map new items by ID for fast lookup
+		// // eslint-disable-next-line svelte/prefer-svelte-reactivity
+		// const newItemMap = new Map(items.map((item) => [item.id, item]));
+		// const currentItems = this._items;
 
-		// Remove items no longer present
-		for (let i = currentItems.length - 1; i >= 0; i--) {
-			if (!newItemMap.has(currentItems[i].id)) {
-				currentItems.splice(i, 1);
-			}
-		}
+		// // Remove items no longer present
+		// for (let i = currentItems.length - 1; i >= 0; i--) {
+		// 	if (!newItemMap.has(currentItems[i].id)) {
+		// 		currentItems.splice(i, 1);
+		// 	}
+		// }
 
-		// Update existing items or add new ones
-		items.forEach((newItem, index) => {
-			const currentIndex = currentItems.findIndex((item) => item.id === newItem.id);
+		// // Update existing items or add new ones
+		// items.forEach((newItem, index) => {
+		// 	const currentIndex = currentItems.findIndex((item) => item.id === newItem.id);
 
-			if (currentIndex !== -1) {
-				// Check if properties actually changed to avoid over-triggering
-				if (JSON.stringify(currentItems[currentIndex]) !== JSON.stringify(newItem)) {
-					currentItems[currentIndex] = newItem;
-				}
-				// Object.assign(currentItems[currentIndex], newItem)
-			} else {
-				// Insert new item at its correct sorted position
-				currentItems.splice(index, 0, newItem);
-			}
-		});
-	}
-
-	private async _updateActive(nextItem: QueueItemData) {
-		await this._db.transaction('rw', this._db.queueItems, async () => {
-			if (this.current) {
-				await this._db.queueItems.update(this.current.id, { isActive: false });
-			}
-			await this._db.queueItems.update(nextItem.id, { isActive: true });
-		});
+		// 	if (currentIndex !== -1) {
+		// 		// Check if properties actually changed to avoid over-triggering
+		// 		// if (JSON.stringify(currentItems[currentIndex]) !== JSON.stringify(newItem)) {
+		// 		// 	currentItems[currentIndex] = newItem;
+		// 		// }
+		// 		Object.assign(currentItems[currentIndex], newItem)
+		// 	} else {
+		// 		// Insert new item at its correct sorted position
+		// 		currentItems.splice(index, 0, newItem);
+		// 	}
+		// });
 	}
 }
 

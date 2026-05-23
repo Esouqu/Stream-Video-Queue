@@ -1,6 +1,6 @@
 import youtubeApi from "$lib/api/youtubeApi";
 import dexieDB from "$lib/db";
-import type { MessageSource, QueueItemData, SocketMessage } from "$lib/types";
+import type { QueueItemData, SocketMessage } from "$lib/types";
 import type { VideoData } from "$lib/api/types";
 import { extractYoutubeVideoData, formatYoutubeDuration } from "$lib/utils";
 import QueueStore from "./QueueStore.svelte";
@@ -11,19 +11,19 @@ import { toast } from "svelte-sonner";
 import YouTubePlayerStore from "./YoutubePlayerStore.svelte";
 import { PersistedState } from "runed";
 import TimerStore from "./TimerStore.svelte";
-import { SvelteMap } from "svelte/reactivity";
-import type MessageSocket from "./MessageSocket.svelte";
+import IntegrationManager from "./integrations/IntegrationManager.svelte";
+import donationAlertsApi from "$lib/api/donationalertsApi.svelte";
+import donatePayApi from "$lib/api/donatePayApi.svelte";
+import TwitchIcon2 from "$lib/components/icons/TwitchIcon2.svelte";
+import DonationAlertsIcon from "$lib/components/icons/DonationAlertsIcon.svelte";
+import DonatePayIcon from "$lib/components/icons/DonatePayIcon.svelte";
+import NumberFormatter from "$lib/utils/NumberFormatter";
+import Integration from "./integrations/Integration.svelte";
+import TwitchDriver from "./integrations/drivers/TwitchChatDriver";
+import DonatePayDriver from "./integrations/drivers/DonatePayDriver";
+import DonationAlertsDriver from "./integrations/drivers/DonationAlertsDriver";
 
 type SkipAction = 'none' | 'warning' | 'skip';
-
-type PersistedAppState = {
-	queueLimit: number | null;
-	payedTimerPricePerMinute: number;
-	prioritizedVideoPrice: number;
-	shouldLoop: boolean;
-	payedTimerEnabled: boolean;
-	autoSkipAction: SkipAction;
-}
 
 type QueueItemParams = {
 	videoData: VideoData;
@@ -34,36 +34,54 @@ type QueueItemParams = {
 	value: number;
 }
 
+type PersistedAppState = {
+	shouldLoop: boolean;
+	paidTimerPricePerMinute: number;
+	prioritizedVideoPrice: number;
+	paidTimerEnabled: boolean;
+	autoSkipAction: SkipAction;
+	twitchChannel: string,
+	kickChannel: string,
+}
+
 class AppStore {
 	readonly youtubePlayer = new YouTubePlayerStore();
 	readonly queue = new QueueStore(dexieDB);
 	readonly poll = new PollStore();
 	readonly autoSkipTimer = new TimerStore();
-	readonly payedTimer = new TimerStore('up');
+	readonly paidTimer = new TimerStore('up');
+	readonly integrations: IntegrationManager;
 
 	readonly canVote = $derived(this.poll.isEnabled && this.queue.current);
 
-	private _sockets = new SvelteMap<string, MessageSocket>();
 	private _randomColor = new RandomColor();
 	private _isLoadingItems = $state(true);
+	private _isDonatePayApiKeyDialogOpen = $state(false);
 
 	private _persisted = new PersistedState<PersistedAppState>('appStore', {
-		queueLimit: null,
 		shouldLoop: false,
-		payedTimerEnabled: false,
-		payedTimerPricePerMinute: 25,
+		paidTimerEnabled: false,
+		paidTimerPricePerMinute: 100,
 		prioritizedVideoPrice: 100,
 		autoSkipAction: 'warning',
+		twitchChannel: '',
+		kickChannel: '',
 	});
 
 	private _videoRequestPrefix = '!rq';
 
-	get queueLimit() {
-		return this._persisted.current.queueLimit;
+	get twitchChannel() {
+		return this._persisted.current.twitchChannel;
+	}
+	set twitchChannel(val: string) {
+		this._persisted.current.twitchChannel = val;
 	}
 
-	set queueLimit(val: number | null) {
-		this._persisted.current.queueLimit = val;
+	get kickChannel() {
+		return this._persisted.current.kickChannel;
+	}
+	set kickChannel(val: string) {
+		this._persisted.current.kickChannel = val;
 	}
 
 	get autoSkipAction() {
@@ -82,18 +100,18 @@ class AppStore {
 		this._persisted.current.shouldLoop = val;
 	}
 
-	get payedTimerEnabled() {
-		return this._persisted.current.payedTimerEnabled;
+	get paidTimerEnabled() {
+		return this._persisted.current.paidTimerEnabled;
 	}
-	set payedTimerEnabled(val: boolean) {
-		this._persisted.current.payedTimerEnabled = val;
+	set paidTimerEnabled(val: boolean) {
+		this._persisted.current.paidTimerEnabled = val;
 	}
 
-	get payedTimerPricePerMinute() {
-		return this._persisted.current.payedTimerPricePerMinute;
+	get paidTimerPricePerMinute() {
+		return this._persisted.current.paidTimerPricePerMinute;
 	}
-	set payedTimerPricePerMinute(val: number) {
-		this._persisted.current.payedTimerPricePerMinute = val;
+	set paidTimerPricePerMinute(val: number) {
+		this._persisted.current.paidTimerPricePerMinute = val;
 	}
 
 	get prioritizedVideoPrice() {
@@ -103,23 +121,18 @@ class AppStore {
 		this._persisted.current.prioritizedVideoPrice = val;
 	}
 
+	get isDonatePayApiKeyDialogOpen() {
+		return this._isDonatePayApiKeyDialogOpen;
+	}
+
 	get isLoadingItems() {
 		return this._isLoadingItems;
 	}
 
 	constructor() {
 		this._initialize();
-	}
 
-	public removeSocket(socketId: MessageSource) {
-		const socket = this._sockets.get(socketId);
-		socket?.disconnect();
-		this._sockets.delete(socketId);
-	}
-
-	public addSocket(socket: MessageSocket) {
-		socket.onMessage(this.onSocketMessage.bind(this));
-		this._sockets.set(socket.id, socket);
+		this.integrations = new IntegrationManager(this.onSocketMessage.bind(this));
 	}
 
 	public async clearQueue() {
@@ -175,7 +188,7 @@ class AppStore {
 	}
 
 	public onSocketMessage({ name, message, value }: SocketMessage) {
-		const isQueueFull = this.queueLimit && this.queue.size >= this.queueLimit;
+		const isQueueFull = this.queue.isFull;
 		const isPaid = value > 0;
 
 		// for paid messaged
@@ -213,7 +226,6 @@ class AppStore {
 	public resetVotes(isManual = false) {
 		this.poll.reset(isManual);
 		this.autoSkipTimer.reset();
-		this.youtubePlayer.play();
 	}
 
 	public resumeVideo() {
@@ -245,16 +257,24 @@ class AppStore {
 	}
 
 	private _onVideoUnstarted() {
+		this.poll.reset();
+		this.paidTimer.reset();
 		this.autoSkipTimer.reset();
 
-		if (this.payedTimerEnabled) {
-			const price = this.queue.current?.value;
-			if (price) {
-				const minutes = price / this.payedTimerPricePerMinute;
-				this.payedTimer.reset();
-				this.payedTimer.setTime(minutes * 60 * 1000);
-			}
+		if (!this.paidTimerEnabled) return;
+
+		const currentVideo = this.queue.current;
+		if (!currentVideo || currentVideo.value <= 0) return;
+
+		const paidMinutes = currentVideo.value / this.paidTimerPricePerMinute;
+		let duration = paidMinutes * 60 * 1000;
+
+		if (currentVideo.duration) {
+			const originalDuration = NumberFormatter.timeStringToMs(currentVideo.duration);
+			duration = Math.min(originalDuration, duration);
 		}
+
+		this.paidTimer.setTime(duration);
 	}
 
 	private _onVideoEnded() {
@@ -262,14 +282,22 @@ class AppStore {
 	}
 
 	private _onVideoPause() {
-		if (this.payedTimerEnabled) {
-			this.payedTimer.pause();
+		if (!this.queue.current) return;
+
+		const currentIsPaid = this.queue.current.value > 0;
+
+		if (this.paidTimerEnabled && currentIsPaid) {
+			this.paidTimer.pause();
 		}
 	}
 
 	private _onVideoPlay() {
-		if (this.payedTimerEnabled) {
-			this.payedTimer.start();
+		if (!this.queue.current) return;
+
+		const currentIsPaid = this.queue.current.value > 0;
+
+		if (this.paidTimerEnabled && currentIsPaid) {
+			this.paidTimer.start();
 		}
 	}
 
@@ -296,6 +324,73 @@ class AppStore {
 		}
 	}
 
+	private async _initializeIntegrations() {
+		if (browser) {
+			if (this.twitchChannel) {
+				const socket = new Integration({
+					id: 'twitch',
+					type: 'chat',
+					title: 'Twitch',
+					color: 'text-purple-500',
+					icon: TwitchIcon2,
+					socketRoomId: this.twitchChannel
+				}, new TwitchDriver());
+
+				this.integrations.add(socket);
+			}
+
+			// if (this.kickChannel) {
+			// 	const socket = new KickIntegration({
+			// 		id: 'kick',
+			// 		type: 'chat',
+			// 		title: 'Kick',
+			// 		color: 'text-lime-500',
+			// 		icon: GalleryIcon,
+			// 		socketRoomId: this.kickChannel
+			// 	});
+			// 	this.integrations.add(socket);
+			// }
+
+			if (donatePayApi.user?.id) {
+				const donatePaySocket = new Integration({
+					id: 'donatepay',
+					type: 'donation',
+					title: 'DonatePay',
+					icon: DonatePayIcon,
+					color: 'text-green-500',
+					socketRoomId: `${donatePayApi.user.id}`,
+					onLogout: () => {
+						donatePayApi.logout();
+						this.integrations.remove('donatepay');
+					},
+					onAuth: () => {
+						this._isDonatePayApiKeyDialogOpen = true;
+					}
+				}, new DonatePayDriver());
+
+				this.integrations.add(donatePaySocket);
+			}
+
+
+			// const donationAlertsSocket = new Integration({
+			// 	id: 'donationalerts',
+			// 	type: 'donation',
+			// 	title: 'DonationAlerts',
+			// 	color: 'text-amber-500',
+			// 	icon: DonationAlertsIcon,
+			// 	socketRoomId: `$alerts:donation_${donationAlertsUser.id}`,
+			// 	socketToken: donationAlertsUser.socket_connection_token,
+			// 	onAuth: () => window.location.assign('/api/donationalerts/auth'),
+			// 	onLogout: () => {
+			// 		donationAlertsApi.logout();
+			// 		this.integrations.remove('donationalerts');
+			// 	},
+			// }, new DonationAlertsDriver());
+
+			// this.integrations.add(donationAlertsSocket);
+		}
+	}
+
 	private async _initialize() {
 		if (browser) {
 			this._isLoadingItems = true;
@@ -308,21 +403,11 @@ class AppStore {
 			this.youtubePlayer.on('ended', this._onVideoEnded.bind(this));
 
 			this.autoSkipTimer.on('finished', this._onAutoSkipTimerFinished.bind(this));
-			this.payedTimer.on('finished', this._activateAutoSkipAction.bind(this));
+			this.paidTimer.on('finished', this._activateAutoSkipAction.bind(this));
 			this.poll.on('finished', this._activateAutoSkipAction.bind(this));
 		}
-	}
 
-	private _getRandomItems() {
-		const items = Array.from({ length: 200 }, () => ({
-			id: crypto.randomUUID() as string,
-			title: `${crypto.randomUUID().slice(0, 5)}`,
-			value: Math.floor(Math.random() * 1000),
-			thumbnail: 'https://i.ytimg.com/vi/GkG60kISnfc/hqdefault.jpg?sqp=-oaymwEmCKgBEF5IWvKriqkDGQgBFQAAiEIYAdgBAeIBCggYEAIYBjgBQAE=&rs=AOn4CLC838QzSTZsByv8P3WDpvj0PR2XTQ',
-			color: this._randomColor.get().array()
-		} as unknown as QueueItemData));
-
-		return items;
+		this._initializeIntegrations();
 	}
 }
 

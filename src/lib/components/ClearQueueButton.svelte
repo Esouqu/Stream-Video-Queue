@@ -1,6 +1,5 @@
 <script lang="ts">
 	import appStore from '$lib/stores/AppStore.svelte';
-	import TrashIcon from './icons/TrashIcon.svelte';
 	import {
 		AlertDialog,
 		AlertDialogAction,
@@ -33,7 +32,6 @@
 		class={buttonVariants({ variant: 'destructive', size })}
 		disabled={appStore.queue.isEmpty}
 	>
-		<TrashIcon />
 		Очистить
 	</AlertDialogTrigger>
 
