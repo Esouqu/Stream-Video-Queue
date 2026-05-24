@@ -3,10 +3,13 @@ type TimeInterval = {
 	seconds: number;
 }
 
+type FormatTimerOptions = {
+	startMs?: number;
+	onlySeconds?: boolean;
+}
+
 class NumberFormatter {
-	private static _7_HOURS = 7 * 60 * 60 * 1000;
 	private static _1_HOUR = 60 * 60 * 1000;
-	private static _1_MINUTE = 60 * 1000;
 	private static _relativeTimeFormatter = new Intl.RelativeTimeFormat('ru', { numeric: 'auto' });
 	private static _viewsFormatter = Intl.NumberFormat('ru', { notation: 'compact' });
 	private static _currencyFormatter = Intl.NumberFormat("ru-RU", {
@@ -34,25 +37,26 @@ class NumberFormatter {
 		return ((hours * 3600) + (minutes * 60) + seconds) * 1000;
 	}
 
-	public static formatTimerValue(ms: number, startMs = ms) {
-		let formatter = Intl.DateTimeFormat('ru-RU', {
-			second: '2-digit'
-		});
+	public static formatTimerValue(ms: number, options: FormatTimerOptions = {}): string {
+		const { startMs = ms, onlySeconds = false } = options;
+		const totalSeconds = Math.floor(Math.max(0, ms) / 1000);
 
-		if (startMs >= this._1_HOUR) {
-			formatter = Intl.DateTimeFormat('ru-RU', {
-				hour: 'numeric',
-				minute: '2-digit',
-				second: '2-digit'
-			});
-		} else if (startMs >= this._1_MINUTE) {
-			formatter = Intl.DateTimeFormat('ru-RU', {
-				minute: 'numeric',
-				second: '2-digit'
-			});
+		if (onlySeconds) {
+			return String(totalSeconds);
 		}
 
-		return formatter.format(ms - this._7_HOURS);
+		const hours = Math.floor(totalSeconds / 3600);
+		const minutes = Math.floor((totalSeconds % 3600) / 60);
+		const seconds = totalSeconds % 60;
+
+		const mm = String(minutes).padStart(2, '0');
+		const ss = String(seconds).padStart(2, '0');
+
+		if (startMs >= this._1_HOUR) {
+			return `${hours}:${mm}:${ss}`;
+		}
+
+		return `${mm}:${ss}`;
 	}
 
 	public static formatCurrency(number: number): string {

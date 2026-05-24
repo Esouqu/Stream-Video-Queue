@@ -46,6 +46,7 @@
 		"eslint": "^9.39.2",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.14.0",
+		"fractional-indexing": "^3.2.0",
 		"globals": "^17.1.0",
 		"mode-watcher": "^1.1.0",
 		"prettier": "^3.8.1",

@@ -40,8 +40,7 @@ class KickChatDriver implements IConnectionDriver {
 	private onDisconnectCb?: () => void;
 	private onErrorCb?: () => void;
 
-	public async connect(config: { roomId: string }) {
-		// 1. Fetch Chatroom ID using API v2 (as in the working Gist)
+	public async connect() {
 		const proxyUrl = 'https://corsproxy.io/?url=';
 		const targetUrl = encodeURIComponent(`https://kick.com/api/v2/channels/${config.roomId}`);
 
@@ -51,27 +50,18 @@ class KickChatDriver implements IConnectionDriver {
 		console.log(`Channel Info - Chatroom ID: ${chatroomId}`);
 
 		return new Promise<void>((resolve) => {
-			// 2. Use the HARDCODED WebSocket URL from the working Gist
-			//    Note: The app key "32cbd69e4b950bf97679" is for ws-us2.pusher.com
 			const wsUrl = `wss://ws-us2.pusher.com/app/${this._pusherKey}?protocol=7&client=js&version=7.6.0&flash=false`;
 
 			console.log('Connecting to Pusher...');
 
-			// 3. Connect to the WebSocket
 			this._socket = new WebSocket(wsUrl);
 
 			this._socket.addEventListener('open', () => {
 				resolve();
 				console.log('WebSocket connection opened, waiting for connection_established...');
 			})
-
-			this._socket.addEventListener('close', () => {
+			this._socket.addEventListener('close', (event) => {
 				console.log(`Connection closed: Code ${event.code} - ${event.reason}`);
-				// Reconnect after 5 seconds (optional)
-				setTimeout(() => {
-					console.log('Attempting to reconnect...');
-					this.connect(config);
-				}, 5000);
 				this.onDisconnectCb?.();
 			});
 			this._socket.addEventListener('error', () => {
@@ -81,13 +71,11 @@ class KickChatDriver implements IConnectionDriver {
 			this._socket.addEventListener('message', (event) => {
 				const packet = JSON.parse(event.data);
 
-				// Handle initial connection response (Pusher handshake)
 				if (packet.event === 'pusher:connection_established') {
 					const connectionData = JSON.parse(packet.data);
 					const socketId = connectionData.socket_id;
 					console.log(`Connected with socket ID: ${socketId}`);
 
-					// Subscribe to the chatroom (as shown in the Gist)
 					const subscribeMsg = {
 						event: 'pusher:subscribe',
 						data: {
@@ -99,7 +87,6 @@ class KickChatDriver implements IConnectionDriver {
 					console.log(`Subscribed to chatroom: chatrooms.${chatroomId}.v2`);
 				}
 
-				// Handle chat messages (same as Gist's Python code)
 				if (packet.event === 'App\\Events\\ChatMessageEvent') {
 					const chatData = JSON.parse(packet.data) as MessageData;
 					const username = chatData.sender.username || 'Unknown';
@@ -115,7 +102,6 @@ class KickChatDriver implements IConnectionDriver {
 					console.log(chatData);
 				}
 
-				// Log other events for debugging (optional)
 				if (packet.event === 'pusher:subscription_succeeded') {
 					console.log('Successfully subscribed to channel');
 				}

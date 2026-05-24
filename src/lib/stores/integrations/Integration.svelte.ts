@@ -1,4 +1,4 @@
-import type { IntegrationData, IntegrationId, IntegrationType, SocketMessage, SocketState } from "$lib/types";
+import type { IntegrationData, IntegrationId, SocketMessage, SocketState } from "$lib/types";
 import { toast } from "svelte-sonner";
 import { SvelteSet } from "svelte/reactivity";
 import type { Component } from "svelte";
@@ -8,8 +8,7 @@ type MessageHandler = (message: SocketMessage) => void;
 
 class Integration {
 	readonly id: IntegrationId;
-	readonly type: IntegrationType;
-	readonly title: string;
+	readonly name: string;
 	readonly color: string;
 	readonly icon: Component;
 	readonly onAuth?: () => void;
@@ -19,19 +18,14 @@ class Integration {
 	protected _messageListeners = new SvelteSet<MessageHandler>();
 
 	protected driver: IConnectionDriver;
-	protected config: { roomId: string; token?: string };
 
 	constructor(data: IntegrationData, driver: IConnectionDriver) {
 		this.id = data.id;
-		this.type = data.type;
-		this.title = data.title;
+		this.name = data.name;
 		this.color = data.color;
 		this.icon = data.icon;
-		this.onAuth = data.onAuth;
-		this.onLogout = data.onLogout;
 
 		this.driver = driver;
-		this.config = { roomId: data.socketRoomId, token: data.socketToken };
 
 		this.driver.onMessage((msg) => {
 			for (const handler of this._messageListeners) {
@@ -73,7 +67,7 @@ class Integration {
 		this._state = 'connecting';
 
 		try {
-			await this.driver.connect(this.config);
+			await this.driver.connect();
 			this._state = 'open';
 			toast.info(`Соединение установлено — ${this.id}.`);
 		} catch {

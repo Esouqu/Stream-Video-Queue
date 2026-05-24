@@ -3,8 +3,7 @@ import { db } from "$lib/server/db";
 import { fail, redirect, type Actions } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 import { account } from "$lib/server/db/schema";
-
-const settingsUrl = '/?settings=open';
+import { SETTINGS_URL } from "$lib/constants";
 
 export const actions: Actions = {
 	linkDonatePay: async ({ request }) => {
@@ -65,7 +64,7 @@ export const actions: Actions = {
 	},
 	unlinkDonatePay: async (event) => {
 		const session = await auth.api.getSession({ headers: event.request.headers });
-		if (!session) throw redirect(302, settingsUrl);
+		if (!session) throw redirect(302, SETTINGS_URL);
 
 		try {
 			await db.delete(account)

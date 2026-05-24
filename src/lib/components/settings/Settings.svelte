@@ -25,8 +25,6 @@
 			goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
 		}
 	}
-
-	$inspect(page.data);
 </script>
 
 <Sheet open={page.url.searchParams.get('settings') === 'open'} {onOpenChange}>

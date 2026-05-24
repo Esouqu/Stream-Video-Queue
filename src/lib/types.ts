@@ -1,4 +1,5 @@
 import type { Component } from "svelte";
+import type { IConnectionDriver } from "./interfaces";
 
 export type IntegrationId = 'twitch' | 'kick' | 'donationalerts' | 'donatepay';
 export type SocketState = 'not-exists' | 'connecting' | 'open' | 'closed';
@@ -8,6 +9,7 @@ export type IntegrationData = {
 	name: string;
 	color: string;
 	icon: Component;
+	driver: IConnectionDriver;
 	isManual: boolean;
 }
 
@@ -19,7 +21,9 @@ export type SocketMessage = {
 }
 
 export type QueueItemData = {
-	id: number;
+	id: string;
+	sortOrder: string;
+
 	// video data
 	videoId: string;
 	startSeconds: number;
@@ -30,15 +34,14 @@ export type QueueItemData = {
 	thumbnail: string;
 	viewCount: string;
 	publishedAt: string;
+
 	// additional data
-	submittedBy: string[];
-	message: string;
+	submittedBy: string;
 	value: number;
-	sortOrder: number;
-	isActive: boolean;
-	// source: MessageSource;
-	color: number[];
+	color: [number, number, number];
 }
+
+export type RawQueueItem = Omit<QueueItemData, 'id' | 'sortOrder'>;
 
 export type PlayerOptions = {
 	containerId: string;

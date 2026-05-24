@@ -6,16 +6,15 @@
 	import { Input } from './ui/input';
 	import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 	import ToolsIcon from '@lucide/svelte/icons/tool-case';
-	import RandomColor from '$lib/stores/RandomColorStore';
 	import { randInt } from '$lib/utils';
 
 	type Props = {
 		anchor?: HTMLElement;
 	};
 
-	const randomColor = new RandomColor();
-
-	let message = $state('');
+	let message = $state(
+		'!rq https://www.youtube.com/watch?v=ssXR5K2ZdrM&list=RDssXR5K2ZdrM&start_radio=1&pp=oAcB'
+	);
 	let value = $state(100);
 	let addAmount = $state(25);
 
@@ -28,31 +27,11 @@
 
 	function addWithInterval() {
 		setInterval(async () => {
-			const color = randomColor.get().array();
-			const newItem = {
-				channelTitle: 'Deko',
-				title: 'iridescent prod. deko ✧･ﾟ: *✧･ﾟ:*  OFFICIAL VIDEO',
-				thumbnail: 'https://i.ytimg.com/vi/ssXR5K2ZdrM/mqdefault.jpg',
-				duration: '1:40',
-				videoId: 'ssXR5K2ZdrM',
-				viewCount: '590151',
-				publishedAt: '2019-07-20T01:40:57Z',
-				isLive: false,
-				startSeconds: 0,
-				message:
-					'!rq https://www.youtube.com/watch?v=ssXR5K2ZdrM&list=RDssXR5K2ZdrM&start_radio=1&pp=oAcB',
-				value: 0,
-				isActive: false,
-				submittedBy: ['esouqu'],
-				color
-			};
-			try {
-				await new Promise((resolve) => setTimeout(() => resolve(true), 50));
-				await G.queue.enqueue(newItem);
+			const val = Math.random() > 0.5 ? randInt(100, 1000) : 0;
+			await new Promise((resolve) => setTimeout(() => resolve(true), 50));
 
-				toast.message('Видео добавлено', {
-					description: newItem.title
-				});
+			try {
+				G.queueManager.addVideo('esouqu', message, val);
 			} catch (err) {
 				toast.error('Не удалось добавить видео', {
 					description: (err as Error).message
@@ -63,32 +42,11 @@
 
 	async function addMultiple() {
 		for (let i = 0; i < addAmount; i++) {
-			const color = randomColor.get().array();
-			const newItem = {
-				channelTitle: 'Deko',
-				title: 'iridescent prod. deko ✧･ﾟ: *✧･ﾟ:*  OFFICIAL VIDEO',
-				thumbnail: 'https://i.ytimg.com/vi/ssXR5K2ZdrM/mqdefault.jpg',
-				duration: '1:40',
-				videoId: 'ssXR5K2ZdrM',
-				viewCount: '590151',
-				publishedAt: '2019-07-20T01:40:57Z',
-				isLive: false,
-				startSeconds: 0,
-				message:
-					'!rq https://www.youtube.com/watch?v=ssXR5K2ZdrM&list=RDssXR5K2ZdrM&start_radio=1&pp=oAcB',
-				value: Math.random() > 0.5 ? randInt(100, 1000) : 0,
-				isActive: false,
-				submittedBy: ['esouqu'],
-				color
-			};
+			const val = Math.random() > 0.5 ? randInt(100, 1000) : 0;
+			// await new Promise((resolve) => setTimeout(() => resolve(true), 50));
 
 			try {
-				await new Promise((resolve) => setTimeout(() => resolve(true), 50));
-				await G.queue.enqueue(newItem);
-
-				toast.message('Видео добавлено', {
-					description: newItem.title
-				});
+				G.queueManager.addVideo('esouqu', message, val);
 			} catch (err) {
 				toast.error('Не удалось добавить видео', {
 					description: (err as Error).message

@@ -13,11 +13,11 @@
 </script>
 
 <Select type="multiple">
-	<SelectTrigger class="flex w-full" disabled={G.integrations.all.length < 1}>
+	<SelectTrigger class="flex w-full" disabled={G.integrations.sockets.length < 1}>
 		<div class="flex items-center gap-4">
 			Очередь
 			<div class="flex gap-2">
-				{#each G.integrations.all as socket (socket.id)}
+				{#each G.integrations.sockets as socket (socket.id)}
 					<socket.icon
 						class="data-[open=true]:{socket.color} {socket.color} transition-colors data-[open=false]:text-stone-500"
 						data-open={socket.isOpen}
@@ -27,7 +27,7 @@
 		</div>
 	</SelectTrigger>
 	<SelectContent side="bottom">
-		{#each G.integrations.all as socket (socket.id)}
+		{#each G.integrations.sockets as socket (socket.id)}
 			<SelectItem
 				noCheckmark
 				value={socket.id}

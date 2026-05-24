@@ -18,10 +18,9 @@
 	const { class: className }: Props = $props();
 
 	const formattedTime = $derived(
-		NumberFormatter.formatTimerValue(
-			G.poll.votesBlockTimer.current,
-			G.poll.votesBlockTimer.startTime
-		)
+		NumberFormatter.formatTimerValue(G.poll.votesBlockTimer.current, {
+			startMs: G.poll.votesBlockTimer.startTime
+		})
 	);
 
 	let intervalId: number;
@@ -78,7 +77,7 @@
 			class="absolute top-1/2 left-1/2 z-50 flex size-full -translate-1/2 items-center justify-center rounded-md bg-black/50 backdrop-blur-md select-none"
 			transition:fade
 		>
-			<div class="text-center font-semibold">
+			<div class="flex flex-col text-center font-semibold">
 				{#if G.poll.votesBlockTimer.isRunning}
 					<span class="text-muted-foreground">Голосование начнется через</span>
 					<span class="tabular-nums">{formattedTime}</span>

@@ -2,7 +2,6 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import { Input } from '$lib/components/ui/input';
 	import G from '$lib/stores/G.svelte';
-	import { createValidator } from '$lib/utils/validation.svelte';
 	import {
 		Card,
 		CardContent,
@@ -14,20 +13,21 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Separator } from '$lib/components/ui/separator';
 	import { slide } from 'svelte/transition';
+	import FieldValidator from '$lib/stores/FieldValidator.svelte';
 
-	const skipKeywordValidator = createValidator()
+	const skipKeywordValidator = new FieldValidator()
 		.required()
 		.minLength(2, 'Минимум 2 символа')
 		.maxLength(12)
 		.onValid((value) => (G.poll.skipKeyword = value));
 
-	const keepKeywordValidator = createValidator()
+	const keepKeywordValidator = new FieldValidator()
 		.required()
 		.minLength(2, 'Минимум 2 символа')
 		.maxLength(12)
 		.onValid((value) => (G.poll.keepKeyword = value));
 
-	const neededVotesValidator = createValidator()
+	const neededVotesValidator = new FieldValidator()
 		.required()
 		.numeric()
 		.onValid((value) => (G.poll.neededVotes = parseInt(value)));
@@ -53,13 +53,7 @@
 			</CardDescription>
 		</CardHeader>
 		<CardContent class="flex justify-end p-0">
-			<Switch
-				id="chat-sockets"
-				disabled={G.integrations.isChatConnecting}
-				bind:checked={
-					() => G.integrations.isChatEnabled, (val) => G.integrations.toggle(val, 'chat')
-				}
-			/>
+			<Switch id="chat-sockets" />
 		</CardContent>
 	</Card>
 	<Card class="gap-0 overflow-hidden">

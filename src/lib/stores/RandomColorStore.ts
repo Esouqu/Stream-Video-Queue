@@ -1,7 +1,7 @@
 import Color from "color";
 import { PersistedState } from "runed";
 
-class RandomColor {
+class RandomColorStore {
 	private _colors = [
 		Color('#fb2c36'),
 		Color('#00c951'),
@@ -22,4 +22,4 @@ class RandomColor {
 	}
 }
 
-export default RandomColor;
+export default RandomColorStore;

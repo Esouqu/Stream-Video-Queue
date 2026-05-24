@@ -27,7 +27,7 @@
 					Видео будут добавляться сразу после текущего.
 				</CardDescription>
 			</div>
-			<Switch id="timer-enable" bind:checked={G.paidTimerEnabled} />
+			<Switch id="timer-enable" />
 		</CardHeader>
 
 		{#if G.paidTimerEnabled}

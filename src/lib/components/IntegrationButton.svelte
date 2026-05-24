@@ -12,55 +12,42 @@
 
 	const { integration, isLinked, onLink, onUnlink }: Props = $props();
 
-	let isHovered = $state(false);
 	let isNavigating = $state(false);
 	let isUnlinking = $state(false);
 
 	beforeNavigate(() => {
 		isNavigating = true;
 	});
-</script>
 
-{#if isLinked}
-	<Button
-		type="submit"
-		formaction="?/signOut"
-		variant={isHovered ? 'destructive' : 'default'}
-		class="group w-full items-start overflow-hidden bg-(--int-color)/20 text-(--int-color)"
-		style="--int-color: {integration.color};"
-		disabled={isNavigating || isUnlinking}
-		onmouseenter={() => (isHovered = true)}
-		onmouseleave={() => (isHovered = false)}
-		onclick={async () => {
+	async function handleLinking() {
+		if (isLinked) {
 			isUnlinking = true;
 			await onUnlink(integration.id);
 			isUnlinking = false;
-		}}
-	>
-		<div class="flex h-full flex-col transition-transform group-hover:-translate-y-full">
-			<div class="flex h-full shrink-0 items-center justify-center gap-2">
-				<integration.icon class="size-5" />
-				{integration.name}
-			</div>
-			<div class="flex h-full shrink-0 items-center justify-center">Отключить</div>
+		} else {
+			onLink(integration.id);
+		}
+	}
+</script>
+
+<Button
+	class="group w-full items-start overflow-hidden hover:bg-green-900 hover:text-green-300 data-[linked=true]:bg-(--int-color)/20 data-[linked=true]:text-(--int-color) data-[linked=true]:hover:bg-red-900 data-[linked=true]:hover:text-red-300"
+	style="--int-color: {integration.color};"
+	data-linked={isLinked}
+	disabled={isNavigating || isUnlinking}
+	onclick={handleLinking}
+>
+	<div class="flex h-full flex-col transition-transform group-hover:-translate-y-full">
+		<div class="flex h-full shrink-0 items-center justify-center gap-2">
+			<integration.icon class="size-5" />
+			{integration.name}
 		</div>
-	</Button>
-{:else}
-	<Button
-		formaction="?/signInSocial"
-		variant={isHovered ? 'positive' : 'default'}
-		class="group w-full items-start overflow-hidden"
-		disabled={isNavigating}
-		onmouseenter={() => (isHovered = true)}
-		onmouseleave={() => (isHovered = false)}
-		onclick={() => onLink(integration.id)}
-	>
-		<div class="flex h-full flex-col transition-transform group-hover:-translate-y-full">
-			<div class="flex h-full shrink-0 items-center justify-center gap-2">
-				<integration.icon class="size-5" />
-				{integration.name}
-			</div>
-			<div class="flex h-full shrink-0 items-center justify-center">Подключить</div>
+		<div class="flex h-full shrink-0 items-center justify-center">
+			{#if isLinked}
+				Отключить
+			{:else}
+				Подключить
+			{/if}
 		</div>
-	</Button>
-{/if}
+	</div>
+</Button>

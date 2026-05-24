@@ -7,8 +7,8 @@
 </script>
 
 <svelte:head>
-	{#if G.queue.current}
-		<title>{G.queue.current.title}</title>
+	{#if G.queueManager.current}
+		<title>{G.queueManager.current.title}</title>
 	{/if}
 </svelte:head>
 

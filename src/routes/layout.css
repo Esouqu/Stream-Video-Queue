@@ -135,3 +135,10 @@
 		}
 	}
 }
+
+@utility container-scroll {
+  container-type: scroll-state;
+}
+
+@custom-variant stuck-top (@container scroll-state(stuck: top));
+@custom-variant stuck-bottom (@container scroll-state(stuck: bottom));

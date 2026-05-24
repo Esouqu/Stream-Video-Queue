@@ -79,7 +79,4 @@ export class FieldValidator<T = string> {
 	}
 }
 
-// Factory function for cleaner syntax
-export function createValidator<T = string>(): FieldValidator<T> {
-	return new FieldValidator<T>();
-}
+export default FieldValidator;

@@ -22,7 +22,7 @@
 	let isAlertOpened = $state(false);
 
 	function onAlertAction() {
-		G.clearQueue();
+		G.queueManager.clear();
 		isAlertOpened = false;
 	}
 </script>
@@ -30,7 +30,7 @@
 <AlertDialog bind:open={isAlertOpened}>
 	<AlertDialogTrigger
 		class={buttonVariants({ variant: 'destructive', size })}
-		disabled={G.queue.isEmpty}
+		disabled={G.queueManager.isEmpty}
 	>
 		Очистить
 	</AlertDialogTrigger>

@@ -11,6 +11,7 @@
 	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
 	import { Command, CommandItem, CommandList } from '$lib/components/ui/command';
 	import NumberFormatter from '$lib/utils/NumberFormatter';
+	import { cubicOut } from 'svelte/easing';
 
 	type Props = {
 		item: QueueItemData;
@@ -48,7 +49,7 @@
 
 		switch (flyType) {
 			case 'moving':
-				return { y: -200 };
+				return { y: -200, easing: cubicOut };
 			case 'remove':
 				return { x: 200 };
 		}
@@ -125,10 +126,12 @@
 								<TrashIcon />
 								<span>Удалить</span>
 							</CommandItem>
-							<CommandItem onclick={(e) => e.stopPropagation()} onSelect={onInfoClick}>
-								<InfoIcon />
-								<span>Доп. информация</span>
-							</CommandItem>
+							{#if onInfoClick}
+								<CommandItem onclick={(e) => e.stopPropagation()} onSelect={onInfoClick}>
+									<InfoIcon />
+									<span>Доп. информация</span>
+								</CommandItem>
+							{/if}
 						</CommandList>
 					</Command>
 				</PopoverContent>

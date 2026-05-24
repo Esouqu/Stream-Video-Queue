@@ -10,7 +10,9 @@
 
 	const shouldShowWarning = $derived(G.autoSkipTimer.isRunning);
 	const formattedTime = $derived(
-		NumberFormatter.formatTimerValue(G.autoSkipTimer.current, G.autoSkipTimer.startTime)
+		NumberFormatter.formatTimerValue(G.autoSkipTimer.current, {
+			onlySeconds: true
+		})
 	);
 
 	onMount(() => {
@@ -22,8 +24,9 @@
 	});
 
 	$effect(() => {
-		if (G.queue.current) {
-			G.loadVideo(G.queue.current);
+		if (G.queueManager.current) {
+			const { videoId, startSeconds } = G.queueManager.current;
+			G.youtubePlayer.load(videoId, startSeconds);
 		} else {
 			G.youtubePlayer.stop();
 		}

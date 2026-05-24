@@ -6,7 +6,7 @@ import { BETTER_AUTH_SECRET, TWITCH_CLIENT_ID, TWITCH_SECRET_KEY, DONATIONALERTS
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
 import { genericOAuth } from 'better-auth/plugins';
-import { AVAILABLE_PROVIDERS } from '$lib/providers';
+import { AVAILABLE_PROVIDER_IDS } from '$lib/providers';
 
 const baseURL = process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : PUBLIC_ORIGIN;
 
@@ -33,12 +33,7 @@ export const auth = betterAuth({
 		accountLinking: {
 			enabled: true,
 			allowDifferentEmails: true,
-			trustedProviders: AVAILABLE_PROVIDERS.map((p) => p.id),
-		},
-	},
-	user: {
-		additionalFields: {
-			donationAlertsSocketToken: { type: "string", required: false, returned: true }
+			trustedProviders: AVAILABLE_PROVIDER_IDS,
 		},
 	},
 	socialProviders: {
@@ -66,14 +61,10 @@ export const auth = betterAuth({
 						const userData = profile.data;
 
 						return {
-							// Default fields if necessary
 							id: String(userData.id),
 							name: userData.name,
 							email: userData.email || `${userData.id}@donationalerts.local`,
 							image: userData.avatar,
-
-							//user.additionalFields
-							donationAlertsSocketToken: userData.socket_connection_token,
 						};
 					}
 				}

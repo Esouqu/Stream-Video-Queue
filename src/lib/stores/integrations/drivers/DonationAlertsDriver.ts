@@ -1,6 +1,6 @@
-import donationAlertsApi from "$lib/api/donationalertsApi";
 import type { IConnectionDriver } from "$lib/interfaces";
 import type { SocketMessage } from "$lib/types";
+import G from '$lib/stores/G.svelte';
 
 type DonationAlertsMessage = {
 	id: number;
@@ -28,8 +28,8 @@ class DonationAlertsDriver implements IConnectionDriver {
 	private onDisconnectCb?: () => void;
 	private onErrorCb?: () => void;
 
-	public async connect(config: { roomId: string; }) {
-		const user = await donationAlertsApi.getUser();
+	public async connect() {
+		const user = await G.donationalertsApi.getUser();
 
 		return new Promise<void>((resolve) => {
 			if (!user?.socket_connection_token) return;
@@ -51,25 +51,24 @@ class DonationAlertsDriver implements IConnectionDriver {
 				const message = JSON.parse(event.data);
 
 				if (message.id === 1) {
-					const socketToken = await donationAlertsApi.getSocketToken(config.roomId, message.result.client);
+					const data = await G.donationalertsApi.getSocketToken(message.result.client);
 
-					if (!socketToken) {
-						throw new Error('No token received');
+					if (data) {
+						this._socket?.send(
+							JSON.stringify({
+								params: {
+									channel: data.channel,
+									token: data.token
+								},
+								method: 1,
+								id: 2
+							})
+						);
 					}
 
-					this._socket?.send(
-						JSON.stringify({
-							params: {
-								channel: config.roomId,
-								token: socketToken
-							},
-							method: 1,
-							id: 2
-						})
-					);
 				}
 
-				if (!message.result.type && message.result.channel === config.roomId) {
+				if (!message.result.type && message.result.channel === `$alerts:donation_${user.id}`) {
 					const donation: DonationAlertsMessage = message.result.data.data;
 					const username = donation.username ?? 'Аноним';
 					const amount = Math.round(donation.amount_in_user_currency);

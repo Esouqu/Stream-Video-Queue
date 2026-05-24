@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { cn } from '$lib/utils';
+	type Props = {
+		class?: string;
+	};
+
+	const { class: className }: Props = $props();
 </script>
 
-<div class="relative flex w-full gap-2 p-2 py-0 select-none">
+<div class={cn('relative flex w-full gap-2 p-2 py-0 select-none', className)}>
 	<div class="relative">
 		<Skeleton class="aspect-video h-auto w-38.5 animate-none rounded-sm" />
 	</div>

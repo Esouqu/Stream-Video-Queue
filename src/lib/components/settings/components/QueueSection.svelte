@@ -12,9 +12,9 @@
 	import G from '$lib/stores/G.svelte';
 
 	const enoughVotesActionOptions = [
-		{ value: 'none', label: 'Ничего' },
-		{ value: 'warning', label: 'Предупреждение' },
-		{ value: 'skip', label: 'Следующее видео' }
+		{ value: 'none', label: 'Выкл.' },
+		{ value: 'warning', label: 'С таймером' },
+		{ value: 'skip', label: 'Мгновенно' }
 	];
 
 	const currentOption = $derived.by(getCurrentOption);
@@ -27,8 +27,10 @@
 <div class="flex flex-col gap-4">
 	<Card class="relative grid auto-rows-auto grid-cols-[1fr_12rem] gap-4 p-4">
 		<CardHeader class="p-0">
-			<CardTitle>При автоскипе</CardTitle>
-			<CardDescription>Действие, которое будет выполнено при автоскипе.</CardDescription>
+			<CardTitle>Автоскип</CardTitle>
+			<CardDescription
+				>Автоматически пропускать видео при наборе голосов или истечении оплаченного времени.</CardDescription
+			>
 		</CardHeader>
 		<CardContent class="flex justify-end p-0">
 			<Select type="single" bind:value={G.autoSkipAction}>
@@ -59,7 +61,7 @@
 				id="queue-limit"
 				type="number"
 				placeholder="Неограниченно"
-				bind:value={G.queue.limit}
+				bind:value={G.queueManager.limit}
 			/>
 		</CardContent>
 	</Card>

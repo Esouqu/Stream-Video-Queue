@@ -7,7 +7,9 @@
 	import { enhance } from '$app/forms';
 	import { authClient } from '$lib/auth-client';
 	import { invalidateAll } from '$app/navigation';
+	import { SETTINGS_URL } from '$lib/constants';
 
+	const abailableProviders = $derived(AVAILABLE_PROVIDERS.filter((p) => p.id !== 'donatepay'));
 	const isLoggedIn = $derived(!!page.data.user);
 	const isSingleAccount = $derived(page.data.accounts?.length === 1);
 
@@ -31,12 +33,12 @@
 		if (!isLoggedIn) {
 			await authClient.signIn.social({
 				provider: providerId,
-				callbackURL: '/?settings=open'
+				callbackURL: SETTINGS_URL
 			});
 		} else {
 			await authClient.linkSocial({
 				provider: providerId,
-				callbackURL: '/?settings=open'
+				callbackURL: SETTINGS_URL
 			});
 		}
 	}
@@ -46,7 +48,7 @@
 
 <form method="POST" action="?/signInSocial" use:enhance>
 	<div class="grid grid-cols-2 gap-2">
-		{#each AVAILABLE_PROVIDERS as integration (integration.id)}
+		{#each abailableProviders as integration (integration.id)}
 			<IntegrationButton
 				{integration}
 				onLink={signInSocial}

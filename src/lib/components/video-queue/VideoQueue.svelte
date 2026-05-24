@@ -5,10 +5,11 @@
 	import type { QueueItemData } from '$lib/types';
 	import SkipForwardIcon from '../icons/SkipForwardIcon.svelte';
 	import QueueHeader from './components/QueueHeader.svelte';
-	import { slide } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import ControlPanel from './components/ControlPanel.svelte';
 	import EmptyQueueItem from './components/EmptyQueueItem.svelte';
 	import ClearQueueButton from '../ClearQueueButton.svelte';
+	import { Separator } from '../ui/separator';
 
 	const itemHeight = 102;
 	const itemsBuffer = 10;
@@ -16,7 +17,7 @@
 	let viewportRef = $state<HTMLDivElement | null>(null);
 
 	function onItemSelect(item: QueueItemData) {
-		G.queue.select(item);
+		G.queueManager.select(item);
 		viewportRef?.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 </script>
@@ -29,21 +30,37 @@
 	<VirtualList
 		bind:viewportRef
 		class="w-full overflow-hidden"
-		items={G.queue.upcoming}
+		items={G.queueManager.upcoming}
 		{itemHeight}
 		{itemsBuffer}
 	>
 		{#snippet header()}
-			<div class="py-2">
-				<div class="pointer-events-none px-2" transition:slide>
-					<ControlPanel
-						currentItem={G.queue.current}
-						videoPlayer={G.youtubePlayer}
-						onSkipBackwardClick={() => G.queue.previous()}
-						onSkipForwardClick={() => G.queue.next()}
-						onRemoveClick={() => G.queue.current && G.removeVideo(G.queue.current)}
-						bind:isShuffled={G.queue.shouldInsertRandomly}
-					/>
+			<div class="space-y-4 p-2 py-4">
+				<div
+					class="flex items-center gap-2 px-2 text-sm font-semibold whitespace-nowrap text-muted-foreground"
+				>
+					<div>Текущее видео</div>
+					<Separator class="shrink" />
+					{#if G.queueManager.current}
+						<div class="tabular-nums">
+							{G.queueManager.index + 1} / {G.queueManager.size}
+						</div>
+					{/if}
+				</div>
+				<ControlPanel
+					currentItem={G.queueManager.current}
+					videoPlayer={G.youtubePlayer}
+					onSkipBackwardClick={() => G.queueManager.previous()}
+					onSkipForwardClick={() => G.queueManager.next()}
+					onRemoveClick={() =>
+						G.queueManager.current && G.queueManager.dequeue(G.queueManager.current)}
+					bind:isShuffled={G.queueManager.shouldInsertRandomly}
+				/>
+				<div
+					class="flex items-center gap-2 px-2 text-sm font-semibold whitespace-nowrap text-muted-foreground"
+				>
+					<div>Далее</div>
+					<Separator class="shrink" />
 				</div>
 			</div>
 		{/snippet}
@@ -52,7 +69,7 @@
 			<QueueItem
 				{item}
 				onSelect={(item) => onItemSelect(item)}
-				onRemoveClick={() => G.removeVideo(item)}
+				onRemoveClick={() => G.queueManager.dequeue(item)}
 			/>
 		{/snippet}
 
@@ -62,18 +79,19 @@
 				{#each { length: 5 } as _, idx (idx)}
 					<EmptyQueueItem />
 				{/each}
-			{:else if G.queue.isEmpty}
+			{:else if G.queueManager.isEmpty}
 				<div
 					class="absolute inset-0 flex size-full flex-col items-center justify-center gap-1 text-center font-semibold text-muted-foreground"
 				>
 					<span class="text-lg">Очередь пуста.</span>
 				</div>
-			{:else if G.queue.index + 1 === G.queue.size}
+			{:else if G.queueManager.index + 1 === G.queueManager.size}
 				<div
 					class="absolute inset-0 flex size-full flex-col items-center justify-center gap-2 text-center font-semibold text-muted-foreground"
+					in:fade|global
 				>
 					<div class="flex flex-col">
-						<span>Очередь закончилась.</span>
+						<span>Конец очереди.</span>
 						<span class="text-sm">
 							Можете начать сначала, нажав <SkipForwardIcon class="inline size-4" />.
 						</span>

@@ -10,7 +10,7 @@
 		itemHeight?: number;
 		class?: string;
 		viewportRef?: HTMLDivElement | null;
-		child: Snippet<[T & { position: number }, number]>;
+		child: Snippet<[T & { index: number }, number]>;
 		header?: Snippet;
 		empty?: Snippet;
 	}
@@ -27,46 +27,36 @@
 	}: Props = $props();
 
 	let scrollTop = $state(0);
-	let minHeight = $state(0);
-	let headerHeight = $state(0);
 	let scrollElement = $state<HTMLDivElement | null>(null);
-	let wrapperOffsetHeight = $state(0);
+	let viewportHeight = $state(0);
 
-	const itemsBufferHeight = $derived(itemsBuffer * itemHeight);
-	const itemsWithPosition = $derived.by(getItemsWithPosition);
+	const totalItemsHeight = $derived(items.length * itemHeight);
+	const range = $derived.by(getRange);
 	const visibleItems = $derived.by(getVisibleItems);
-	const itemsHeight = $derived(itemHeight * itemsWithPosition.length);
-
-	$effect(() => {
-		onresize();
-	});
-
-	function getItemsWithPosition() {
-		return items.map((l, idx) => ({ ...l, position: idx + 1 }));
-	}
 
 	function getVisibleItems() {
-		if (!scrollElement) return [];
+		const { start, end } = range;
+		const sliced = [];
 
-		const viewportTop = scrollTop - itemsBufferHeight;
-		// Index of the potential start item
-		const potentialStartIndex = Math.floor(viewportTop / itemHeight);
-		// Position of the bottom of the viewport
-		const viewportBottom = scrollTop + scrollElement.offsetHeight + itemsBufferHeight;
-		// Index of the potential end item
-		const potentialEndIndex = Math.floor(viewportBottom / itemHeight);
-		// Ensure potentialEndIndex does not exceed the length of the itemsWithPosition
-		const clampedEndIndex = Math.min(itemsWithPosition.length, potentialEndIndex);
-		const startIndex = Math.max(0, potentialStartIndex);
-		const endIndex = Math.max(startIndex, clampedEndIndex);
+		for (let i = start; i < end; i++) {
+			if (items[i]) {
+				sliced.push({ ...items[i], index: i });
+			}
+		}
 
-		return itemsWithPosition.slice(startIndex, endIndex);
+		return sliced;
 	}
 
-	function onresize() {
-		if (!scrollElement) return;
+	function getRange() {
+		const adjustedScrollTop = Math.max(0, scrollTop);
 
-		minHeight = Math.max(wrapperOffsetHeight - headerHeight, itemsHeight);
+		const viewportTop = adjustedScrollTop - itemsBuffer * itemHeight;
+		const viewportBottom = adjustedScrollTop + viewportHeight + itemsBuffer * itemHeight;
+
+		const start = Math.max(0, Math.floor(viewportTop / itemHeight) - 1);
+		const end = Math.min(items.length, Math.ceil(viewportBottom / itemHeight) + 1);
+
+		return { start, end };
 	}
 
 	function onscroll(e: UIEvent) {
@@ -78,7 +68,7 @@
 
 <svelte:window {onresize} />
 
-<div class="size-full overflow-hidden" bind:offsetHeight={wrapperOffsetHeight}>
+<div class="size-full overflow-hidden" bind:offsetHeight={viewportHeight}>
 	<ScrollArea
 		class={cn('relative flex h-full', className)}
 		bind:ref={scrollElement}
@@ -86,22 +76,18 @@
 		{onscroll}
 	>
 		{#if header}
-			<div class="pointer-events-none space-y-2" bind:clientHeight={headerHeight}>
-				{@render header()}
-			</div>
+			{@render header()}
 		{/if}
 
-		<div
-			class="relative grid grid-flow-row px-2 transition-[height] duration-200"
-			style="grid-auto-rows: {itemHeight}px; height: {minHeight}px;"
-		>
+		<div class="relative w-full" style:height="{totalItemsHeight}px">
 			{#each visibleItems as item (item.id)}
 				<div
-					class="flex w-full"
-					style="grid-column: 1; grid-row: {item.position};"
+					class="absolute right-2 left-2"
+					style:top="{item.index * itemHeight}px"
+					style:height="{itemHeight}px"
 					animate:flip={{ duration: 400 }}
 				>
-					{@render child(item, item.position - 1)}
+					{@render child(item, item.index)}
 				</div>
 			{:else}
 				{@render empty?.()}

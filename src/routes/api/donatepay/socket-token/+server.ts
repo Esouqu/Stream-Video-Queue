@@ -2,13 +2,14 @@ import { auth } from "$lib/server/auth";
 import { redirect, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ fetch, request }) => {
-	const accessToken = await auth.api.getAccessToken({
+	const
+	const tokenRes = await auth.api.getAccessToken({
 		body: {
 			providerId: "donatepay",
 		},
 		headers: request.headers
 	});
-	if (!accessToken) throw redirect(302, "/");
+	if (!tokenRes) throw redirect(302, "/");
 
 	const TOKEN_ENDPOINT = 'https://donatepay.ru/api/v2/socket/token';
 
@@ -16,7 +17,7 @@ export const GET: RequestHandler = async ({ fetch, request }) => {
 		const response = await fetch(TOKEN_ENDPOINT, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ access_token: accessToken })
+			body: JSON.stringify({ access_token: tokenRes.accessToken }),
 		});
 		const data = await response.json();
 

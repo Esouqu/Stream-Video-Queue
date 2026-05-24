@@ -33,32 +33,32 @@
 	</div>
 
 	<div class="flex w-full flex-col px-3">
-		{#if G.integrations.isChatEnabled || G.integrations.isDonationEnabled}
-			<div class="mb-3 flex shrink-0 gap-3" transition:slide>
-				{#if G.integrations.isChatEnabled}
-					<div
-						class="pointer-events-auto relative flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3 p-2 font-semibold shadow-sm transition-colors duration-700"
-					>
-						<div class="text-sm text-muted-foreground">Обычный заказ</div>
-						<div class="text-lg">!rq в чате</div>
-					</div>
-				{/if}
-				{#if G.integrations.isDonationEnabled}
-					<div
-						class="pointer-events-auto relative flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3 p-2 font-semibold shadow-sm transition-colors duration-700"
-					>
-						<div class="text-sm text-muted-foreground">Приоритетный заказ</div>
-						<div class="text-lg">
-							{#if G.paidTimerEnabled}
-								{NumberFormatter.formatCurrency(G.paidTimerPricePerMinute)}/мин
-							{:else}
-								{NumberFormatter.formatCurrency(G.prioritizedVideoPrice)}
-							{/if}
-						</div>
-					</div>
-				{/if}
+		<!-- {#if G.integrations.isChatEnabled || G.integrations.isDonationEnabled} -->
+		<div class="mb-3 flex shrink-0 gap-3" transition:slide>
+			<!-- {#if G.integrations.isChatEnabled} -->
+			<div
+				class="pointer-events-auto relative flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3 p-2 font-semibold shadow-sm transition-colors duration-700"
+			>
+				<div class="text-sm text-muted-foreground">Обычный заказ</div>
+				<div class="text-lg">!rq в чате</div>
 			</div>
-		{/if}
+			<!-- {/if} -->
+			<!-- {#if G.integrations.isDonationEnabled} -->
+			<div
+				class="pointer-events-auto relative flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3 p-2 font-semibold shadow-sm transition-colors duration-700"
+			>
+				<div class="text-sm text-muted-foreground">Приоритетный заказ</div>
+				<div class="text-lg">
+					{#if G.paidTimerEnabled}
+						{NumberFormatter.formatCurrency(G.paidTimerPricePerMinute)}/мин
+					{:else}
+						{NumberFormatter.formatCurrency(G.prioritizedVideoPrice)}
+					{/if}
+				</div>
+			</div>
+			<!-- {/if} -->
+		</div>
+		<!-- {/if} -->
 
 		{#if G.poll.isEnabled}
 			<div class="mb-3 shrink-0" transition:slide|global>
