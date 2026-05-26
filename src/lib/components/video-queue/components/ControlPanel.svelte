@@ -7,7 +7,7 @@
 	import ShuffleIcon from '$lib/components/icons/ShuffleIcon.svelte';
 	import QueueItem from '$lib/components/video-queue/components/QueueItem.svelte';
 	import { type QueueItemData } from '$lib/types';
-	import { fade, fly } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import { cn } from '$lib/utils';
 	import { Previous } from 'runed';
 	import RepeatIcon from '$lib/components/icons/RepeatIcon.svelte';
@@ -19,6 +19,8 @@
 	import NumberFormatter from '$lib/utils/NumberFormatter';
 	import EmptyQueueItem from './EmptyQueueItem.svelte';
 	import { cubicOut } from 'svelte/easing';
+	import { onMount } from 'svelte';
+	import Blob from '$lib/components/Blob.svelte';
 
 	type ButtonMouseEvent =
 		| (MouseEvent & {
@@ -52,10 +54,10 @@
 
 	let flyDirection = $state(1);
 
-	let circleClientWidth = $state(0);
-	let circleClientHeight = $state(0);
 	let circleRef = $state<HTMLDivElement>();
 	let panelRef = $state<HTMLDivElement>();
+	let currentTime = $state(0);
+	let duration = $state(0);
 
 	const rgb = $derived(currentItem ? currentItem.color : [0, 0, 0]);
 	const prevRgb = new Previous(() => rgb);
@@ -64,11 +66,26 @@
 		`rgb(${prevRgb.current?.[0]} ${prevRgb.current?.[1]} ${prevRgb.current?.[2]} / 0.4)`
 	);
 	const formattedPaidTimerTime = $derived(
-		NumberFormatter.formatTimerValue(G.paidTimer.current, { startMs: G.paidTimer.startTime })
+		NumberFormatter.formatTimerValue(currentTime * 1000, { startMs: duration * 1000 })
 	);
-	const formattedPaidTimerStartTime = $derived(
-		NumberFormatter.formatTimerValue(G.paidTimer.startTime)
-	);
+	const formattedPaidTimerStartTime = $derived(NumberFormatter.formatTimerValue(duration * 1000));
+	let seed = $state(crypto.randomUUID());
+
+	let intervalId: number;
+	onMount(() => {
+		intervalId = window.setInterval(async () => {
+			const [current, dur] = await Promise.all([
+				G.youtubePlayer.getCurrentTime(),
+				G.youtubePlayer.getDuration()
+			]);
+			currentTime = current;
+			duration = dur;
+		}, 250);
+
+		return () => {
+			clearInterval(intervalId);
+		};
+	});
 
 	function play(e: ButtonMouseEvent) {
 		e.stopPropagation();
@@ -100,14 +117,17 @@
 		if (!circleRef || !panelRef) return;
 
 		const parentRect = panelRef.getBoundingClientRect();
+		const circleClientWidth = circleRef.clientWidth;
+		const circleClientHeight = circleRef.clientHeight;
 
 		let relativeY = parentRect.top / 4;
 		let relativeX = parentRect.left / 4;
 
+		seed = crypto.randomUUID();
+
 		if (event) {
 			const targetRect = event.currentTarget.getBoundingClientRect();
 
-			// Calculate the center point of the button relative to the panel
 			relativeX = targetRect.left + targetRect.width / 2 - parentRect.left;
 			relativeY = targetRect.top + targetRect.height / 2 - parentRect.top;
 		}
@@ -138,41 +158,33 @@
 				},
 				'0'
 			)
-			.add(
-				circleRef,
-				{
-					opacity: 0
-				},
-				'-=250'
-			);
+			.add(circleRef, {
+				opacity: 0
+			});
 	}
 </script>
 
 <div
-	bind:this={panelRef}
 	class={cn(
-		`group pointer-events-auto relative z-10 flex shrink-0 rounded-md shadow-md ring ring-(--panel-color) backdrop-blur-md transition-colors delay-75 duration-500`,
+		`group pointer-events-auto relative z-1 flex shrink-0 rounded-md transition-colors delay-75 duration-500`,
 		className
 	)}
-	style="--panel-color: rgb({rgb[0]} {rgb[1]} {rgb[2]} / 0.3); background: linear-gradient(0deg, oklch(0 0 0 / 0.3) 10%, transparent), var(--panel-color);"
 >
-	<div class="relative z-30 flex w-full flex-col justify-center">
+	<div class="relative z-3 flex w-full flex-col justify-center" bind:this={panelRef}>
 		{#if currentItem}
 			<div class="grid">
 				{#key currentItem}
-					<div
-						class="col-start-1 row-start-1"
-						in:fly={{ y: flyDirection * 200, easing: cubicOut }}
-						out:fly={{ y: flyDirection * -200, easing: cubicOut }}
-					>
-						<QueueItem
-							class="py-3 pt-4"
-							isCurrent
-							item={currentItem}
-							{onRemoveClick}
-							{onInfoClick}
-						/>
-					</div>
+					<QueueItem
+						class="col-start-1 row-start-1 p-3"
+						item={currentItem}
+						isCurrent
+						flyParams={{
+							in: { y: flyDirection * 168, easing: cubicOut },
+							out: { y: flyDirection * -168, easing: cubicOut }
+						}}
+						{onRemoveClick}
+						{onInfoClick}
+					/>
 				{/key}
 			</div>
 		{:else}
@@ -180,17 +192,17 @@
 		{/if}
 
 		<div class="mx-auto mb-3 flex items-center gap-2">
-			<Toggle size="icon" tooltip="Повтор видео" bind:pressed={G.shouldLoop}>
+			<Toggle size="icon" tooltip="Повтор видео" bind:pressed={G.settings.shouldLoop}>
 				<RepeatIcon />
 			</Toggle>
 			<div class="flex items-center gap-2">
-				<Button variant="ghost" disabled={G.queueManager.size < 1} onclick={skipBackward}>
+				<Button variant="ghost" disabled={G.queueManager.size < 2} onclick={skipBackward}>
 					<SkipBackwardIcon />
 				</Button>
 				<Button
 					variant="ghost"
 					size="icon-lg"
-					class="p-0"
+					class="p-0 text-foreground!"
 					disabled={videoPlayer.isBuffering || !videoPlayer.isReady}
 					onclick={play}
 				>
@@ -200,7 +212,7 @@
 						<PlayIcon class="size-full" />
 					{/if}
 				</Button>
-				<Button variant="ghost" disabled={G.queueManager.size < 1} onclick={skipForward}>
+				<Button variant="ghost" disabled={G.queueManager.size < 2} onclick={skipForward}>
 					<SkipForwardIcon />
 				</Button>
 			</div>
@@ -210,14 +222,19 @@
 		</div>
 	</div>
 
-	<div class="absolute inset-0 -z-1 overflow-hidden rounded-md">
-		{#if !G.paidTimer.isUnstarted}
+	<div class="absolute inset-0 -z-1 flex items-center justify-center rounded-md">
+		{#if !G.paidTimer.isUnstarted && duration > 0}
 			<div class="pointer-events-none absolute inset-0 -z-1 size-full" transition:fade>
 				<Progress
+					class="size-full rounded-none bg-transparent *:data-[slot=progress-indicator]:bg-white/5 *:data-[slot=progress-indicator]:duration-500"
+					value={currentTime}
+					max={duration}
+				/>
+				<!-- <Progress
 					class="size-full rounded-none bg-transparent **:data-[slot=progress-indicator]:bg-white/5 **:data-[slot=progress-indicator]:transition-none"
 					value={G.paidTimer.current}
 					max={G.paidTimer.startTime}
-				/>
+				/> -->
 			</div>
 			<div
 				class="pointer-events-none absolute bottom-0 left-0 -z-1 w-full opacity-0 transition-opacity group-hover:opacity-100"
@@ -232,18 +249,30 @@
 					</div>
 				</div>
 				<Progress
-					class="h-1 w-full rounded-none bg-white/10 **:data-[slot=progress-indicator]:bg-white/20 **:data-[slot=progress-indicator]:transition-none"
-					value={G.paidTimer.current}
-					max={G.paidTimer.startTime}
+					class="h-1 w-full rounded-none bg-white/10 *:data-[slot=progress-indicator]:bg-white/20 *:data-[slot=progress-indicator]:duration-500"
+					value={currentTime}
+					max={duration}
 				/>
 			</div>
 		{/if}
 
-		<div
-			bind:this={circleRef}
-			bind:clientWidth={circleClientWidth}
-			bind:clientHeight={circleClientHeight}
-			class="pointer-events-none absolute z-20 size-200 rounded-full bg-radial from-(--c1) from-15% via-(--c2) mask-[radial-gradient(black_10%,transparent)] opacity-0"
-		></div>
+		{#if currentItem}
+			{#key currentItem}
+				<img
+					class="pointer-events-none absolute top-1/2 left-1/2 size-14 -translate-1/2 scale-[8] object-cover opacity-30 blur-xs select-none"
+					src={currentItem?.thumbnail}
+					alt=""
+					draggable="false"
+					transition:fade={{ duration: 500 }}
+				/>
+			{/key}
+		{/if}
+
+		<Blob
+			bind:ref={circleRef}
+			{seed}
+			color="rgb(0 0 0 / 0.25)"
+			class="pointer-events-none absolute z-2 size-250 opacity-0"
+		/>
 	</div>
 </div>

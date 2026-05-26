@@ -16,7 +16,6 @@ export const user = sqliteTable("user", {
 		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
-	donationAlertsSocketToken: text("donation_alerts_socket_token"),
 });
 
 export const session = sqliteTable(
@@ -46,6 +45,7 @@ export const account = sqliteTable(
 		id: text("id").primaryKey(),
 		accountId: text("account_id").notNull(),
 		providerId: text("provider_id").notNull(),
+		username: text("username"),
 		userId: text("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
@@ -67,7 +67,10 @@ export const account = sqliteTable(
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
-	(table) => [index("account_userId_idx").on(table.userId)],
+	(table) => [
+		index("account_userId_idx").on(table.userId),
+		index("account_user_provider_idx").on(table.userId, table.providerId),
+	],
 );
 
 export const verification = sqliteTable(

@@ -1,7 +1,7 @@
-import donatePayApi from "$lib/api/donatePayApi";
-import type { IConnectionDriver } from "$lib/interfaces";
 import type { SocketMessage } from "$lib/types";
 import Centrifuge from "centrifuge";
+import G from '$lib/stores/G.svelte';
+import SocketDriver from "./SocketDriver";
 
 type DonatePayDonationMessage = {
 	data: {
@@ -21,15 +21,15 @@ type DonatePayDonationMessage = {
 	};
 }
 
-class DonatePayDriver implements IConnectionDriver {
+class DonatePayDriver extends SocketDriver {
 	private _CENTRIFUGO_URL = 'wss://centrifugo.donatepay.ru:443/connection/websocket';
 	private _TOKEN_ENDPOINT = 'https://donatepay.ru/api/v2/socket/token';
 
 	private _socket: Centrifuge | null = null;
 	private onMsgCb?: (p: SocketMessage) => void;
 
-	public async connect(config: { roomId: string; token?: string }) {
-		const data = await donatePayApi.getToken();
+	public async connect() {
+		const data = await G.donatepayApi.getSocketToken();
 
 		return new Promise<void>((resolve) => {
 			if (!data.apiKey || !data.token)

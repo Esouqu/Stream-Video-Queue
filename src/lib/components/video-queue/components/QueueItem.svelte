@@ -16,43 +16,34 @@
 	type Props = {
 		item: QueueItemData;
 		class?: string;
+		flyParams?: {
+			in?: FlyParams;
+			out?: FlyParams;
+		};
 		isCurrent?: boolean;
 		onSelect?: (item: QueueItemData) => void;
 		onRemoveClick?: () => void;
 		onInfoClick?: () => void;
 	};
 
-	let flyType = $state<'moving' | 'remove'>('moving');
+	const defaultFlyParams = { y: -168, easing: cubicOut };
 
-	const {
+	let {
 		item,
 		class: className,
+		flyParams = { in: defaultFlyParams, out: defaultFlyParams },
 		isCurrent = false,
 		onSelect,
 		onRemoveClick,
 		onInfoClick
 	}: Props = $props();
 
-	const flyParams = $derived.by<FlyParams>(getFlyParams);
 	const viewCount = $derived(NumberFormatter.formatViews(parseInt(item.viewCount)));
 	const publishedAt = $derived(NumberFormatter.timeAgo(item.publishedAt));
 
 	function handleRemoveClick() {
+		flyParams = { out: { x: 168 } };
 		onRemoveClick?.();
-		flyType = 'remove';
-	}
-
-	function getFlyParams() {
-		if (isCurrent) {
-			return { duration: 0 };
-		}
-
-		switch (flyType) {
-			case 'moving':
-				return { y: -200, easing: cubicOut };
-			case 'remove':
-				return { x: 200 };
-		}
 	}
 </script>
 
@@ -62,19 +53,22 @@
 		className
 	)}
 	data-selectable={!!onSelect}
+	data-current={isCurrent}
 	role="button"
 	tabindex="0"
 	onclick={() => onSelect?.(item)}
 	onkeydown={() => {}}
-	transition:fly={flyParams}
+	in:fly={flyParams.in}
+	out:fly={flyParams.out}
 >
 	<div class="relative">
 		<ImageLoader
-			class="relative aspect-video h-auto w-38.5 flex-none overflow-hidden rounded-sm"
+			class="relative aspect-video h-auto w-38.5 flex-none overflow-hidden rounded-sm
+			group-data-[current=true]:mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent),linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)] group-data-[current=true]:mask-intersect group-data-[current=true]:mask-size-[100%_100%] group-data-[current=true]:mask-no-repeat"
 			src={item.thumbnail}
 			alt={item.title}
 		/>
-		<div class="absolute right-1 bottom-1 left-1 flex justify-end gap-1">
+		<!-- <div class="absolute right-1 bottom-1 left-1 flex justify-end gap-1">
 			{#if item.value > 0}
 				<Badge class="px-1 py-0" variant="destructive">
 					{NumberFormatter.formatCurrency(item.value)}
@@ -87,7 +81,7 @@
 					{item.duration}
 				{/if}
 			</Badge>
-		</div>
+		</div> -->
 	</div>
 	<div class="flex w-full flex-col">
 		<div class="flex w-full gap-2">
@@ -140,7 +134,6 @@
 		<div
 			class="mt-0.75 line-clamp-1 flex items-center gap-0.5 text-xs text-ellipsis text-muted-foreground"
 		>
-			<!-- <EyeIcon class="inline size-3.5" /> -->
 			{viewCount} • {publishedAt}
 		</div>
 	</div>

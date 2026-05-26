@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ fetch, request }) => {
 		});
 
 		if (!tokenRes?.accessToken) {
-			return json({ error: 'DonationAlerts token not found' }, { status: 400 });
+			return json({ error: 'DonationAlerts не подключен' }, { status: 400 });
 		}
 
 		const response = await fetch('https://www.donationalerts.com/api/v1/user/oauth', {
@@ -17,13 +17,13 @@ export const GET: RequestHandler = async ({ fetch, request }) => {
 		});
 
 		if (!response.ok) {
-			return json({ error: 'Failed to get provider data' }, { status: response.status });
+			return json({ error: 'DonationAlerts пользователь не найден' }, { status: response.status });
 		}
 
 		const { data: userData } = await response.json();
 		return json(userData);
 
 	} catch {
-		return json({ error: 'Not authenticated or invalid session' }, { status: 401 });
+		return json({ error: 'Не авторизован' }, { status: 401 });
 	}
 };

@@ -1,15 +1,9 @@
 <script lang="ts">
 	import ClearQueueButton from '$lib/components/ClearQueueButton.svelte';
-	import {
-		Card,
-		CardContent,
-		CardDescription,
-		CardHeader,
-		CardTitle
-	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import G from '$lib/stores/G.svelte';
+	import Setting from './Setting.svelte';
 
 	const enoughVotesActionOptions = [
 		{ value: 'none', label: 'Выкл.' },
@@ -20,20 +14,20 @@
 	const currentOption = $derived.by(getCurrentOption);
 
 	function getCurrentOption() {
-		return enoughVotesActionOptions.find((option) => option.value === G.autoSkipAction);
+		return enoughVotesActionOptions.find((option) => option.value === G.settings.autoSkipAction);
 	}
 </script>
 
 <div class="flex flex-col gap-4">
-	<Card class="relative grid auto-rows-auto grid-cols-[1fr_12rem] gap-4 p-4">
-		<CardHeader class="p-0">
-			<CardTitle>Автоскип</CardTitle>
-			<CardDescription
-				>Автоматически пропускать видео при наборе голосов или истечении оплаченного времени.</CardDescription
-			>
-		</CardHeader>
-		<CardContent class="flex justify-end p-0">
-			<Select type="single" bind:value={G.autoSkipAction}>
+	<Setting>
+		{#snippet title()}
+			Автоскип
+		{/snippet}
+		{#snippet description()}
+			Автоматически пропускать видео при наборе голосов или истечении оплаченного времени.
+		{/snippet}
+		{#snippet input()}
+			<Select type="single" bind:value={G.settings.autoSkipAction}>
 				<SelectTrigger id="enough-votes-action" class="w-full">
 					{currentOption?.label}
 				</SelectTrigger>
@@ -43,36 +37,38 @@
 					{/each}
 				</SelectContent>
 			</Select>
-		</CardContent>
-	</Card>
+		{/snippet}
+	</Setting>
 
-	<Card class="relative grid auto-rows-auto grid-cols-[1fr_12rem] gap-4 p-4">
-		<CardHeader class="p-0">
-			<CardTitle>Ограничение очереди</CardTitle>
-			<CardDescription>
-				Ограничить максимальное количество видео в очереди. После заполнения, новые видео не будут
-				приниматься.
-				<br />
-				<i>Оставьте поле пустым, чтобы не ограничивать.</i>
-			</CardDescription>
-		</CardHeader>
-		<CardContent class="flex justify-end p-0">
+	<Setting>
+		{#snippet title()}
+			Ограничение очереди
+		{/snippet}
+		{#snippet description()}
+			Ограничить максимальное количество видео в очереди. После заполнения, новые видео не будут
+			приниматься.
+			<br />
+			<i>Оставьте поле пустым, чтобы не ограничивать.</i>
+		{/snippet}
+		{#snippet input()}
 			<Input
 				id="queue-limit"
 				type="number"
 				placeholder="Неограниченно"
-				bind:value={G.queueManager.limit}
+				bind:value={G.settings.queueLimit}
 			/>
-		</CardContent>
-	</Card>
+		{/snippet}
+	</Setting>
 
-	<Card class="relative grid auto-rows-auto grid-cols-[1fr_12rem] gap-4 p-4">
-		<CardHeader class="p-0">
-			<CardTitle>Очистить очередь</CardTitle>
-			<CardDescription>Все видео в очереди будут навсегда удалены.</CardDescription>
-		</CardHeader>
-		<CardContent class="flex justify-end p-0">
+	<Setting>
+		{#snippet title()}
+			Очистить очередь
+		{/snippet}
+		{#snippet description()}
+			Все видео в очереди будут навсегда удалены.
+		{/snippet}
+		{#snippet input()}
 			<ClearQueueButton />
-		</CardContent>
-	</Card>
+		{/snippet}
+	</Setting>
 </div>

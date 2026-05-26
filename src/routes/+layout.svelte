@@ -3,8 +3,18 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { Toaster } from 'svelte-sonner';
 	import { TooltipProvider } from '$lib/components/ui/tooltip';
+	import { onDestroy, onMount } from 'svelte';
+	import G from '$lib/stores/G.svelte';
 
 	let { children } = $props();
+
+	onMount(() => {
+		G.initialize();
+	});
+
+	onDestroy(() => {
+		G.integrationManager.disconnectAll();
+	});
 </script>
 
 <svelte:head>

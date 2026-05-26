@@ -1,5 +1,5 @@
-import type { IConnectionDriver } from "$lib/interfaces";
-import type { SocketMessage } from "$lib/types";
+import G from "$lib/stores/G.svelte";
+import SocketDriver from "./SocketDriver";
 
 type MessageData = {
 	id: string
@@ -33,20 +33,15 @@ type Metadata = {
 	message_ref: string
 }
 
-class KickChatDriver implements IConnectionDriver {
+class KickChatDriver extends SocketDriver {
 	private _pusherKey = '32cbd69e4b950bf97679';
 	private _socket: WebSocket | null = null;
-	private onMessageCb?: (p: SocketMessage) => void;
-	private onDisconnectCb?: () => void;
-	private onErrorCb?: () => void;
 
 	public async connect() {
-		const proxyUrl = 'https://corsproxy.io/?url=';
-		const targetUrl = encodeURIComponent(`https://kick.com/api/v2/channels/${config.roomId}`);
-
-		const response = await fetch(proxyUrl + targetUrl);
-		const data = await response.json();
-		const chatroomId = data.chatroom.id;
+		const chatroomId = await G.kickApi.getChatroomId();
+		if (!chatroomId) {
+			throw new Error('Chatroom ID не найден');
+		}
 		console.log(`Channel Info - Chatroom ID: ${chatroomId}`);
 
 		return new Promise<void>((resolve) => {
@@ -62,10 +57,10 @@ class KickChatDriver implements IConnectionDriver {
 			})
 			this._socket.addEventListener('close', (event) => {
 				console.log(`Connection closed: Code ${event.code} - ${event.reason}`);
-				this.onDisconnectCb?.();
+				this.emit('disconnect');
 			});
 			this._socket.addEventListener('error', () => {
-				this.onErrorCb?.();
+				this.emit('error');
 			});
 
 			this._socket.addEventListener('message', (event) => {
@@ -93,13 +88,12 @@ class KickChatDriver implements IConnectionDriver {
 					const message = chatData.content || '';
 					console.log(`[Chat] ${username}: ${message}`);
 
-					this.onMessageCb?.({
+					this.emit('message', {
 						name: username,
 						message: message,
 						value: 0,
 						source: 'kick'
 					});
-					console.log(chatData);
 				}
 
 				if (packet.event === 'pusher:subscription_succeeded') {
@@ -112,18 +106,6 @@ class KickChatDriver implements IConnectionDriver {
 
 	public disconnect() {
 		this._socket?.close();
-	}
-
-	public onMessage(callback: (p: SocketMessage) => void) {
-		this.onMessageCb = callback;
-	}
-
-	public onDisconnect(callback: () => void): void {
-		this.onDisconnectCb = callback;
-	}
-
-	public onError(callback: () => void): void {
-		this.onErrorCb = callback;
 	}
 }
 

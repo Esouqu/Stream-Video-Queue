@@ -7,10 +7,7 @@ type RequiredOnly<T> = {
 export type StrictAccount = RequiredOnly<Account>;
 declare global {
 	namespace App {
-		// interface Locals {
-
-		// }
-
+		// interface Locals {}
 		// interface Error {}
 		interface PageData {
 			user?: Session['user'];

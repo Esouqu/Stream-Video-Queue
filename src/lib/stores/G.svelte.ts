@@ -4,108 +4,87 @@ import PollStore from "./PollStore.svelte";
 import { browser } from "$app/environment";
 import { toast } from "svelte-sonner";
 import YouTubePlayerStore from "./YoutubePlayerStore.svelte";
-import { PersistedState } from "runed";
 import TimerStore from "./TimerStore.svelte";
-import IntegrationManager from "./integrations/IntegrationManager.svelte";
 import NumberFormatter from "$lib/utils/NumberFormatter";
-import YoutubeApi from "$lib/api/youtubeApi";
-import DonationAlertsApi from "$lib/api/donationalertsApi";
-import DonatePayApi from "$lib/api/donatePayApi";
-import RandomColorStore from "./RandomColorStore";
-
-type SkipAction = 'none' | 'warning' | 'skip';
-
-type PersistedAppState = {
-	shouldLoop: boolean;
-	paidTimerPricePerMinute: number;
-	prioritizedVideoPrice: number;
-	paidTimerEnabled: boolean;
-	autoSkipAction: SkipAction;
-}
+import YoutubeApiClient from "$lib/api/YoutubeApiClient";
+import DonationAlertsApiClient from "$lib/api/DonationAlertsApiClient";
+import DonatePayApiClient from "$lib/api/DonatePayApiClient";
+import { AVAILABLE_PROVIDERS } from "$lib/providers";
+import SettingsStore from "./SettingsStore.svelte";
+import { REQUEST_PREFIX } from "$lib/constants";
+import IntegrationManager from "./IntegrationManager.svelte";
+import Integration from "./Integration.svelte";
+import TwitchApiClient from "$lib/api/TwitchApiClient";
+import KickApiClient from "$lib/api/KickApiClient";
+import { randInt } from "$lib/utils";
 
 class G {
-	readonly youtubeApi = new YoutubeApi();
-	readonly donationalertsApi = new DonationAlertsApi();
-	readonly donatepayApi = new DonatePayApi();
-	readonly youtubePlayer = new YouTubePlayerStore();
-	readonly randomColor = new RandomColorStore();
-	readonly queueManager = new QueueStore(this.randomColor, this.youtubeApi);
-	readonly poll = new PollStore();
-	readonly autoSkipTimer = new TimerStore();
-	readonly paidTimer = new TimerStore('up');
-	readonly integrations: IntegrationManager;
+	static readonly settings = new SettingsStore();
 
-	private _isLoadingItems = $state(true);
-	private _isDonatePayApiKeyDialogOpen = $state(false);
+	static readonly youtubeApi = new YoutubeApiClient();
+	static readonly twitchApi = new TwitchApiClient();
+	static readonly kickApi = new KickApiClient();
+	static readonly donationalertsApi = new DonationAlertsApiClient();
+	static readonly donatepayApi = new DonatePayApiClient();
 
-	readonly canVote = $derived(this.poll.isEnabled && this.queueManager.current);
+	static readonly autoSkipTimer = new TimerStore();
+	static readonly voteBlockTimer = new TimerStore();
+	static readonly paidTimer = new TimerStore('up');
 
-	private _persisted = new PersistedState<PersistedAppState>('appStore', {
-		shouldLoop: false,
-		paidTimerEnabled: false,
-		paidTimerPricePerMinute: 100,
-		prioritizedVideoPrice: 100,
-		autoSkipAction: 'warning',
-	});
+	static readonly youtubePlayer = new YouTubePlayerStore();
+	static readonly integrationManager = new IntegrationManager();
+	static readonly queueManager = new QueueStore(this.youtubeApi, this.settings);
+	static readonly poll = new PollStore(this.settings);
 
-	private _videoRequestPrefix = '!rq';
+	private static _simulationIntervalId?: number;
 
-	constructor() {
-		this._initialize();
+	public static async initialize() {
+		if (browser) {
+			this.youtubePlayer.on('unstarted', this._onVideoUnstarted.bind(this));
+			this.youtubePlayer.on('play', this._onVideoPlay.bind(this));
+			this.youtubePlayer.on('pause', this._onVideoPause.bind(this));
+			this.youtubePlayer.on('ended', this._onVideoEnded.bind(this));
 
-		this.integrations = new IntegrationManager(this.onSocketMessage.bind(this));
+			this.autoSkipTimer.on('finished', this._onAutoSkipTimerFinished.bind(this));
+			this.paidTimer.on('finished', this._activateAutoSkipAction.bind(this));
+			this.poll.on('finished', this._activateAutoSkipAction.bind(this));
+
+			for (const data of AVAILABLE_PROVIDERS) {
+				const integration = new Integration(data);
+
+				integration.on('message', this._onSocketMessage.bind(this));
+				this.integrationManager.add(integration);
+			}
+		}
 	}
 
-	get autoSkipAction() { return this._persisted.current.autoSkipAction; }
-	set autoSkipAction(val: SkipAction) { this._persisted.current.autoSkipAction = val; }
-	get shouldLoop() { return this._persisted.current.shouldLoop; }
-	set shouldLoop(val: boolean) { this._persisted.current.shouldLoop = val; }
-	get paidTimerEnabled() { return this._persisted.current.paidTimerEnabled; }
-	set paidTimerEnabled(val: boolean) { this._persisted.current.paidTimerEnabled = val; }
-	get paidTimerPricePerMinute() { return this._persisted.current.paidTimerPricePerMinute; }
-	set paidTimerPricePerMinute(val: number) { this._persisted.current.paidTimerPricePerMinute = val; }
-	get prioritizedVideoPrice() { return this._persisted.current.prioritizedVideoPrice }
-	set prioritizedVideoPrice(val: number) { this._persisted.current.prioritizedVideoPrice = val; }
-	get isDonatePayApiKeyDialogOpen() { return this._isDonatePayApiKeyDialogOpen; }
-	get isLoadingItems() { return this._isLoadingItems; }
-
-	public onSocketMessage(message: SocketMessage) {
+	private static _onSocketMessage(message: SocketMessage) {
 		const isPaid = message.value > 0;
 
-		// for paid messaged
+		console.log(`[MESSAGE]: ${message.message}`);
+
 		if (isPaid) {
 			this._processDonationMessage(message);
-
 			return;
 		}
 
 		this._processChatMessage(message);
 	}
 
-	public resetVotes(isManual = false) {
-		this.poll.reset(isManual);
-		this.autoSkipTimer.reset();
-	}
-
-	public resumeVideo() {
-		this.autoSkipTimer.reset();
-		this.youtubePlayer.play();
-	}
-
-	private _processChatMessage({ name, message, value }: SocketMessage) {
-		const hasPrefix = message.startsWith(this._videoRequestPrefix);
-		const messageWithoutPrefix = message.replace(this._videoRequestPrefix, '').trim();
+	private static _processChatMessage({ name, message, value }: SocketMessage) {
+		const hasPrefix = message.startsWith(REQUEST_PREFIX);
+		const messageWithoutPrefix = message.replace(REQUEST_PREFIX, '').trim();
 
 		if (hasPrefix && messageWithoutPrefix && !this.queueManager.isFull) {
 			this.queueManager.addVideo(name, messageWithoutPrefix, value);
 		}
 
-		if (this.canVote) {
+		if (this.settings.isPollEnabled && this.queueManager.current) {
 			this.poll.addVote(name, message);
 		}
 	}
 
-	private _processDonationMessage({ name, message, value }: SocketMessage) {
+	private static _processDonationMessage({ name, message, value }: SocketMessage) {
 		if (!this.queueManager.isFull) {
 			this.queueManager.addVideo(name, message, value);
 		} else {
@@ -113,17 +92,17 @@ class G {
 		}
 	}
 
-	private _activateAutoSkipAction() {
-		if (this.autoSkipTimer.isRunning || this.autoSkipAction === 'none') return;
+	private static _activateAutoSkipAction() {
+		if (this.autoSkipTimer.isRunning || this.settings.autoSkipAction === 'none') return;
 
-		if (this.autoSkipAction === 'skip') {
+		if (this.settings.autoSkipAction === 'skip') {
 			this.queueManager.next();
 			this.poll.reset();
 
 			return;
 		}
 
-		if (this.autoSkipAction === 'warning') {
+		if (this.settings.autoSkipAction === 'warning') {
 			this.youtubePlayer.pause();
 			this.autoSkipTimer.start(7000);
 
@@ -131,22 +110,22 @@ class G {
 		}
 	}
 
-	private _onAutoSkipTimerFinished() {
+	private static _onAutoSkipTimerFinished() {
 		this.autoSkipTimer.reset();
 		this.queueManager.next();
 	}
 
-	private _onVideoUnstarted() {
-		this.poll.reset();
-		this.paidTimer.reset();
+	private static _onVideoUnstarted() {
 		this.autoSkipTimer.reset();
+		this.paidTimer.reset();
+		this.poll.reset();
 
-		if (!this.paidTimerEnabled) return;
+		if (!this.settings.isPaidTimerEnabled) return;
 
 		const currentVideo = this.queueManager.current;
 		if (!currentVideo || currentVideo.value <= 0) return;
 
-		const paidMinutes = currentVideo.value / this.paidTimerPricePerMinute;
+		const paidMinutes = currentVideo.value / this.settings.paidTimerPricePerMinute;
 		let duration = paidMinutes * 60 * 1000;
 
 		if (currentVideo.duration) {
@@ -157,47 +136,47 @@ class G {
 		this.paidTimer.setTime(duration);
 	}
 
-	private _onVideoEnded() {
-		if (!this.shouldLoop) this.queueManager.next();
+	private static _onVideoEnded() {
+		if (!this.settings.shouldLoop) this.queueManager.next();
 	}
 
-	private _onVideoPause() {
+	private static _onVideoPause() {
 		if (!this.queueManager.current) return;
 
 		const currentIsPaid = this.queueManager.current.value > 0;
 
-		if (this.paidTimerEnabled && currentIsPaid) {
+		if (this.settings.isPaidTimerEnabled && currentIsPaid) {
 			this.paidTimer.pause();
 		}
 	}
 
-	private _onVideoPlay() {
+	private static _onVideoPlay() {
 		if (!this.queueManager.current) return;
 
 		const currentIsPaid = this.queueManager.current.value > 0;
 
-		if (this.paidTimerEnabled && currentIsPaid) {
+		if (this.settings.isPaidTimerEnabled && currentIsPaid) {
 			this.paidTimer.start();
 		}
 	}
 
-	private async _initialize() {
-		if (browser) {
-			this._isLoadingItems = true;
-			await this.queueManager.initialize();
-			this._isLoadingItems = false;
+	public static __sendDevMessage(message: string, value = 0) {
+		this._onSocketMessage({ name: 'dev', message, source: 'twitch', value });
+	}
 
-			this.youtubePlayer.on('unstarted', this._onVideoUnstarted.bind(this));
-			this.youtubePlayer.on('play', this._onVideoPlay.bind(this));
-			this.youtubePlayer.on('pause', this._onVideoPause.bind(this));
-			this.youtubePlayer.on('ended', this._onVideoEnded.bind(this));
-
-			this.autoSkipTimer.on('finished', this._onAutoSkipTimerFinished.bind(this));
-			this.paidTimer.on('finished', this._activateAutoSkipAction.bind(this));
-			this.poll.on('finished', this._activateAutoSkipAction.bind(this));
+	public static __toggleVotingSimulation(isToggled: boolean) {
+		if (!isToggled) {
+			window.clearInterval(this._simulationIntervalId);
+			return;
 		}
+
+		this._simulationIntervalId = window.setInterval(() => {
+			// const message = G.poll.skipKeyword;
+			const message = randInt(0, 2) === 0 ? G.settings.keepKeyword : G.settings.skipKeyword;
+			const name = crypto.randomUUID() as string;
+			this._onSocketMessage({ name, message, value: 0, source: 'twitch' });
+		}, 250);
 	}
 }
 
-const appStore = new G();
-export default appStore;
+export default G;

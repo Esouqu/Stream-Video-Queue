@@ -12,14 +12,16 @@
 	{/if}
 </svelte:head>
 
-<div class="relative flex h-dvh justify-center overflow-hidden">
-	<div class="relative m-4 flex max-h-[calc(100vh-2rem)] w-full flex-col justify-center">
+<div
+	class="relative flex h-dvh justify-center overflow-hidden bg-[radial-gradient(circle,#1a1c23_0%,#0d0e12_70%,#050506_100%)]"
+>
+	<div class="relative m-4 flex w-full items-center gap-4 overflow-hidden">
 		<VideoPlayer />
-		<div class="absolute right-0 bottom-0">
-			<DevTools />
-		</div>
+		<VideoQueue />
 	</div>
-	<VideoQueue />
+</div>
+<div class="absolute right-0 bottom-0">
+	<DevTools />
 </div>
 
 <Settings />

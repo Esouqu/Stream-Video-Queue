@@ -2,9 +2,9 @@ import ApiClient from "$lib/utils/ApiClient";
 import { toast } from "svelte-sonner";
 import type { DonationAlertsUserData } from "./types";
 
-class DonationAlertsApi extends ApiClient {
+class DonationAlertsApiClient extends ApiClient {
 	public async getUser() {
-		const { data, error } = await this.get<DonationAlertsUserData>('/api/donationalerts/user');
+		const { data, error } = await this.get<DonationAlertsUserData>('/donationalerts/user');
 
 		if (error) {
 			toast.error('Ошибка при получении DonationAlerts пользователя', {
@@ -15,11 +15,11 @@ class DonationAlertsApi extends ApiClient {
 		}
 	}
 
-	public async getSocketToken(client: string) {
+	public async getSocketToken(userId: string, client: string) {
 		const { data, error } = await this.post<{
 			token: string;
-			channel: string;
 		}>('/donationalerts/socket-token', {
+			userId,
 			client,
 		});
 
@@ -28,9 +28,9 @@ class DonationAlertsApi extends ApiClient {
 				description: error.message
 			});
 		} else {
-			return data;
+			return data.token;
 		}
 	}
 }
 
-export default DonationAlertsApi;
+export default DonationAlertsApiClient;

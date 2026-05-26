@@ -1,4 +1,4 @@
-import type { QueueItemData, RawQueueItem } from "$lib/types";
+import type { QueueItemData, RawQueueItemData } from "$lib/types";
 import { extractYoutubeVideoData, formatYoutubeDuration } from "$lib/utils";
 import Dexie, { liveQuery, type EntityTable } from "dexie";
 import { generateKeyBetween } from "fractional-indexing";
@@ -6,14 +6,10 @@ import { PersistedState } from "runed";
 import { toast } from "svelte-sonner";
 import RandomColorStore from "./RandomColorStore";
 import type { VideoData } from "$lib/api/types";
-import type YoutubeApi from "$lib/api/youtubeApi";
+import type YoutubeApi from "$lib/api/YoutubeApiClient";
 import { dev } from "$app/environment";
+import type SettingsStore from "./SettingsStore.svelte";
 
-type QueueStorePersisted = {
-	index: number;
-	shouldInsertRandomly: boolean;
-	limit: number | null;
-}
 type QueueItemParams = {
 	videoData: VideoData;
 	videoId: string;
@@ -24,52 +20,45 @@ type QueueItemParams = {
 }
 
 class QueueManager extends Dexie {
+	private _settings: SettingsStore;
+	private _randomColor = new RandomColorStore();
+	private _index = new PersistedState('queueItemIndex', 0);
 	private _items = $state<QueueItemData[]>([]);
-	private _persisted = new PersistedState<QueueStorePersisted>('queueStore', {
-		index: 0,
-		shouldInsertRandomly: false,
-		limit: null,
-	});
+	private _isLoading = $state(true);
 
 	readonly current = $derived(this._items[this.index] ?? null);
 	readonly upcoming = $derived(this._items.slice(this.index + 1));
 
 	queueItems!: EntityTable<QueueItemData, 'id'>;
 	private _youtubeApi: YoutubeApi;
-	private _colorStore: RandomColorStore;
 
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	private _pendingVideoIds = new Set<string>();
-	private _pendingSaveBuffer: RawQueueItem[] = [];
+	private _pendingSaveBuffer: RawQueueItemData[] = [];
 	private _isProcessingBuffer = false;
 
-	constructor(colorStore: RandomColorStore, youtubeApi: YoutubeApi) {
+	get items() { return this._items; }
+	get index() { return this._index.current; }
+	set index(val: number) { this._index.current = val; }
+	get size() { return this._items.length; }
+	get isFull() { return this._settings.queueLimit && this.size >= this._settings.queueLimit; }
+	get isEmpty() { return this._items.length === 0; }
+	get isFirstItem() { return this.index === 0; }
+	get isLastItem() { return this.index === this.size - 1; }
+	get isLoading() { return this._isLoading; }
+
+	constructor(youtubeApi: YoutubeApi, settings: SettingsStore) {
 		super('StreamQueueDB');
+
+		this._settings = settings;
+		this._youtubeApi = youtubeApi;
+
+		liveQuery(async () => await this.queueItems.orderBy('sortOrder').toArray())
+			.subscribe(this._updateItems.bind(this));
 
 		this.version(1).stores({
 			queueItems: 'id, videoId, sortOrder',
 		});
-
-		this._colorStore = colorStore;
-		this._youtubeApi = youtubeApi;
-	}
-
-	get items() { return this._items; }
-	get index() { return this._persisted.current.index; }
-	set index(val: number) { this._persisted.current.index = val; }
-	get size() { return this._items.length; }
-	get shouldInsertRandomly() { return this._persisted.current.shouldInsertRandomly; }
-	set shouldInsertRandomly(value: boolean) { this._persisted.current.shouldInsertRandomly = value; }
-	get limit() { return this._persisted.current.limit; }
-	set limit(val: number | null) { this._persisted.current.limit = val; }
-	get isFull() { return this.limit && this.size >= this.limit; }
-	get isEmpty() { return this._items.length === 0; }
-	get isFirstItem() { return this.index === 0; }
-	get isLastItem() { return this.index === this.size - 1; }
-
-	public async initialize() {
-		liveQuery(async () => await this.queueItems.orderBy('sortOrder').toArray())
-			.subscribe(this._updateItems.bind(this));
 	}
 
 	public previous() {
@@ -169,10 +158,9 @@ class QueueManager extends Dexie {
 
 
 	private _updateItems(items: QueueItemData[]) {
-		// this._items = items;
-
-		if (!this._items || this._items.length === 0) {
+		if (this._items.length === 0) {
 			this._items = items;
+			this._isLoading = false;
 			return;
 		}
 
@@ -234,7 +222,7 @@ class QueueManager extends Dexie {
 		this._isProcessingBuffer = false;
 	}
 
-	private _getTargetInsertionIndex(item: RawQueueItem): number {
+	private _getTargetInsertionIndex(item: RawQueueItemData): number {
 		const totalItems = this._items.length;
 
 		// Default target for empty array or normal items is the end of the list
@@ -254,7 +242,7 @@ class QueueManager extends Dexie {
 		return insertIdx;
 	}
 
-	private _calculateSortOrder(item: RawQueueItem, targetIndex: number): string {
+	private _calculateSortOrder(item: RawQueueItemData, targetIndex: number): string {
 		const totalItems = this._items.length;
 
 		// Case 1: Database is completely empty
@@ -320,7 +308,7 @@ class QueueManager extends Dexie {
 	}
 
 	private _composeQueueItem(params: QueueItemParams): Omit<QueueItemData, 'id' | 'sortOrder'> {
-		const color = this._colorStore.get().array() as [number, number, number];
+		const color = this._randomColor.get().array() as [number, number, number];
 		const isLive = params.videoData.snippet.liveBroadcastContent === 'live';
 		const duration = params.videoData.contentDetails.duration;
 

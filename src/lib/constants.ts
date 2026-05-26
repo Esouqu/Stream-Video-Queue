@@ -1,6 +1,7 @@
 import type { VideoData } from "./api/types";
 
 export const SETTINGS_URL = '/?settings=open';
+export const REQUEST_PREFIX = '!rq';
 
 export const MOCK_VIDEO_DATA = {
 	snippet: {

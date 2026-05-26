@@ -75,23 +75,28 @@
 		bind:viewportRef
 		{onscroll}
 	>
-		{#if header}
-			{@render header()}
-		{/if}
+		<div class="h-full overflow-hidden">
+			{#if header}
+				{@render header()}
+			{/if}
 
-		<div class="relative w-full" style:height="{totalItemsHeight}px">
-			{#each visibleItems as item (item.id)}
-				<div
-					class="absolute right-2 left-2"
-					style:top="{item.index * itemHeight}px"
-					style:height="{itemHeight}px"
-					animate:flip={{ duration: 400 }}
-				>
-					{@render child(item, item.index)}
-				</div>
-			{:else}
-				{@render empty?.()}
-			{/each}
+			<div
+				class="relative my-2 w-full"
+				style:height={items.length > 0 ? `${totalItemsHeight}px` : '100%'}
+			>
+				{#each visibleItems as item (item.id)}
+					<div
+						class="absolute right-2 left-2"
+						style:top="{item.index * itemHeight}px"
+						style:height="{itemHeight}px"
+						animate:flip={{ duration: 400 }}
+					>
+						{@render child(item, item.index)}
+					</div>
+				{:else}
+					{@render empty?.()}
+				{/each}
+			</div>
 		</div>
 	</ScrollArea>
 </div>

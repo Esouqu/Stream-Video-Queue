@@ -13,7 +13,7 @@
 				positive: 'bg-green-900 hover:bg-green-900/80 text-green-300',
 				outline: 'bg-elevation-2 hover:bg-primary/10 hover:text-accent-foreground border',
 				secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-				ghost: ' [&>svg]:z-10 hover:text-foreground',
+				ghost: ' [&>svg]:z-10 hover:text-foreground text-muted-foreground',
 				link: 'text-primary underline-offset-4 hover:underline before:hidden'
 			},
 			size: {

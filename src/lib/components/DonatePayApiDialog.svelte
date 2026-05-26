@@ -1,5 +1,4 @@
 <script lang="ts">
-	import donatePayApi from '$lib/api/donatePayApi';
 	import G from '$lib/stores/G.svelte';
 	import { cn } from '$lib/utils';
 	import { badgeVariants } from './ui/badge';
@@ -20,16 +19,15 @@
 	async function saveApiKey() {
 		isLoading = true;
 
-		const user = await donatePayApi.getUser(apiKey);
+		const user = await G.donatepayApi.getUser(apiKey);
 
 		if (user) {
-			donatePayApi.setUser({
+			G.donatepayApi.setUser({
 				id: user.data.id,
 				username: user.data.name
 			});
-			donatePayApi.setApiKey(apiKey);
+			G.donatepayApi.setApiKey(apiKey);
 
-			G.initializeIntegrations();
 			isOpen = false;
 		} else {
 			error = 'Неверный API ключ';

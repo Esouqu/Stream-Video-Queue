@@ -1,4 +1,5 @@
 import { auth } from "$lib/server/auth";
+import { fetchProviderAccount } from "$lib/server/db";
 import { json, type RequestHandler } from "@sveltejs/kit";
 
 type SocketTokenData = {
@@ -9,15 +10,7 @@ type SocketTokenData = {
 }
 
 export const POST: RequestHandler = async ({ request, fetch }) => {
-	let body: { client: string };
-	try {
-		body = await request.json();
-		if (!body.client) {
-			return json({ error: 'Missing required field: "client"' }, { status: 400 });
-		}
-	} catch {
-		return json({ error: 'Invalid or empty JSON body' }, { status: 400 });
-	}
+	const body: { userId: string, client: string } = await request.json();
 
 	const tokenRes = await auth.api.getAccessToken({
 		body: { providerId: "donationalerts" },
@@ -25,17 +18,21 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 	});
 
 	if (!tokenRes?.accessToken) {
-		return json({ error: 'DonationAlerts token not found' }, { status: 400 });
+		return json({ error: 'DonationAlerts токен не найден' }, { status: 400 });
 	}
 
-	const accounts = await auth.api.listUserAccounts({ headers: request.headers });
-	const daAccount = accounts.find((account) => account.providerId === 'donationalerts');
-
-	if (!daAccount?.accountId) {
-		return new Response('DonationAlerts аккаунт не найден', { status: 404 });
+	const session = await auth.api.getSession({ headers: request.headers });
+	if (!session) {
+		return json({ error: 'Не авторизован' }, { status: 401 });
 	}
 
-	const expectedChannel = `$alerts:donation_${daAccount.accountId}`;
+	const account = await fetchProviderAccount(session.user.id, 'donationalerts');
+
+	if (!account) {
+		return json({ error: 'DonationAlerts аккаунт не найден' }, { status: 404 });
+	}
+
+	const expectedChannel = `$alerts:donation_${account.accountId}`;
 	const url = 'https://www.donationalerts.com/api/v1/centrifuge/subscribe';
 
 	try {
@@ -54,22 +51,21 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 		if (!response.ok) {
 			const errorText = await response.text();
 			console.error(`DonationAlerts API rejected subscription request: Status ${response.status}`, errorText);
-			return new Response(`Ошибка DonationAlerts API: ${response.status}`, { status: response.status });
+			return json({ error: `${errorText} (${response.status})` }, { status: response.status });
 		}
 
 		const data = await response.json() as SocketTokenData;
 
 		if (!data?.channels[0]?.token) {
-			return new Response('Токен подписки отсутствует в ответе DonationAlerts', { status: 502 });
+			return json({ error: 'Ошибка получения токена Centrifuge' }, { status: 502 });
 		}
 
 		return json({
 			token: data.channels[0].token,
-			channel: expectedChannel,
 		}, { status: 200 });
 
 	} catch (error) {
 		console.error('Error subscribing to donation alerts Centrifuge:', error);
-		return new Response('Что-то пошло не так', { status: 500 });
+		return json({ error: 'Что-то пошло не так' }, { status: 500 });
 	}
 };

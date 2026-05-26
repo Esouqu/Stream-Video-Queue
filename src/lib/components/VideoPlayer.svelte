@@ -34,12 +34,13 @@
 
 	function clearWarning(e: MouseEvent) {
 		e.stopPropagation();
-		G.resumeVideo();
+		G.autoSkipTimer.reset();
+		G.youtubePlayer.play();
 	}
 </script>
 
 <div
-	class="relative aspect-video w-full overflow-hidden rounded-2xl bg-elevation-2 shadow-[0_0_20px_rgb(255_255_255/10%)]"
+	class="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/8 bg-elevation-2 shadow-[0_30px_60px_rgba(0,0,0,0.8)]"
 >
 	{#if !G.youtubePlayer.isReady && !G.youtubePlayer.error}
 		<div class="pointer-events-none absolute inset-0 flex items-center justify-center">

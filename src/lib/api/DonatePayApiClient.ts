@@ -1,7 +1,7 @@
 import ApiClient from "$lib/utils/ApiClient";
 import { toast } from "svelte-sonner";
 
-class DonatePayApi extends ApiClient {
+class DonatePayApiClient extends ApiClient {
 	public async getSocketToken() {
 		const { data, error } = await this.get<{ token: string }>('/donatepay/socket-token');
 
@@ -15,4 +15,4 @@ class DonatePayApi extends ApiClient {
 	};
 }
 
-export default DonatePayApi;
+export default DonatePayApiClient;

@@ -1,86 +1,79 @@
 <script lang="ts">
-	import {
-		Card,
-		CardContent,
-		CardDescription,
-		CardHeader,
-		CardTitle
-	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import { Separator } from '$lib/components/ui/separator';
 	import { Switch } from '$lib/components/ui/switch';
 	import G from '$lib/stores/G.svelte';
-	import { slide } from 'svelte/transition';
+	import Setting from './Setting.svelte';
+
+	let isEnabledTEST = $state(false);
+
+	function setPaidTimerChecked(checked: boolean) {
+		G.settings.isPaidTimerEnabled = checked;
+		G.paidTimer.reset();
+	}
 </script>
 
-<div class="flex flex-col gap-4">
-	<Card class="gap-0 overflow-hidden">
-		<CardHeader class="flex flex-row items-start justify-between gap-4">
-			<div class="flex flex-col gap-0.5">
-				<CardTitle>Приоритетный заказ</CardTitle>
-				<CardDescription>
-					В донате: <span class="rounded bg-blue-900 px-1 font-semibold text-blue-300">
-						&lt;ссылка на видео&gt;
-					</span>.
-					<br />
-					Видео будут добавляться сразу после текущего.
-				</CardDescription>
-			</div>
-			<Switch id="timer-enable" />
-		</CardHeader>
+<div class="space-y-4">
+	<Setting isEnabled={isEnabledTEST}>
+		{#snippet title()}
+			Приоритетный заказ
+		{/snippet}
+		{#snippet description()}
+			В донате: <span class="rounded bg-blue-900 px-1 font-semibold text-blue-300">
+				&lt;ссылка на видео&gt;
+			</span>.
+			<br />
+			Видео будут добавляться сразу после текущего.
+		{/snippet}
+		{#snippet input()}
+			<Switch bind:checked={isEnabledTEST} />
+		{/snippet}
+		{#snippet content()}
+			<Setting isSub>
+				{#snippet title()}
+					Минимальная стоимость
+				{/snippet}
+				{#snippet input()}
+					<Input
+						id="donation-request-price"
+						type="number"
+						placeholder="Значение"
+						suffix="₽"
+						bind:value={G.settings.prioritizedVideoPrice}
+					/>
+				{/snippet}
+			</Setting>
+		{/snippet}
+	</Setting>
 
-		{#if G.paidTimerEnabled}
-			<div transition:slide>
-				<Separator class="mt-4" />
-				<CardContent class="flex flex-col gap-6 pt-6">
-					<div class="grid grid-cols-[1fr_12rem]">
-						<div class="flex flex-col justify-center gap-0.5">
-							<Label for="donation-request-price">Минимальная стоимость</Label>
-						</div>
-						<Input
-							id="donation-request-price"
-							type="number"
-							placeholder="Значение"
-							suffix="₽"
-							bind:value={G.prioritizedVideoPrice}
-						/>
-					</div>
-				</CardContent>
-			</div>
-		{/if}
-	</Card>
-
-	<Card class="gap-0 overflow-hidden">
-		<CardHeader class="flex flex-row items-start justify-between gap-4">
-			<div class="flex flex-col gap-0.5">
-				<CardTitle>Таймер</CardTitle>
-				<CardDescription
-					>Ограничить время воспроизведения видео. Когда оплаченое время закончится, текущее видео
-					будет автоматически пропущено.</CardDescription
-				>
-			</div>
-			<Switch id="timer-enable" bind:checked={G.paidTimerEnabled} />
-		</CardHeader>
-
-		{#if G.paidTimerEnabled}
-			<div transition:slide>
-				<Separator class="mt-4" />
-				<CardContent class="flex flex-col gap-6 pt-6">
-					<div class="grid grid-cols-[1fr_12rem]">
-						<div class="flex flex-col justify-center gap-0.5">
-							<Label for="timer-value">Стоимость за минуту</Label>
-						</div>
-						<Input
-							id="timer-value"
-							type="number"
-							placeholder="Значение"
-							suffix="₽/мин"
-							bind:value={G.paidTimerPricePerMinute}
-						/>
-					</div>
-				</CardContent>
-			</div>
-		{/if}
-	</Card>
+	<Setting isEnabled={G.settings.isPaidTimerEnabled}>
+		{#snippet title()}
+			Таймер
+		{/snippet}
+		{#snippet description()}
+			Ограничить время воспроизведения видео. Когда оплаченое время закончится, текущее видео будет
+			автоматически пропущено.
+		{/snippet}
+		{#snippet input()}
+			<Switch
+				id="timer-enable"
+				bind:checked={() => G.settings.isPaidTimerEnabled, setPaidTimerChecked}
+			/>
+		{/snippet}
+		{#snippet content()}
+			<Setting isSub>
+				{#snippet title()}
+					Стоимость за минуту
+				{/snippet}
+				{#snippet input()}
+					<Input
+						id="timer-value"
+						type="number"
+						placeholder="Значение"
+						suffix="₽/мин"
+						bind:value={G.settings.paidTimerPricePerMinute}
+					/>
+				{/snippet}
+			</Setting>
+		{/snippet}
+	</Setting>
 </div>

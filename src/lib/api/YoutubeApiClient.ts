@@ -4,15 +4,15 @@ import type { VideoData, VideoDataResponse } from "./types";
 import { dev } from "$app/environment";
 import { MOCK_VIDEO_DATA } from "$lib/constants";
 
-class YoutubeApi extends ApiClient {
+class YoutubeApiClient extends ApiClient {
 	public async getVideo(id: string) {
-		if (dev) {
-			return await new Promise<VideoData>((resolve) => {
-				setTimeout(() => {
-					resolve(MOCK_VIDEO_DATA)
-				}, 200);
-			});
-		}
+		// if (dev) {
+		// 	return await new Promise<VideoData>((resolve) => {
+		// 		setTimeout(() => {
+		// 			resolve(MOCK_VIDEO_DATA)
+		// 		}, 200);
+		// 	});
+		// }
 
 		const { data, error } = await this.get<VideoDataResponse>(`/youtube/video?id=${id}`, {
 			customErrors: {
@@ -37,4 +37,4 @@ class YoutubeApi extends ApiClient {
 	}
 }
 
-export default YoutubeApi;
+export default YoutubeApiClient;

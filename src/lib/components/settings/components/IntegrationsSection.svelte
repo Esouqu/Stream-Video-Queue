@@ -2,62 +2,49 @@
 	import DonatePayApiDialog from '$lib/components/DonatePayApiDialog.svelte';
 	import IntegrationButton from '$lib/components/IntegrationButton.svelte';
 	import G from '$lib/stores/G.svelte';
-	import { AVAILABLE_PROVIDERS } from '$lib/providers';
 	import { page } from '$app/state';
-	import { enhance } from '$app/forms';
+	import { Button } from '$lib/components/ui/button';
 	import { authClient } from '$lib/auth-client';
+	import ImageLoader from '$lib/components/ImageLoader.svelte';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { invalidateAll } from '$app/navigation';
-	import { SETTINGS_URL } from '$lib/constants';
 
-	const abailableProviders = $derived(AVAILABLE_PROVIDERS.filter((p) => p.id !== 'donatepay'));
-	const isLoggedIn = $derived(!!page.data.user);
-	const isSingleAccount = $derived(page.data.accounts?.length === 1);
+	let isDonatePayApiKeyDialogOpen = $state(false);
 
-	function isLinked(providerId: string) {
-		return page.data.accounts?.some((acc) => acc.providerId === providerId) ?? false;
-	}
-
-	async function unlink(providerId: string) {
-		if (isSingleAccount) {
-			await authClient.signOut();
-		} else {
-			await authClient.unlinkAccount({
-				providerId
-			});
-		}
-
+	async function onSignOut() {
+		await authClient.signOut();
 		invalidateAll();
-	}
-
-	async function signInSocial(providerId: string) {
-		if (!isLoggedIn) {
-			await authClient.signIn.social({
-				provider: providerId,
-				callbackURL: SETTINGS_URL
-			});
-		} else {
-			await authClient.linkSocial({
-				provider: providerId,
-				callbackURL: SETTINGS_URL
-			});
-		}
 	}
 </script>
 
-<DonatePayApiDialog bind:isOpen={G.isDonatePayApiKeyDialogOpen} />
+<DonatePayApiDialog bind:isOpen={isDonatePayApiKeyDialogOpen} />
 
-<form method="POST" action="?/signInSocial" use:enhance>
-	<div class="grid grid-cols-2 gap-2">
-		{#each abailableProviders as integration (integration.id)}
-			<IntegrationButton
-				{integration}
-				onLink={signInSocial}
-				onUnlink={unlink}
-				isLinked={isLinked(integration.id)}
-			/>
-		{/each}
-	</div>
-	{#if page.form?.error}
-		<span>{page.form.error}</span>
+<Card>
+	{#if page.data.user}
+		<CardHeader class="flex flex-row items-start justify-between gap-4">
+			<div class="flex gap-2">
+				<ImageLoader class="size-10" src={page.data.user.image} alt="avatar" />
+				<div>
+					<CardTitle class="flex gap-2">
+						<div>{page.data.user.name}</div>
+					</CardTitle>
+					<CardDescription>
+						{page.data.user.email}
+					</CardDescription>
+				</div>
+			</div>
+			<Button variant="ghost" onclick={onSignOut}>Выйти</Button>
+		</CardHeader>
 	{/if}
-</form>
+	<CardContent class="grid grid-cols-2 gap-4 space-y-0">
+		{#each G.integrationManager.integrations as integration (integration.data.id)}
+			<IntegrationButton integration={integration.data} />
+		{/each}
+	</CardContent>
+</Card>

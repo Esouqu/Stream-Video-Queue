@@ -5,11 +5,12 @@
 	import VoteIcon from '$lib/components/icons/VoteIcon.svelte';
 	import Votes from '$lib/components/votes/Votes.svelte';
 	import NumberFormatter from '$lib/utils/NumberFormatter';
-	import IntegrationSelector from '$lib/components/IntegrationSelector.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import CogIcon from '$lib/components/icons/CogIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import ConnectionManager from '$lib/components/ConnectionManager.svelte';
+	import { REQUEST_PREFIX } from '$lib/constants';
 
 	function openSheet() {
 		const newUrl = new URL(page.url);
@@ -19,11 +20,11 @@
 	}
 </script>
 
-<div class="flex w-full flex-col bg-muted">
-	<div class="flex items-center justify-between gap-4 p-3 font-semibold text-muted-foreground">
-		<IntegrationSelector />
+<div class="flex w-full flex-col">
+	<div class="flex items-center justify-between gap-4 p-3 font-semibold">
+		<ConnectionManager />
 		<div class="flex">
-			<Toggle size="icon" tooltip="Голосование" bind:pressed={G.poll.isEnabled}>
+			<Toggle size="icon" tooltip="Голосование" bind:pressed={G.settings.isPollEnabled}>
 				<VoteIcon />
 			</Toggle>
 			<Button variant="ghost" size="icon" onclick={openSheet}>
@@ -37,22 +38,22 @@
 		<div class="mb-3 flex shrink-0 gap-3" transition:slide>
 			<!-- {#if G.integrations.isChatEnabled} -->
 			<div
-				class="pointer-events-auto relative flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3 p-2 font-semibold shadow-sm transition-colors duration-700"
+				class="relative z-10 flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3/50 p-2 font-semibold shadow-sm backdrop-blur-md transition-colors duration-700"
 			>
 				<div class="text-sm text-muted-foreground">Обычный заказ</div>
-				<div class="text-lg">!rq в чате</div>
+				<div class="text-lg">{REQUEST_PREFIX} в чате</div>
 			</div>
 			<!-- {/if} -->
 			<!-- {#if G.integrations.isDonationEnabled} -->
 			<div
-				class="pointer-events-auto relative flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3 p-2 font-semibold shadow-sm transition-colors duration-700"
+				class="relative z-10 flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3/50 p-2 font-semibold shadow-sm backdrop-blur-md transition-colors duration-700"
 			>
 				<div class="text-sm text-muted-foreground">Приоритетный заказ</div>
 				<div class="text-lg">
-					{#if G.paidTimerEnabled}
-						{NumberFormatter.formatCurrency(G.paidTimerPricePerMinute)}/мин
+					{#if G.settings.isPaidTimerEnabled}
+						{NumberFormatter.formatCurrency(G.settings.paidTimerPricePerMinute)}/мин
 					{:else}
-						{NumberFormatter.formatCurrency(G.prioritizedVideoPrice)}
+						{NumberFormatter.formatCurrency(G.settings.prioritizedVideoPrice)}
 					{/if}
 				</div>
 			</div>
@@ -60,11 +61,12 @@
 		</div>
 		<!-- {/if} -->
 
-		{#if G.poll.isEnabled}
-			<div class="mb-3 shrink-0" transition:slide|global>
-				<Votes
-					class="pointer-events-auto w-full overflow-hidden rounded-md border bg-elevation-3 p-2 shadow-sm transition-colors duration-700"
-				/>
+		{#if G.settings.isPollEnabled}
+			<div
+				class="z-10 mb-3 w-full shrink-0 overflow-hidden rounded-md border bg-elevation-3/30 shadow-sm backdrop-blur-md transition-colors duration-700"
+				transition:slide|global
+			>
+				<Votes />
 			</div>
 		{/if}
 	</div>

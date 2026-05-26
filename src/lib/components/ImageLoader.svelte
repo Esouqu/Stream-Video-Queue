@@ -7,7 +7,7 @@
 	import { onMount } from 'svelte';
 
 	type Props = HTMLAttributes<HTMLDivElement> & {
-		src: string;
+		src?: string | null;
 		alt: string;
 	};
 

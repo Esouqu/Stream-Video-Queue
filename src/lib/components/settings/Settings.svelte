@@ -34,7 +34,7 @@
 				<SheetTitle>Настройки</SheetTitle>
 			</SheetHeader>
 
-			<div class="space-y-6 px-6 pb-6">
+			<div class="space-y-10 px-6 pb-6">
 				{#each settingsSections as section (section.title)}
 					<div class="space-y-2">
 						<div class="flex w-full items-center gap-4">
