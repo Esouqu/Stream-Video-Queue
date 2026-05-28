@@ -13,7 +13,7 @@
 	});
 
 	onDestroy(() => {
-		G.integrationManager.disconnectAll();
+		G.dispose();
 	});
 </script>
 
@@ -22,7 +22,7 @@
 	<title>StreamQueue</title>
 </svelte:head>
 
-<Toaster richColors closeButton />
+<Toaster richColors closeButton theme="dark" />
 <TooltipProvider disableHoverableContent ignoreNonKeyboardFocus delayDuration={500}>
 	{@render children()}
 </TooltipProvider>

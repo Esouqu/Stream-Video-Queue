@@ -63,12 +63,13 @@
 >
 	<div class="relative">
 		<ImageLoader
-			class="relative aspect-video h-auto w-38.5 flex-none overflow-hidden rounded-sm
-			group-data-[current=true]:mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent),linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)] group-data-[current=true]:mask-intersect group-data-[current=true]:mask-size-[100%_100%] group-data-[current=true]:mask-no-repeat"
+			class="relative aspect-video h-auto w-38.5 flex-none overflow-hidden rounded-sm"
 			src={item.thumbnail}
 			alt={item.title}
 		/>
-		<!-- <div class="absolute right-1 bottom-1 left-1 flex justify-end gap-1">
+		<div
+			class="absolute right-1 bottom-1 left-1 flex justify-end gap-1 group-data-[current=true]:hidden"
+		>
 			{#if item.value > 0}
 				<Badge class="px-1 py-0" variant="destructive">
 					{NumberFormatter.formatCurrency(item.value)}
@@ -77,11 +78,11 @@
 			<Badge class="px-1 py-0" variant={item.isLive ? 'destructive' : 'secondary'}>
 				{#if item.isLive}
 					LIVE
-				{:else if item.duration}
-					{item.duration}
+				{:else if item.durationMs}
+					{NumberFormatter.formatMs(item.durationMs)}
 				{/if}
 			</Badge>
-		</div> -->
+		</div>
 	</div>
 	<div class="flex w-full flex-col">
 		<div class="flex w-full gap-2">

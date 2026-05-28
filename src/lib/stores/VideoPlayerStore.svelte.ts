@@ -8,16 +8,21 @@ type PlayerEvents = {
 	pause: unknown;
 	ended: unknown;
 	error: unknown;
-	timeupdate: unknown;
+	timeupdated: { current: number, duration: number };
+	buffering: unknown;
 	unstarted: unknown;
 };
 
 abstract class VideoPlayerStore<T> extends EventEmitter<PlayerEvents> {
 	protected _player: T | undefined;
 	protected _state = $state<PlayerState>('unstarted');
-	protected _isReady = $state(false);
 	protected _error = $state<unknown>();
+	protected _isReady = $state(false);
+	protected _currentTime = $state(0);
+	protected _duration = $state(0);
 
+	get currentTime() { return this._currentTime; }
+	get duration() { return this._duration; }
 	get error() { return this._error; }
 	get isReady() { return this._isReady; }
 	get isUnstarted() { return this._state === 'unstarted'; }

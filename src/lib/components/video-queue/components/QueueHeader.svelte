@@ -9,7 +9,7 @@
 	import CogIcon from '$lib/components/icons/CogIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import ConnectionManager from '$lib/components/ConnectionManager.svelte';
+	import ConnectionSelector from '$lib/components/ConnectionsSelector.svelte';
 	import { REQUEST_PREFIX } from '$lib/constants';
 
 	function openSheet() {
@@ -20,9 +20,10 @@
 	}
 </script>
 
-<div class="flex w-full flex-col">
+<div class="relative z-2 flex w-full flex-col">
 	<div class="flex items-center justify-between gap-4 p-3 font-semibold">
-		<ConnectionManager />
+		<ConnectionSelector />
+
 		<div class="flex">
 			<Toggle size="icon" tooltip="Голосование" bind:pressed={G.settings.isPollEnabled}>
 				<VoteIcon />
@@ -38,17 +39,22 @@
 		<div class="mb-3 flex shrink-0 gap-3" transition:slide>
 			<!-- {#if G.integrations.isChatEnabled} -->
 			<div
-				class="relative z-10 flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3/50 p-2 font-semibold shadow-sm backdrop-blur-md transition-colors duration-700"
+				class="group relative z-1 flex w-full flex-col justify-between overflow-hidden rounded-md bg-elevation-3/50 p-2 font-semibold shadow-sm ring ring-border backdrop-blur-md transition-colors duration-700"
 			>
 				<div class="text-sm text-muted-foreground">Обычный заказ</div>
 				<div class="text-lg">{REQUEST_PREFIX} в чате</div>
+				<div class="absolute inset-0 bg-muted opacity-0 transition-opacity group-hover:opacity-100">
+					<button class="flex size-full items-center justify-center text-sm font-semibold">
+						Отключить
+					</button>
+				</div>
 			</div>
 			<!-- {/if} -->
 			<!-- {#if G.integrations.isDonationEnabled} -->
 			<div
-				class="relative z-10 flex w-full flex-col justify-between overflow-hidden rounded-md border bg-elevation-3/50 p-2 font-semibold shadow-sm backdrop-blur-md transition-colors duration-700"
+				class="relative z-1 flex w-full flex-col justify-between overflow-hidden rounded-md bg-elevation-3/50 p-2 font-semibold shadow-sm ring ring-border backdrop-blur-md transition-colors duration-700"
 			>
-				<div class="text-sm text-muted-foreground">Приоритетный заказ</div>
+				<div class="text-sm text-muted-foreground">Платный заказ</div>
 				<div class="text-lg">
 					{#if G.settings.isPaidTimerEnabled}
 						{NumberFormatter.formatCurrency(G.settings.paidTimerPricePerMinute)}/мин
@@ -63,7 +69,7 @@
 
 		{#if G.settings.isPollEnabled}
 			<div
-				class="z-10 mb-3 w-full shrink-0 overflow-hidden rounded-md border bg-elevation-3/30 shadow-sm backdrop-blur-md transition-colors duration-700"
+				class="mb-3 w-full shrink-0 overflow-hidden rounded-md bg-elevation-3/30 shadow-sm ring ring-border backdrop-blur-md transition-colors duration-700"
 				transition:slide|global
 			>
 				<Votes />

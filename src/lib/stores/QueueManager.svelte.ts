@@ -1,33 +1,21 @@
 import type { QueueItemData, RawQueueItemData } from "$lib/types";
-import { extractYoutubeVideoData, formatYoutubeDuration } from "$lib/utils";
 import Dexie, { liveQuery, type EntityTable } from "dexie";
 import { generateKeyBetween } from "fractional-indexing";
 import { PersistedState } from "runed";
 import { toast } from "svelte-sonner";
-import RandomColorStore from "./RandomColorStore";
-import type { VideoData } from "$lib/api/types";
 import type YoutubeApi from "$lib/api/YoutubeApiClient";
 import { dev } from "$app/environment";
 import type SettingsStore from "./SettingsStore.svelte";
 
-type QueueItemParams = {
-	videoData: VideoData;
-	videoId: string;
-	startSeconds: number;
-	username: string;
-	message: string;
-	value: number;
-}
-
 class QueueManager extends Dexie {
 	private _settings: SettingsStore;
-	private _randomColor = new RandomColorStore();
 	private _index = new PersistedState('queueItemIndex', 0);
 	private _items = $state<QueueItemData[]>([]);
 	private _isLoading = $state(true);
 
 	readonly current = $derived(this._items[this.index] ?? null);
 	readonly upcoming = $derived(this._items.slice(this.index + 1));
+	readonly currentPaidMs = $derived.by(this._getPaidMs.bind(this));
 
 	queueItems!: EntityTable<QueueItemData, 'id'>;
 	private _youtubeApi: YoutubeApi;
@@ -61,6 +49,17 @@ class QueueManager extends Dexie {
 		});
 	}
 
+	public async clear() {
+		this.index = 0;
+
+		try {
+			await this.queueItems.clear();
+			toast.success("Очередь очищена");
+		} catch (err) {
+			toast.error('Не удалось очистить очередь', { description: (err as Error).message });
+		}
+	}
+
 	public previous() {
 		if (this.size <= 1 || !this.current) return;
 
@@ -92,70 +91,42 @@ class QueueManager extends Dexie {
 		}
 	}
 
-	public async enqueue(items: QueueItemData[]) {
-		if (this.isFull || items.length === 0) return;
-
-		const itemsSnapshot = $state.snapshot(items);
-		const toastTitle = items.length === 1 ? 'Видео добавлено' : `Видео добавлено +${items.length}`;
-
-		try {
-			await this.queueItems.bulkAdd(itemsSnapshot);
-			toast.success(toastTitle, {
-				description: items[0].title
-			});
-		} catch (err) {
-			toast.error(`Не удалось добавить видео +${items.length}`, { description: (err as Error).message });
-		}
+	public async isExisting(videoId: string) {
+		return await this.queueItems.where({ videoId }).first();
 	}
 
-	public async clear() {
-		this.index = 0;
+	public async enqueue(data: RawQueueItemData) {
+		const isFree = data.value === 0;
 
-		try {
-			await this.queueItems.clear();
-			toast.success("Очередь очищена");
-		} catch (err) {
-			toast.error('Не удалось очистить очередь', { description: (err as Error).message });
+		console.log(Array.from(this._pendingVideoIds.values()))
+		if (isFree && this._pendingVideoIds.has(data.videoId)) return;
+
+		this._pendingVideoIds.add(data.videoId);
+		this._pendingSaveBuffer.push(data);
+
+		if (!this._isProcessingBuffer) {
+			await this._processSaveBuffer();
 		}
+
+		this._pendingVideoIds.delete(data.videoId);
 	}
 
-	public async addVideo(username: string, message: string, value: number) {
-		const data = extractYoutubeVideoData(message);
-		if (!data) {
-			console.warn(`No video data found in message: "${message}"`);
-			return;
+	private _getPaidMs(): number {
+		const pricePerMin = this._settings?.paidTimerPricePerMinute;
+
+		if (!this.current || this.current.value <= 0 || !pricePerMin || pricePerMin <= 0) {
+			return 0;
 		}
 
-		// if (value === 0 && this._pendingVideoIds.has(data.videoId)) return;
+		const paidMinutes = this.current.value / pricePerMin;
+		let endDuration = Math.round(paidMinutes * 60 * 1000);
 
-		// const existingItem = await this.queueItems.where({ videoId: data.videoId }).first();
-		// if (existingItem && value === 0) return;
-
-		if (value === 0) {
-			this._pendingVideoIds.add(data.videoId);
+		if (this.current.durationMs) {
+			endDuration = Math.min(this.current.durationMs, endDuration);
 		}
 
-		const videoData = await this._youtubeApi.getVideo(data.videoId);
-
-		if (videoData) {
-			const newItem = this._composeQueueItem({
-				videoData,
-				username,
-				message,
-				value,
-				...data
-			});
-
-			this._pendingSaveBuffer.push(newItem);
-
-			if (!this._isProcessingBuffer) {
-				this._processSaveBuffer();
-			}
-
-			this._pendingVideoIds.delete(data.videoId);
-		}
+		return endDuration;
 	}
-
 
 	private _updateItems(items: QueueItemData[]) {
 		if (this._items.length === 0) {
@@ -190,10 +161,7 @@ class QueueManager extends Dexie {
 			const itemsToSave: QueueItemData[] = [];
 
 			for (const item of currentBatch) {
-				// 1. Find where this item belongs BEFORE calculating the key
 				const targetIndex = this._getTargetInsertionIndex(item);
-
-				// 2. Pass that target index to generate a true, unique neighbor key
 				const newSortOrder = this._calculateSortOrder(item, targetIndex);
 
 				const newItem: QueueItemData = {
@@ -202,7 +170,6 @@ class QueueManager extends Dexie {
 					sortOrder: newSortOrder
 				};
 
-				// 3. CRITICAL: Insert the item exactly at its sorted position mid-loop
 				if (item.value && item.value > 0 && this._items.length > 0) {
 					this._items.splice(targetIndex, 0, newItem);
 				} else {
@@ -225,8 +192,7 @@ class QueueManager extends Dexie {
 	private _getTargetInsertionIndex(item: RawQueueItemData): number {
 		const totalItems = this._items.length;
 
-		// Default target for empty array or normal items is the end of the list
-		if (totalItems === 0 || !item.value || item.value <= 0) {
+		if (totalItems === 0 || item.value <= 0) {
 			return totalItems;
 		}
 
@@ -245,33 +211,43 @@ class QueueManager extends Dexie {
 	private _calculateSortOrder(item: RawQueueItemData, targetIndex: number): string {
 		const totalItems = this._items.length;
 
-		// Case 1: Database is completely empty
+		// Database is completely empty
 		if (totalItems === 0) {
 			return generateKeyBetween(null, null);
 		}
 
-		// Case 2: High-value requests injected near the current index
-		if (item.value && item.value > 0) {
+		// High-value requests injected near the current index
+		if (item.value > 0) {
 			const afterKey = this._items[targetIndex - 1]?.sortOrder || null;
 			const beforeKey = this._items[targetIndex]?.sortOrder || null;
 
-			// Safeguard: If fractional keys ever collapse due to massive batches, append cleanly
+			// If fractional keys ever collapse due to massive batches, append cleanly
 			if (afterKey && beforeKey && afterKey >= beforeKey) {
 				return generateKeyBetween(afterKey, null);
 			}
+
 			return generateKeyBetween(afterKey, beforeKey);
 		}
 
-		// Case 3: Normal items appended to the absolute tail
+		// Normal items appended to the absolute tail
 		const absoluteTailKey = this._items[totalItems - 1]?.sortOrder || null;
 		return generateKeyBetween(absoluteTailKey, null);
 	}
 
 	private async _commitBatch(itemsToSave: QueueItemData[]) {
+		if (this.isFull || itemsToSave.length === 0) return;
+
+		const itemsSnapshot = $state.snapshot(itemsToSave);
+		const toastTitle = itemsToSave.length === 1 ? 'Видео добавлено' : `Видео добавлено +${itemsToSave.length}`;
+
 		try {
-			await this.enqueue(itemsToSave);
+			await this.queueItems.bulkAdd(itemsSnapshot);
+			toast.success(toastTitle, {
+				description: itemsToSave[0].title
+			});
 		} catch (err) {
 			console.error("Failed to commit batch to queue storage:", err);
+			toast.error(`Не удалось добавить видео +${itemsToSave.length}`, { description: (err as Error).message });
 		}
 	}
 
@@ -304,27 +280,6 @@ class QueueManager extends Dexie {
 			console.log(`✅ [POST-BATCH CHECK] Clean! No duplicate sort keys found across all ${this._items.length} items.`);
 		} else {
 			console.warn(`⚠️ [POST-BATCH CHECK] Found ${duplicateCount} unique duplicate key clusters.`);
-		}
-	}
-
-	private _composeQueueItem(params: QueueItemParams): Omit<QueueItemData, 'id' | 'sortOrder'> {
-		const color = this._randomColor.get().array() as [number, number, number];
-		const isLive = params.videoData.snippet.liveBroadcastContent === 'live';
-		const duration = params.videoData.contentDetails.duration;
-
-		return {
-			channelTitle: params.videoData.snippet.channelTitle,
-			title: params.videoData.snippet.title,
-			thumbnail: params.videoData.snippet.thumbnails.medium.url,
-			duration: duration && formatYoutubeDuration(duration),
-			videoId: params.videoId,
-			viewCount: params.videoData.statistics.viewCount,
-			publishedAt: params.videoData.snippet.publishedAt,
-			isLive,
-			startSeconds: params.startSeconds,
-			value: params.value,
-			submittedBy: params.username,
-			color,
 		}
 	}
 }

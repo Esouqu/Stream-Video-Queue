@@ -1,11 +1,10 @@
-import type { SocketMessage } from "$lib/types";
+import type { RawQueueItemData, SocketMessageData } from "$lib/types";
 import QueueStore from "./QueueManager.svelte";
 import PollStore from "./PollStore.svelte";
-import { browser } from "$app/environment";
+import { browser, dev } from "$app/environment";
 import { toast } from "svelte-sonner";
 import YouTubePlayerStore from "./YoutubePlayerStore.svelte";
 import TimerStore from "./TimerStore.svelte";
-import NumberFormatter from "$lib/utils/NumberFormatter";
 import YoutubeApiClient from "$lib/api/YoutubeApiClient";
 import DonationAlertsApiClient from "$lib/api/DonationAlertsApiClient";
 import DonatePayApiClient from "$lib/api/DonatePayApiClient";
@@ -16,11 +15,30 @@ import IntegrationManager from "./IntegrationManager.svelte";
 import Integration from "./Integration.svelte";
 import TwitchApiClient from "$lib/api/TwitchApiClient";
 import KickApiClient from "$lib/api/KickApiClient";
-import { randInt } from "$lib/utils";
+import { extractYoutubeVideoData, formatYoutubeDurationToMs, randInt } from "$lib/utils";
+import { page } from "$app/state";
+import type { VideoData } from "$lib/api/types";
+import RandomColorStore from "./RandomColorStore";
+import TurnirApiClient from "$lib/api/TurnirApiClient";
+
+type QueueItemParams = {
+	fetchedData: VideoData;
+	extractedData: {
+		videoId: string;
+		startSeconds: number;
+	};
+	username: string;
+	message: string;
+	value: number;
+}
+
+const turnirApiOrigin = 'https://mapcar.alwaysdata.net/v2/turnir-api';
 
 class G {
 	static readonly settings = new SettingsStore();
+	static readonly randomColor = new RandomColorStore();
 
+	static readonly turnirApi = new TurnirApiClient(turnirApiOrigin);
 	static readonly youtubeApi = new YoutubeApiClient();
 	static readonly twitchApi = new TwitchApiClient();
 	static readonly kickApi = new KickApiClient();
@@ -29,7 +47,6 @@ class G {
 
 	static readonly autoSkipTimer = new TimerStore();
 	static readonly voteBlockTimer = new TimerStore();
-	static readonly paidTimer = new TimerStore('up');
 
 	static readonly youtubePlayer = new YouTubePlayerStore();
 	static readonly integrationManager = new IntegrationManager();
@@ -37,31 +54,30 @@ class G {
 	static readonly poll = new PollStore(this.settings);
 
 	private static _simulationIntervalId?: number;
+	private static _validationIntervalId?: number;
+	private static _isEventTriggered = false;
 
 	public static async initialize() {
 		if (browser) {
-			this.youtubePlayer.on('unstarted', this._onVideoUnstarted.bind(this));
-			this.youtubePlayer.on('play', this._onVideoPlay.bind(this));
-			this.youtubePlayer.on('pause', this._onVideoPause.bind(this));
-			this.youtubePlayer.on('ended', this._onVideoEnded.bind(this));
-
-			this.autoSkipTimer.on('finished', this._onAutoSkipTimerFinished.bind(this));
-			this.paidTimer.on('finished', this._activateAutoSkipAction.bind(this));
-			this.poll.on('finished', this._activateAutoSkipAction.bind(this));
-
-			for (const data of AVAILABLE_PROVIDERS) {
-				const integration = new Integration(data);
-
-				integration.on('message', this._onSocketMessage.bind(this));
-				this.integrationManager.add(integration);
-			}
+			this._validateTwitchTokenHourly();
+			this._connectEvents();
+			this._registerIntegrations();
 		}
 	}
 
-	private static _onSocketMessage(message: SocketMessage) {
+	public static dispose() {
+		this.integrationManager.disconnectAll();
+
+		clearInterval(this._simulationIntervalId);
+		clearInterval(this._validationIntervalId);
+	}
+
+	private static _onSocketMessage(message: SocketMessageData) {
 		const isPaid = message.value > 0;
 
-		console.log(`[MESSAGE]: ${message.message}`);
+		if (dev) {
+			console.log(`[MESSAGE]: ${message.message}`);
+		}
 
 		if (isPaid) {
 			this._processDonationMessage(message);
@@ -71,12 +87,20 @@ class G {
 		this._processChatMessage(message);
 	}
 
-	private static _processChatMessage({ name, message, value }: SocketMessage) {
+	private static async _processChatMessage({ name, message, value, source }: SocketMessageData) {
 		const hasPrefix = message.startsWith(REQUEST_PREFIX);
 		const messageWithoutPrefix = message.replace(REQUEST_PREFIX, '').trim();
 
 		if (hasPrefix && messageWithoutPrefix && !this.queueManager.isFull) {
-			this.queueManager.addVideo(name, messageWithoutPrefix, value);
+			const newItem = await this._fetchNewQueueItem({
+				name,
+				message: messageWithoutPrefix,
+				value,
+				source
+			});
+			if (!newItem) return;
+
+			this.queueManager.enqueue(newItem);
 		}
 
 		if (this.settings.isPollEnabled && this.queueManager.current) {
@@ -84,12 +108,40 @@ class G {
 		}
 	}
 
-	private static _processDonationMessage({ name, message, value }: SocketMessage) {
+	private static async _processDonationMessage(message: SocketMessageData) {
 		if (!this.queueManager.isFull) {
-			this.queueManager.addVideo(name, message, value);
+			const newItem = await this._fetchNewQueueItem(message);
+			if (!newItem) return;
+
+			this.queueManager.enqueue(newItem);
 		} else {
 			toast.warning('Видео не было добавлено', { description: 'Очередь заполнена!' })
 		}
+	}
+
+	private static async _fetchNewQueueItem({ name, message, value }: SocketMessageData) {
+		const extractedData = extractYoutubeVideoData(message);
+		if (!extractedData) {
+			console.warn(`[VIDEO FETCH]: No data found in message: "${message}"`);
+			return;
+		}
+
+		const existingItem = await this.queueManager.isExisting(extractedData.videoId);
+		if (existingItem && value < 1) {
+			console.log(`[VIDEO FETCH]: Already in queue: "${existingItem.title}"`);
+			return;
+		};
+
+		const fetchedData = await this.youtubeApi.getVideo(extractedData.videoId);
+		if (!fetchedData) return;
+
+		return this._composeQueueItem({
+			fetchedData,
+			extractedData,
+			username: name,
+			message,
+			value,
+		});
 	}
 
 	private static _activateAutoSkipAction() {
@@ -117,46 +169,86 @@ class G {
 
 	private static _onVideoUnstarted() {
 		this.autoSkipTimer.reset();
-		this.paidTimer.reset();
 		this.poll.reset();
 
-		if (!this.settings.isPaidTimerEnabled) return;
-
-		const currentVideo = this.queueManager.current;
-		if (!currentVideo || currentVideo.value <= 0) return;
-
-		const paidMinutes = currentVideo.value / this.settings.paidTimerPricePerMinute;
-		let duration = paidMinutes * 60 * 1000;
-
-		if (currentVideo.duration) {
-			const originalDuration = NumberFormatter.timeStringToMs(currentVideo.duration);
-			duration = Math.min(originalDuration, duration);
-		}
-
-		this.paidTimer.setTime(duration);
+		this._isEventTriggered = false;
 	}
 
 	private static _onVideoEnded() {
 		if (!this.settings.shouldLoop) this.queueManager.next();
 	}
 
-	private static _onVideoPause() {
-		if (!this.queueManager.current) return;
+	private static _onVideoPlay() {
+		this.autoSkipTimer.reset();
+	}
 
-		const currentIsPaid = this.queueManager.current.value > 0;
+	private static async _onVideoTimeUpdate({ current }: { current: number, duration: number }) {
+		const isPaid = this.queueManager.current?.value > 0;
+		const isSettingEnabled = this.settings.isPaidTimerEnabled;
+		const isLive = this.queueManager.current?.isLive;
 
-		if (this.settings.isPaidTimerEnabled && currentIsPaid) {
-			this.paidTimer.pause();
+		if (this._isEventTriggered || isLive || !isSettingEnabled || !isPaid) return;
+
+		const startMs = this.queueManager.current.startMs;
+		const paidMs = this.queueManager.currentPaidMs;
+
+		if (current * 1000 >= startMs + paidMs) {
+			this._activateAutoSkipAction();
+			this._isEventTriggered = true;
 		}
 	}
 
-	private static _onVideoPlay() {
-		if (!this.queueManager.current) return;
+	private static async _validateTwitchTokenHourly() {
+		if (!page.data.accounts?.some((acc) => acc.providerId === 'twitch')) return;
 
-		const currentIsPaid = this.queueManager.current.value > 0;
+		// const data = await this.twitchApi.validateToken();
+		// if (!data) return;
 
-		if (this.settings.isPaidTimerEnabled && currentIsPaid) {
-			this.paidTimer.start();
+		this._validationIntervalId = window.setInterval(async () => {
+			const data = await this.twitchApi.validateToken();
+			if (data) return;
+
+			clearInterval(this._validationIntervalId);
+		}, 59 * 60 * 1000); // 59 minutes
+	}
+
+	private static _registerIntegrations() {
+		for (const data of AVAILABLE_PROVIDERS) {
+			const integration = new Integration(data);
+
+			integration.on('message', this._onSocketMessage.bind(this));
+			this.integrationManager.add(integration);
+		}
+	}
+
+	private static _connectEvents() {
+		this.youtubePlayer.on('unstarted', this._onVideoUnstarted.bind(this));
+		this.youtubePlayer.on('ended', this._onVideoEnded.bind(this));
+		this.youtubePlayer.on('play', this._onVideoPlay.bind(this));
+		this.youtubePlayer.on('timeupdated', this._onVideoTimeUpdate.bind(this));
+
+		this.autoSkipTimer.on('finished', this._onAutoSkipTimerFinished.bind(this));
+		this.poll.on('finished', this._activateAutoSkipAction.bind(this));
+	}
+
+	private static _composeQueueItem(params: QueueItemParams): RawQueueItemData {
+		const color = this.randomColor.get().array() as [number, number, number];
+		const isLive = params.fetchedData.snippet.liveBroadcastContent === 'live';
+		const duration = params.fetchedData.contentDetails.duration;
+
+		return {
+			channelTitle: params.fetchedData.snippet.channelTitle,
+			title: params.fetchedData.snippet.title,
+			thumbnail: params.fetchedData.snippet.thumbnails.medium.url,
+			durationMs: duration ? formatYoutubeDurationToMs(duration) : undefined,
+			videoId: params.extractedData.videoId,
+			viewCount: params.fetchedData.statistics.viewCount,
+			publishedAt: params.fetchedData.snippet.publishedAt,
+			isLive,
+			startMs: params.extractedData.startSeconds * 1000,
+			value: params.value,
+			submittedBy: params.username,
+			color,
 		}
 	}
 

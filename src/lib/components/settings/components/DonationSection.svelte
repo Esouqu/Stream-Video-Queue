@@ -4,28 +4,25 @@
 	import G from '$lib/stores/G.svelte';
 	import Setting from './Setting.svelte';
 
-	let isEnabledTEST = $state(false);
-
 	function setPaidTimerChecked(checked: boolean) {
 		G.settings.isPaidTimerEnabled = checked;
-		G.paidTimer.reset();
 	}
 </script>
 
 <div class="space-y-4">
-	<Setting isEnabled={isEnabledTEST}>
+	<Setting>
 		{#snippet title()}
-			Приоритетный заказ
+			Заказ видео
 		{/snippet}
 		{#snippet description()}
-			В донате: <span class="rounded bg-blue-900 px-1 font-semibold text-blue-300">
+			В донате:
+			<span class="rounded bg-blue-900 px-1 font-semibold text-blue-300">
 				&lt;ссылка на видео&gt;
 			</span>.
 			<br />
-			Видео будут добавляться сразу после текущего.
-		{/snippet}
-		{#snippet input()}
-			<Switch bind:checked={isEnabledTEST} />
+			Видео будут добавляться после текущего.
+			<br />
+			Случайное добавление не работает на платные видео.
 		{/snippet}
 		{#snippet content()}
 			<Setting isSub>
@@ -47,7 +44,7 @@
 
 	<Setting isEnabled={G.settings.isPaidTimerEnabled}>
 		{#snippet title()}
-			Таймер
+			Ограничение по времени
 		{/snippet}
 		{#snippet description()}
 			Ограничить время воспроизведения видео. Когда оплаченое время закончится, текущее видео будет

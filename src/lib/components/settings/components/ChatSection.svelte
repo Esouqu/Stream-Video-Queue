@@ -37,15 +37,15 @@
 <div class="flex flex-col gap-4">
 	<Setting>
 		{#snippet title()}
-			Обычный заказ
+			Заказ видео
 		{/snippet}
 		{#snippet description()}
-			В чате: <span class="rounded bg-blue-900 px-1 font-semibold text-blue-300">
+			В чате:
+			<span class="rounded bg-blue-900 px-1 font-semibold text-blue-300">
 				!rq &lt;ссылка на видео&gt;
 			</span>.
-		{/snippet}
-		{#snippet input()}
-			<Switch id="chat-sockets" />
+			<br />
+			Видео будут добавляться в конец очереди.
 		{/snippet}
 	</Setting>
 

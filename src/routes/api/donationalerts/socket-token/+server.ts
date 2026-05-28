@@ -1,5 +1,5 @@
 import { auth } from "$lib/server/auth";
-import { fetchProviderAccount } from "$lib/server/db";
+import { fetchProviderAccountId } from "$lib/server/db";
 import { json, type RequestHandler } from "@sveltejs/kit";
 
 type SocketTokenData = {
@@ -10,33 +10,32 @@ type SocketTokenData = {
 }
 
 export const POST: RequestHandler = async ({ request, fetch }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
+	if (!session) {
+		return json({ error: 'Не авторизован' }, { status: 401 });
+	}
+
 	const body: { userId: string, client: string } = await request.json();
 
 	const tokenRes = await auth.api.getAccessToken({
 		body: { providerId: "donationalerts" },
-		headers: request.headers
+		headers: request.headers,
 	});
 
 	if (!tokenRes?.accessToken) {
 		return json({ error: 'DonationAlerts токен не найден' }, { status: 400 });
 	}
 
-	const session = await auth.api.getSession({ headers: request.headers });
-	if (!session) {
-		return json({ error: 'Не авторизован' }, { status: 401 });
-	}
+	const accountId = await fetchProviderAccountId(session.user.id, 'donationalerts');
 
-	const account = await fetchProviderAccount(session.user.id, 'donationalerts');
-
-	if (!account) {
+	if (!accountId) {
 		return json({ error: 'DonationAlerts аккаунт не найден' }, { status: 404 });
 	}
 
-	const expectedChannel = `$alerts:donation_${account.accountId}`;
-	const url = 'https://www.donationalerts.com/api/v1/centrifuge/subscribe';
+	const roomId = `$alerts:donation_${accountId}`;
 
 	try {
-		const response = await fetch(url, {
+		const response = await fetch('https://www.donationalerts.com/api/v1/centrifuge/subscribe', {
 			method: 'POST',
 			headers: {
 				'Authorization': `Bearer ${tokenRes.accessToken}`,
@@ -44,7 +43,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 			},
 			body: JSON.stringify({
 				client: body.client,
-				channels: [expectedChannel]
+				channels: [roomId]
 			}),
 		});
 
@@ -57,11 +56,12 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 		const data = await response.json() as SocketTokenData;
 
 		if (!data?.channels[0]?.token) {
-			return json({ error: 'Ошибка получения токена Centrifuge' }, { status: 502 });
+			return json({ error: 'Ошибка получения Centrifuge токена' }, { status: 502 });
 		}
 
 		return json({
 			token: data.channels[0].token,
+			roomId,
 		}, { status: 200 });
 
 	} catch (error) {

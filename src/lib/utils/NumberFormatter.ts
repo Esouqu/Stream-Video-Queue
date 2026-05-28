@@ -37,7 +37,7 @@ class NumberFormatter {
 		return ((hours * 3600) + (minutes * 60) + seconds) * 1000;
 	}
 
-	public static formatTimerValue(ms: number, options: FormatTimerOptions = {}): string {
+	public static formatMs(ms: number, options: FormatTimerOptions = {}): string {
 		const { startMs = ms, onlySeconds = false } = options;
 		const totalSeconds = Math.floor(Math.max(0, ms) / 1000);
 

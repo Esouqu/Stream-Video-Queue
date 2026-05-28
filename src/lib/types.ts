@@ -19,13 +19,13 @@ export type IntegrationConfig = {
 }
 
 export type DriverEvents = {
-	message: SocketMessage;
+	message: SocketMessageData;
 	connect: void;
 	disconnect: void;
 	error: Error;
 }
 
-export type SocketMessage = {
+export type SocketMessageData = {
 	name: string;
 	message: string;
 	value: number;
@@ -38,8 +38,8 @@ export type QueueItemData = {
 
 	// video data
 	videoId: string;
-	startSeconds: number;
-	duration?: string;
+	startMs: number;
+	durationMs?: number;
 	isLive: boolean;
 	title: string;
 	channelTitle: string;

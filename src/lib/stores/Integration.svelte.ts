@@ -1,10 +1,10 @@
-import type { IntegrationConfig, IntegrationData, SocketMessage, SocketState } from "$lib/types";
+import type { IntegrationConfig, IntegrationData, SocketMessageData, SocketState } from "$lib/types";
 import EventEmitter from "$lib/utils/EventEmitter";
 import { toast } from "svelte-sonner";
 import type SocketDriver from "../socket-drivers/SocketDriver";
 
 type IntegrationEvents = {
-	message: SocketMessage;
+	message: SocketMessageData;
 	connect: void;
 	disconnect: void;
 }
@@ -39,6 +39,13 @@ class Integration extends EventEmitter<IntegrationEvents> {
 		});
 	}
 
+	public disconnect() {
+		this._driver.disconnect();
+		this._state = 'closed';
+		this.emit('disconnect');
+		toast.error(`Соединение с ${this.data.name} разорвано.`);
+	}
+
 	public async connect() {
 		if (this._state === 'open' || this._state === 'connecting') return;
 		this._state = 'connecting';
@@ -51,28 +58,20 @@ class Integration extends EventEmitter<IntegrationEvents> {
 
 			toast.info(`Соединение с ${this.data.name} установлено.`);
 		} catch (err) {
-			this.disconnect();
-			toast.error(`Не удалось установить соединение с ${this.data.name}`, {
+			this._state = 'closed';
+			toast.error(`Не удалось установить соединение с ${this.data.name}.`, {
 				description: (err as Error).message
 			});
 		}
 	}
 
-	public disconnect() {
-		this._driver.disconnect();
-		this._state = 'closed';
-		toast.error(`Соединение разорвано — ${this.data.id}.`);
-	}
-
-	private _onMessage(message: SocketMessage) {
+	private _onMessage(message: SocketMessageData) {
 		this.emit('message', message);
 	}
 
 	private _onDisconnect() {
 		if (this._state !== 'closed') {
-			this._state = 'closed';
-			this.emit('disconnect');
-			toast.error(`Соединение потеряно — ${this.data.id}.`);
+			this.disconnect();
 		}
 	}
 }

@@ -6,7 +6,6 @@
 	import { Input } from './ui/input';
 	import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 	import ToolsIcon from '@lucide/svelte/icons/tool-case';
-	import { randInt } from '$lib/utils';
 	import { Switch } from './ui/switch';
 
 	type Props = {
@@ -43,10 +42,11 @@
 	}
 
 	function addVideo() {
-		const val = Math.random() > 0.5 ? randInt(100, 1000) : 0;
+		const value = isPaid ? 100 : 0;
+		// const val = Math.random() > 0.5 ? randInt(100, 1000) : 0;
 
 		try {
-			G.queueManager.addVideo('esouqu', message, val);
+			G.__sendDevMessage(message, value);
 		} catch (err) {
 			toast.error('Не удалось добавить видео', {
 				description: (err as Error).message

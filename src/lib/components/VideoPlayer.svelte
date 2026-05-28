@@ -10,7 +10,7 @@
 
 	const shouldShowWarning = $derived(G.autoSkipTimer.isRunning);
 	const formattedTime = $derived(
-		NumberFormatter.formatTimerValue(G.autoSkipTimer.current, {
+		NumberFormatter.formatMs(G.autoSkipTimer.current, {
 			onlySeconds: true
 		})
 	);
@@ -25,8 +25,8 @@
 
 	$effect(() => {
 		if (G.queueManager.current) {
-			const { videoId, startSeconds } = G.queueManager.current;
-			G.youtubePlayer.load(videoId, startSeconds);
+			const { videoId, startMs } = G.queueManager.current;
+			G.youtubePlayer.load(videoId, startMs / 1000);
 		} else {
 			G.youtubePlayer.stop();
 		}
@@ -40,7 +40,7 @@
 </script>
 
 <div
-	class="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/8 bg-elevation-2 shadow-[0_30px_60px_rgba(0,0,0,0.8)]"
+	class="relative aspect-video max-h-full w-full max-w-[calc(100vh*16/9)] overflow-hidden rounded-2xl border border-white/8 bg-elevation-2 shadow-[0_30px_60px_rgba(0,0,0,0.8)]"
 >
 	{#if !G.youtubePlayer.isReady && !G.youtubePlayer.error}
 		<div class="pointer-events-none absolute inset-0 flex items-center justify-center">

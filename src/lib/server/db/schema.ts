@@ -64,12 +64,16 @@ export const account = sqliteTable(
 			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
 			.notNull(),
 		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.$onUpdate(() => new Date())
 			.notNull(),
 	},
 	(table) => [
 		index("account_userId_idx").on(table.userId),
-		index("account_user_provider_idx").on(table.userId, table.providerId),
+		index("account_user_provider_id_covering_idx").on(
+			table.userId,
+			table.providerId,
+			table.accountId
+		),
 	],
 );
 

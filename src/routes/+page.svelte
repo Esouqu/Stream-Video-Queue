@@ -15,7 +15,7 @@
 <div
 	class="relative flex h-dvh justify-center overflow-hidden bg-[radial-gradient(circle,#1a1c23_0%,#0d0e12_70%,#050506_100%)]"
 >
-	<div class="relative m-4 flex w-full items-center gap-4 overflow-hidden">
+	<div class="relative m-4 flex w-full items-center justify-center gap-4">
 		<VideoPlayer />
 		<VideoQueue />
 	</div>

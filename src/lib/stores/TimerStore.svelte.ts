@@ -58,7 +58,7 @@ class TimerStore extends EventEmitter<PlayerEvents> {
 	public async start(ms?: number) {
 		if (this.isRunning || (this._startTime === 0 && !ms)) return;
 
-		if (ms) this.setTime(ms);
+		if (ms) this.set(ms);
 
 		this._state = 'running';
 		this.emit('started');
@@ -101,7 +101,7 @@ class TimerStore extends EventEmitter<PlayerEvents> {
 		this.emit('finished');
 	}
 
-	public setTime(ms: number) {
+	public set(ms: number) {
 		this._startTime = ms;
 
 		if (this._type === 'down') {

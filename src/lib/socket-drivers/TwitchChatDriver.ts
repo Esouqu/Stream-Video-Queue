@@ -8,7 +8,6 @@ class TwitchChatDriver extends SocketDriver {
 	public async connect() {
 		const username = await G.twitchApi.getUsername();
 
-		console.log(username)
 		if (!username) {
 			throw new Error('Twitch аккаунт не найден или вы не авторизованы');
 		}

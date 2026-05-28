@@ -9,18 +9,15 @@
 	import { type QueueItemData } from '$lib/types';
 	import { fade } from 'svelte/transition';
 	import { cn } from '$lib/utils';
-	import { Previous } from 'runed';
 	import RepeatIcon from '$lib/components/icons/RepeatIcon.svelte';
 	import PlayIcon from '$lib/components/icons/PlayIcon.svelte';
 	import PauseIcon from '$lib/components/icons/PauseIcon.svelte';
 	import type VideoPlayerStore from '$lib/stores/VideoPlayerStore.svelte';
 	import G from '$lib/stores/G.svelte';
-	import { Progress } from '$lib/components/ui/progress';
-	import NumberFormatter from '$lib/utils/NumberFormatter';
 	import EmptyQueueItem from './EmptyQueueItem.svelte';
 	import { cubicOut } from 'svelte/easing';
-	import { onMount } from 'svelte';
 	import Blob from '$lib/components/Blob.svelte';
+	import VideoProgress from './VideoProgress.svelte';
 
 	type ButtonMouseEvent =
 		| (MouseEvent & {
@@ -56,36 +53,7 @@
 
 	let circleRef = $state<HTMLDivElement>();
 	let panelRef = $state<HTMLDivElement>();
-	let currentTime = $state(0);
-	let duration = $state(0);
-
-	const rgb = $derived(currentItem ? currentItem.color : [0, 0, 0]);
-	const prevRgb = new Previous(() => rgb);
-	const firstGradientStep = $derived(`rgb(${rgb[0]} ${rgb[1]} ${rgb[2]} / 0.4)`);
-	const secondGradientStep = $derived(
-		`rgb(${prevRgb.current?.[0]} ${prevRgb.current?.[1]} ${prevRgb.current?.[2]} / 0.4)`
-	);
-	const formattedPaidTimerTime = $derived(
-		NumberFormatter.formatTimerValue(currentTime * 1000, { startMs: duration * 1000 })
-	);
-	const formattedPaidTimerStartTime = $derived(NumberFormatter.formatTimerValue(duration * 1000));
 	let seed = $state(crypto.randomUUID());
-
-	let intervalId: number;
-	onMount(() => {
-		intervalId = window.setInterval(async () => {
-			const [current, dur] = await Promise.all([
-				G.youtubePlayer.getCurrentTime(),
-				G.youtubePlayer.getDuration()
-			]);
-			currentTime = current;
-			duration = dur;
-		}, 250);
-
-		return () => {
-			clearInterval(intervalId);
-		};
-	});
 
 	function play(e: ButtonMouseEvent) {
 		e.stopPropagation();
@@ -96,7 +64,7 @@
 			videoPlayer.pause();
 		}
 
-		animateCircle(e, true);
+		animateCircle(e);
 	}
 
 	async function skipBackward(e: ButtonMouseEvent) {
@@ -113,24 +81,18 @@
 		flyDirection = G.queueManager.isFirstItem ? 0 : 1;
 	}
 
-	function animateCircle(event: ButtonMouseEvent | null, sameColor = false) {
+	function animateCircle(event: ButtonMouseEvent) {
 		if (!circleRef || !panelRef) return;
 
 		const parentRect = panelRef.getBoundingClientRect();
+		const targetRect = event.currentTarget.getBoundingClientRect();
+
 		const circleClientWidth = circleRef.clientWidth;
 		const circleClientHeight = circleRef.clientHeight;
-
-		let relativeY = parentRect.top / 4;
-		let relativeX = parentRect.left / 4;
+		const relativeX = targetRect.left + targetRect.width / 2 - parentRect.left;
+		const relativeY = targetRect.top + targetRect.height / 2 - parentRect.top;
 
 		seed = crypto.randomUUID();
-
-		if (event) {
-			const targetRect = event.currentTarget.getBoundingClientRect();
-
-			relativeX = targetRect.left + targetRect.width / 2 - parentRect.left;
-			relativeY = targetRect.top + targetRect.height / 2 - parentRect.top;
-		}
 
 		createTimeline()
 			.add(circleRef, {
@@ -141,8 +103,6 @@
 				onBegin: ({ targets }) => {
 					for (const target of targets) {
 						target.style = `
-							--c1: ${firstGradientStep};
-							--c2: ${sameColor ? 'transparent' : secondGradientStep};
 							top: ${relativeY - circleClientHeight / 2}px;
 							left: ${relativeX - circleClientWidth / 2}px;
 						`;
@@ -175,7 +135,7 @@
 			<div class="grid">
 				{#key currentItem}
 					<QueueItem
-						class="col-start-1 row-start-1 p-3"
+						class="col-start-1 row-start-1 p-3 px-4"
 						item={currentItem}
 						isCurrent
 						flyParams={{
@@ -223,37 +183,14 @@
 	</div>
 
 	<div class="absolute inset-0 -z-1 flex items-center justify-center rounded-md">
-		{#if !G.paidTimer.isUnstarted && duration > 0}
-			<div class="pointer-events-none absolute inset-0 -z-1 size-full" transition:fade>
-				<Progress
-					class="size-full rounded-none bg-transparent *:data-[slot=progress-indicator]:bg-white/5 *:data-[slot=progress-indicator]:duration-500"
-					value={currentTime}
-					max={duration}
-				/>
-				<!-- <Progress
-					class="size-full rounded-none bg-transparent **:data-[slot=progress-indicator]:bg-white/5 **:data-[slot=progress-indicator]:transition-none"
-					value={G.paidTimer.current}
-					max={G.paidTimer.startTime}
-				/> -->
-			</div>
-			<div
-				class="pointer-events-none absolute bottom-0 left-0 -z-1 w-full opacity-0 transition-opacity group-hover:opacity-100"
-				transition:fade
-			>
-				<div class="mb-1 flex justify-between px-2 text-sm font-semibold text-muted-foreground">
-					<div>
-						{formattedPaidTimerTime}
-					</div>
-					<div>
-						{formattedPaidTimerStartTime}
-					</div>
-				</div>
-				<Progress
-					class="h-1 w-full rounded-none bg-white/10 *:data-[slot=progress-indicator]:bg-white/20 *:data-[slot=progress-indicator]:duration-500"
-					value={currentTime}
-					max={duration}
-				/>
-			</div>
+		{#if G.queueManager.current}
+			<VideoProgress
+				current={videoPlayer.currentTime * 1000}
+				duration={G.queueManager.current.durationMs || 0}
+				start={currentItem?.startMs || 0}
+				paidDuration={G.queueManager.currentPaidMs}
+				isLive={currentItem?.isLive || false}
+			/>
 		{/if}
 
 		{#if currentItem}

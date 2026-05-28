@@ -31,8 +31,6 @@ class DonationAlertsDriver extends SocketDriver {
 			throw new Error('DonationAlerts: Missing socket connection token.');
 		}
 
-		const targetChannel = `$alerts:donation_${user.id}`;
-
 		return new Promise<void>((resolve, reject) => {
 			this._socket = new WebSocket(this._websocketUrl);
 
@@ -57,13 +55,13 @@ class DonationAlertsDriver extends SocketDriver {
 			this._socket.addEventListener('message', async (event) => {
 				const message = JSON.parse(event.data);
 
-				// 1. Handle Centrifugo/DonationAlerts connection handshake
 				if (message.id === 1 && message.result?.client) {
-					const token = await G.donationalertsApi.getSocketToken(String(user.id), message.result.client);
-					if (token) {
+					const data = await G.donationalertsApi.getSocketToken(String(user.id), message.result.client);
+
+					if (data) {
 						this._socket?.send(
 							JSON.stringify({
-								params: { channel: targetChannel, token: token },
+								params: { channel: data.roomId, token: data.token },
 								method: 1,
 								id: 2
 							})
@@ -73,19 +71,16 @@ class DonationAlertsDriver extends SocketDriver {
 				}
 
 				const result = message.result;
-				if (!result || !result.data) return;
+				if (!result?.data?.data) return;
 
-				if (!result.type && result.channel === targetChannel) {
-					const donation: DonationAlertsMessage = result.data.data;
+				const donation: DonationAlertsMessage = result.data.data;
 
-					console.log(`DonationAlerts: New donation: ${donation.username} (${donation.amount_in_user_currency} ${donation.currency})`);
-					this.emit('message', {
-						name: donation.username ?? 'Аноним',
-						value: Math.round(donation.amount_in_user_currency),
-						message: donation.message,
-						source: 'donationalerts'
-					});
-				}
+				this.emit('message', {
+					name: donation.username ?? 'Аноним',
+					value: Math.round(donation.amount_in_user_currency),
+					message: donation.message,
+					source: 'donationalerts'
+				});
 			});
 
 			this._socket.addEventListener('close', () => {

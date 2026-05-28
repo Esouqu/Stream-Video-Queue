@@ -55,7 +55,7 @@
 
 	<VirtualList
 		bind:viewportRef
-		class="w-full **:data-[slot=scroll-area-content]:pt-3"
+		class="z-1 w-full **:data-[slot=scroll-area-content]:pt-3"
 		items={G.queueManager.upcoming}
 		{itemHeight}
 		{itemsBuffer}

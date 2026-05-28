@@ -16,7 +16,7 @@
 	const { class: className }: Props = $props();
 
 	const formattedTime = $derived(
-		NumberFormatter.formatTimerValue(G.poll.blockTimer.current, {
+		NumberFormatter.formatMs(G.poll.blockTimer.current, {
 			startMs: G.poll.blockTimer.startTime
 		})
 	);
@@ -53,7 +53,7 @@
 
 	{#if G.poll.blockTimer.isRunning || !G.settings.isPollEnabled || !G.queueManager.current}
 		<div
-			class="absolute top-1/2 left-1/2 z-50 flex size-full -translate-1/2 items-center justify-center rounded-md bg-black/50 backdrop-blur-md select-none"
+			class="absolute top-1/2 left-1/2 z-50 flex size-full -translate-1/2 items-center justify-center rounded-md bg-muted select-none"
 			transition:fade
 		>
 			<div class="flex flex-col text-center font-semibold">

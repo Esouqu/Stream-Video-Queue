@@ -4,7 +4,8 @@ import type { Account } from 'better-auth';
 type RequiredOnly<T> = {
 	[K in keyof T as undefined extends T[K] ? never : K]: T[K];
 };
-export type StrictAccount = RequiredOnly<Account>;
+type StrictAccount = RequiredOnly<Account>;
+
 declare global {
 	namespace App {
 		// interface Locals {}

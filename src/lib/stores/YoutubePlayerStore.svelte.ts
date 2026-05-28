@@ -14,6 +14,8 @@ export enum YOUTUBE_PLAYER_STATE {
 }
 
 class YouTubePlayerStore extends VideoPlayer<YTPType> {
+	private _checkTimer?: number;
+
 	public async initialize(container: HTMLDivElement) {
 		if (browser) {
 			try {
@@ -31,7 +33,6 @@ class YouTubePlayerStore extends VideoPlayer<YTPType> {
 				console.log(err);
 				toast('Не получилось инициализировать плеер', { description: (err as Error).message });
 			}
-
 		}
 	}
 
@@ -84,26 +85,48 @@ class YouTubePlayerStore extends VideoPlayer<YTPType> {
 		this._eventListeners.clear();
 	}
 
+	private async _checkVideoTime() {
+		if (!this._player) return;
+
+		const [current, duration] = await Promise.all([
+			this._player.getCurrentTime(),
+			this._player.getDuration()
+		]);
+
+		this._currentTime = current;
+		this._duration = duration;
+
+		this.emit('timeupdated', { current, duration });
+	}
+
 	private _handleStateChange(event: CustomEvent<unknown> & { data: YOUTUBE_PLAYER_STATE }) {
+		if (event.data !== YOUTUBE_PLAYER_STATE.PLAYING && event.data !== YOUTUBE_PLAYER_STATE.PAUSED) {
+			clearInterval(this._checkTimer);
+		} else {
+			this._checkTimer = window.setInterval(this._checkVideoTime.bind(this), 250);
+		}
+
 		switch (event.data) {
 			case YOUTUBE_PLAYER_STATE.UNSTARTED:
-				this.emit('unstarted');
 				this._state = 'unstarted';
+				this._currentTime = 0;
+				this.emit('unstarted');
 				break;
 			case YOUTUBE_PLAYER_STATE.PLAYING:
-				this.emit('play');
 				this._state = 'playing';
+				this.emit('play');
 				break;
 			case YOUTUBE_PLAYER_STATE.PAUSED:
-				this.emit('pause');
 				this._state = 'paused';
+				this.emit('pause');
 				break;
 			case YOUTUBE_PLAYER_STATE.ENDED:
-				this.emit('ended');
 				this._state = 'ended';
+				this.emit('ended');
 				break;
 			case YOUTUBE_PLAYER_STATE.BUFFERING:
 				this._state = 'buffering';
+				this.emit('buffering');
 				break;
 		}
 	}

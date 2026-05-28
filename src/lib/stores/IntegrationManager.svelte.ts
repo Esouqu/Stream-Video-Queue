@@ -6,6 +6,7 @@ class IntegrationManager {
 	private _integrations = new SvelteMap<IntegrationId, Integration>();
 
 	get integrations() { return Array.from(this._integrations.values()) }
+	get isAnyConnected() { return this.integrations.some(integration => integration.isOpen) }
 
 	public connectAll() {
 		for (const conn of this._integrations.values()) {

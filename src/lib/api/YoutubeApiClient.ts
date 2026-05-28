@@ -6,13 +6,13 @@ import { MOCK_VIDEO_DATA } from "$lib/constants";
 
 class YoutubeApiClient extends ApiClient {
 	public async getVideo(id: string) {
-		// if (dev) {
-		// 	return await new Promise<VideoData>((resolve) => {
-		// 		setTimeout(() => {
-		// 			resolve(MOCK_VIDEO_DATA)
-		// 		}, 200);
-		// 	});
-		// }
+		if (dev) {
+			return await new Promise<VideoData>((resolve) => {
+				setTimeout(() => {
+					resolve(MOCK_VIDEO_DATA)
+				}, 200);
+			});
+		}
 
 		const { data, error } = await this.get<VideoDataResponse>(`/youtube/video?id=${id}`, {
 			customErrors: {

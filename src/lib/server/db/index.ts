@@ -11,7 +11,20 @@ const client = createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUT
 
 export const db = drizzle(client, { schema, logger: true });
 
-export async function fetchProviderAccount(userId: string, providerId: string) {
+export async function fetchProviderAccountId(userId: string, providerId: string) {
+	const [result] = await db
+		.select({ accountId: schema.account.accountId })
+		.from(schema.account)
+		.where(and(
+			eq(schema.account.userId, userId),
+			eq(schema.account.providerId, providerId)
+		))
+		.limit(1);
+
+	return result?.accountId || null;
+}
+
+export async function fetchFullProviderAccount(userId: string, providerId: string) {
 	const [result] = await db
 		.select()
 		.from(schema.account)

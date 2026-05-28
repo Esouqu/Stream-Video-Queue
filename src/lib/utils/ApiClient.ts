@@ -25,23 +25,23 @@ abstract class ApiClient {
 		this._baseUrl = baseUrl;
 	}
 
-	public get<T>(endpoint: string, options?: RequestOptions): Promise<ApiResponse<T>> {
+	protected get<T>(endpoint: string, options?: RequestOptions): Promise<ApiResponse<T>> {
 		return this._request<T>('GET', endpoint, undefined, options);
 	}
 
-	public post<T>(endpoint: string, body?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
+	protected post<T>(endpoint: string, body?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
 		return this._request<T>('POST', endpoint, body, options);
 	}
 
-	public put<T>(endpoint: string, body?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
+	protected put<T>(endpoint: string, body?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
 		return this._request<T>('PUT', endpoint, body, options);
 	}
 
-	public patch<T>(endpoint: string, body?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
+	protected patch<T>(endpoint: string, body?: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
 		return this._request<T>('PATCH', endpoint, body, options);
 	}
 
-	public delete<T>(endpoint: string, options?: RequestOptions): Promise<ApiResponse<T>> {
+	protected delete<T>(endpoint: string, options?: RequestOptions): Promise<ApiResponse<T>> {
 		return this._request<T>('DELETE', endpoint, undefined, options);
 	}
 

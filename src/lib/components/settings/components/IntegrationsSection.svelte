@@ -1,5 +1,4 @@
 <script lang="ts">
-	import DonatePayApiDialog from '$lib/components/DonatePayApiDialog.svelte';
 	import IntegrationButton from '$lib/components/IntegrationButton.svelte';
 	import G from '$lib/stores/G.svelte';
 	import { page } from '$app/state';
@@ -14,8 +13,7 @@
 		CardTitle
 	} from '$lib/components/ui/card';
 	import { invalidateAll } from '$app/navigation';
-
-	let isDonatePayApiKeyDialogOpen = $state(false);
+	import DonatePayIntegrationButton from '$lib/components/DonatePayIntegrationButton.svelte';
 
 	async function onSignOut() {
 		await authClient.signOut();
@@ -23,13 +21,15 @@
 	}
 </script>
 
-<DonatePayApiDialog bind:isOpen={isDonatePayApiKeyDialogOpen} />
-
 <Card>
 	{#if page.data.user}
 		<CardHeader class="flex flex-row items-start justify-between gap-4">
 			<div class="flex gap-2">
-				<ImageLoader class="size-10" src={page.data.user.image} alt="avatar" />
+				<ImageLoader
+					class="size-10 overflow-hidden rounded"
+					src={page.data.user.image}
+					alt="avatar"
+				/>
 				<div>
 					<CardTitle class="flex gap-2">
 						<div>{page.data.user.name}</div>
@@ -44,7 +44,11 @@
 	{/if}
 	<CardContent class="grid grid-cols-2 gap-4 space-y-0">
 		{#each G.integrationManager.integrations as integration (integration.data.id)}
-			<IntegrationButton integration={integration.data} />
+			{#if integration.data.id === 'donatepay'}
+				<DonatePayIntegrationButton integration={integration.data} />
+			{:else}
+				<IntegrationButton integration={integration.data} />
+			{/if}
 		{/each}
 	</CardContent>
 </Card>

@@ -8,6 +8,7 @@ import { db } from '$lib/server/db';
 import { genericOAuth } from 'better-auth/plugins';
 import { AVAILABLE_PROVIDER_IDS } from '$lib/providers';
 import * as schema from "./db/schema";
+import { donatePayPlugin } from './plugins/donatepay-plugin';
 
 const baseURL = process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : PUBLIC_ORIGIN;
 
@@ -57,6 +58,7 @@ export const auth = betterAuth({
 		}
 	},
 	plugins: [
+		donatePayPlugin(),
 		genericOAuth({
 			config: [
 				{
@@ -78,23 +80,10 @@ export const auth = betterAuth({
 						};
 					}
 				},
-				// {
-				// 	providerId: "donatepay",
-				// 	authorizationUrl: "https://donationalerts.com/oauth/authorize",
-				// 	tokenUrl: "https://www.donationalerts.com/oauth/token",
-				// 	userInfoUrl: "https://www.donationalerts.com/api/v1/user/oauth",
-				// 	scopes: ['oauth-user-show', 'oauth-donation-subscribe'],
-				// 	mapProfileToUser: (profile) => {
-				// 		const userData = profile.data;
-
-				// 		return {
-				// 			id: String(userData.id),
-				// 			name: userData.name,
-				// 			email: userData.email || `${userData.id}@donationalerts.local`,
-				// 			image: userData.avatar,
-				// 		};
-				// 	}
-				// }
+				{
+					providerId: "donatepay",
+					clientId: DONATIONALERTS_CLIENT_ID,
+				}
 			]
 		}),
 		// make sure this is the last plugin in the array

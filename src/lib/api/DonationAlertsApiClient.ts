@@ -18,6 +18,7 @@ class DonationAlertsApiClient extends ApiClient {
 	public async getSocketToken(userId: string, client: string) {
 		const { data, error } = await this.post<{
 			token: string;
+			roomId: string;
 		}>('/donationalerts/socket-token', {
 			userId,
 			client,
@@ -28,7 +29,7 @@ class DonationAlertsApiClient extends ApiClient {
 				description: error.message
 			});
 		} else {
-			return data.token;
+			return data;
 		}
 	}
 }

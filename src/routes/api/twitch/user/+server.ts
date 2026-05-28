@@ -2,35 +2,41 @@ import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { TWITCH_CLIENT_ID } from "$env/static/private";
 import { auth } from "$lib/server/auth";
-import { db, fetchProviderAccount } from "$lib/server/db";
+import { db, fetchFullProviderAccount } from "$lib/server/db";
 import { account } from "$lib/server/db/schema";
 import { eq } from "drizzle-orm";
 
-export const GET: RequestHandler = async (event) => {
-	const session = await auth.api.getSession({
-		headers: event.request.headers
-	});
+export const GET: RequestHandler = async ({ request, fetch }) => {
+	const session = await auth.api.getSession({ headers: request.headers });
+	if (!session) {
+		return json({ error: 'Не авторизован' }, { status: 401 });
+	}
 
-	if (!session) return json({ user: null, username: null });
+	const linkedAccount = await fetchFullProviderAccount(session.user.id, "twitch");
 
-	const twitchAccount = await fetchProviderAccount(session.user.id, "twitch");
+	if (!linkedAccount) return json({ error: 'Twitch не подключен' }, { status: 400 });
 
-	if (!twitchAccount) return json({ error: 'Twitch не подключен' }, { status: 400 });
-
-	if (twitchAccount.username) {
+	if (linkedAccount.username) {
 		return json({
 			user: session.user,
-			username: twitchAccount.username
+			username: linkedAccount.username
 		});
 	}
 
-	if (!twitchAccount.accessToken) return json({ error: 'Twitch токен не найден' }, { status: 400 });
+	const tokenRes = await auth.api.getAccessToken({
+		body: { providerId: "twitch" },
+		headers: request.headers
+	});
+
+	if (!tokenRes?.accessToken) {
+		return json({ error: 'Twitch токен не найден' }, { status: 400 });
+	}
 
 	try {
-		const twitchResponse = await event.fetch("https://api.twitch.tv/helix/users", {
+		const twitchResponse = await fetch("https://api.twitch.tv/helix/users", {
 			headers: {
 				"Client-ID": TWITCH_CLIENT_ID,
-				"Authorization": `Bearer ${twitchAccount.accessToken}`
+				"Authorization": `Bearer ${tokenRes.accessToken}`
 			}
 		});
 
@@ -47,7 +53,7 @@ export const GET: RequestHandler = async (event) => {
 		await db
 			.update(account)
 			.set({ username: fetchedUsername })
-			.where(eq(account.id, twitchAccount.id));
+			.where(eq(account.id, linkedAccount.id));
 
 		return json({
 			user: session.user,
