@@ -13,7 +13,6 @@ export const GET: RequestHandler = async ({ request, fetch }) => {
 	});
 
 	if (!tokenRes?.accessToken) {
-		console.log(console.log(tokenRes))
 		return json({ error: 'Twitch токен не найден' }, { status: 400 });
 	}
 
@@ -29,7 +28,6 @@ export const GET: RequestHandler = async ({ request, fetch }) => {
 			console.error('Token expired or invalid! Refresh needed.');
 			return json({ error: 'Действие Twitch токена истекло' }, { status: 401 });
 		}
-		console.log('response ok')
 
 		return json(await response.json(), { status: response.status });
 

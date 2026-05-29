@@ -47,7 +47,6 @@ class DonatePayDriver extends SocketDriver {
 				const username = data.notification.vars.name ?? 'Аноним';
 				const amount = Math.round(data.notification.vars.sum);
 
-				console.log(`[DONATEPAY]: ${username} donated ${amount} ${data.notification.vars.currency}`);
 				this.emit('message', {
 					name: username,
 					value: amount,

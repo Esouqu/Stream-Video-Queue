@@ -20,7 +20,6 @@ export const donatePayPlugin = () => {
 				},
 				async (ctx) => {
 					const session = ctx.context.session;
-					console.log(session)
 
 					if (!session) {
 						throw new APIError("UNAUTHORIZED", { message: "Сессия не найдена." });

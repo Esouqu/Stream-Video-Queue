@@ -145,7 +145,6 @@ class QueueManager extends Dexie {
 				const currentBatch = [...this._pendingSaveBuffer];
 				this._pendingSaveBuffer = [];
 
-				console.log(`Saving ${currentBatch.length} items...`);
 				const itemsToSave: QueueItemData[] = [];
 				const localItemsCopy = [...this._items];
 
@@ -157,7 +156,7 @@ class QueueManager extends Dexie {
 
 				for (const item of currentBatch) {
 					const targetIndex = this._getTargetInsertionIndexFromTracker(item, localItemsCopy, idMap);
-					const newSortOrder = this._calculateSortOrderFromList(item, targetIndex, localItemsCopy);
+					const newSortOrder = this._calculateSortOrderFromList(targetIndex, localItemsCopy);
 
 					const newItem: QueueItemData = {
 						...item,
@@ -165,21 +164,24 @@ class QueueManager extends Dexie {
 						sortOrder: newSortOrder
 					};
 
-					if (item.value && item.value > 0 && localItemsCopy.length > 0) {
-						// Insert into the cluster
+					if (targetIndex < localItemsCopy.length) {
 						localItemsCopy.splice(targetIndex, 0, newItem);
 
-						// Shift ID lookup map for elements affected by splice
-						for (let i = targetIndex; i < localItemsCopy.length; i++) {
-							idMap.set(localItemsCopy[i].id, i);
+						if (this._clusterTailId.current) {
+							const currentTailIdx = idMap.get(this._clusterTailId.current);
+							if (currentTailIdx !== undefined && targetIndex <= currentTailIdx) {
+								idMap.set(this._clusterTailId.current, currentTailIdx + 1);
+							}
 						}
-
-						// This newly inserted high-value item is now the tail of the cluster
-						this._clusterTailId.current = newItem.id;
+						idMap.set(newItem.id, targetIndex);
 					} else {
-						// Normal items append to the absolute end
 						localItemsCopy.push(newItem);
 						idMap.set(newItem.id, localItemsCopy.length - 1);
+					}
+
+					if (item.value && item.value > 0) {
+						this._clusterTailId.current = newItem.id;
+						idMap.set(newItem.id, targetIndex);
 					}
 
 					itemsToSave.push(newItem);
@@ -208,34 +210,59 @@ class QueueManager extends Dexie {
 		item: RawQueueItemData,
 		list: QueueItemData[],
 		idMap: Map<string, number>
-	): number {
+	) {
 		const totalItems = list.length;
 
-		if (totalItems === 0 || item.value <= 0) {
+		if (totalItems === 0) {
 			return totalItems;
 		}
 
-		const fallbackIndex = Math.min(totalItems, Math.max(0, this.index + 1));
+		if (item.value > 0) {
+			const fallbackIndex = Math.min(totalItems, Math.max(0, this.index + 1));
 
-		if (this._clusterTailId.current) {
-			const trackedIdx = idMap.get(this._clusterTailId.current);
+			if (this._clusterTailId.current) {
+				const trackedIdx = idMap.get(this._clusterTailId.current);
 
-			if (trackedIdx !== undefined && trackedIdx < totalItems && trackedIdx >= fallbackIndex) {
-				return trackedIdx + 1;
+				if (trackedIdx !== undefined && trackedIdx < totalItems && trackedIdx >= fallbackIndex) {
+					return trackedIdx + 1;
+				}
+			}
+			return fallbackIndex;
+		}
+
+		if (this._settings.shouldInsertRandomly) {
+			const firstFreeIndex = this._getFirstFreeItemIndex(list, idMap);
+
+			if (firstFreeIndex < totalItems) {
+				return Math.floor(Math.random() * (totalItems - firstFreeIndex + 1)) + firstFreeIndex;
 			}
 		}
 
-		return fallbackIndex;
+		return totalItems;
 	}
 
-	private _calculateSortOrderFromList(item: RawQueueItemData, targetIndex: number, list: QueueItemData[]): string {
+	private _getFirstFreeItemIndex(list: QueueItemData[], idMap: Map<string, number>) {
+		const absoluteMinIndex = Math.max(0, this.index + 1);
+
+		if (this._clusterTailId.current) {
+			const tailIndex = idMap.get(this._clusterTailId.current);
+			if (tailIndex !== undefined && tailIndex !== -1) {
+				return Math.max(absoluteMinIndex, tailIndex + 1);
+			}
+		}
+
+		const firstFree = list.findIndex(i => !i.value || i.value <= 0);
+		return firstFree !== -1 ? Math.max(absoluteMinIndex, firstFree) : absoluteMinIndex;
+	}
+
+	private _calculateSortOrderFromList(targetIndex: number, list: QueueItemData[]) {
 		const totalItems = list.length;
 
 		if (totalItems === 0) {
 			return generateKeyBetween(null, null);
 		}
 
-		if (item.value > 0) {
+		if (targetIndex < totalItems) {
 			const afterKey = list[targetIndex - 1]?.sortOrder || null;
 			const beforeKey = list[targetIndex]?.sortOrder || null;
 
@@ -255,14 +282,12 @@ class QueueManager extends Dexie {
 
 		const itemsSnapshot = $state.snapshot(itemsToSave);
 		const isOneVideo = itemsToSave.length === 1;
-		const toastTitle = isOneVideo ? 'Видео добавлено' : `Добавлено несколько видео`;
+		const toastTitle = isOneVideo ? 'Видео добавлено' : 'Добавлено несколько видео';
 		const toastDescription = isOneVideo ? itemsToSave[0].title : `${itemsToSave[0].title} +${itemsToSave.length}`;
 
 		try {
 			await this.queueItems.bulkAdd(itemsSnapshot);
-			toast.success(toastTitle, {
-				description: toastDescription
-			});
+			toast.success(toastTitle, { description: toastDescription });
 		} catch (err) {
 			console.error("Failed to commit batch to queue storage:", err);
 			toast.error(`Не удалось добавить видео +${itemsToSave.length}`, {
@@ -270,6 +295,7 @@ class QueueManager extends Dexie {
 			});
 		}
 	}
+
 
 	private _getPaidMs(): number {
 		const pricePerMin = this._settings?.paidTimePricePerMinute;

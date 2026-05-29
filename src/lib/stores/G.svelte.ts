@@ -2,7 +2,6 @@ import type { RawQueueItemData, SocketMessageData } from "$lib/types";
 import QueueStore from "./QueueManager.svelte";
 import PollStore from "./PollStore.svelte";
 import { browser, dev } from "$app/environment";
-import { toast } from "svelte-sonner";
 import YouTubePlayerStore from "./YoutubePlayerStore.svelte";
 import TimerStore from "./TimerStore.svelte";
 import YoutubeApiClient from "$lib/api/YoutubeApiClient";
@@ -123,19 +122,21 @@ class G {
 	private static async _fetchNewQueueItem({ name, message, value }: SocketMessageData) {
 		const extractedData = extractYoutubeVideoData(message);
 		if (!extractedData) {
-			console.warn(`[VIDEO FETCH]: No data found in message: "${message}"`);
+			if (dev) {
+				console.warn(`[VIDEO FETCH]: No data found in message: "${message}"`);
+			}
+
 			return;
 		}
 
-		const existingItem = this.queueManager.isDuplicate(extractedData.videoId);
-		if (existingItem && value < 1) {
-			console.log(`[VIDEO FETCH]: Already in queue: "${existingItem.title}"`);
-			toast.warning('Видео уже в очереди', {
-				id: 'video-already-in-queue',
-				description: existingItem.title,
-			});
-			return;
-		};
+		// const existingItem = this.queueManager.isDuplicate(extractedData.videoId);
+		// if (existingItem && value < 1) {
+		// 	if (dev) {
+		// 		console.log(`[VIDEO FETCH]: Already in queue: "${existingItem.title}"`);
+		// 	}
+
+		// 	return;
+		// };
 
 		const fetchedData = await this.youtubeApi.getVideo(extractedData.videoId);
 		if (!fetchedData) return;

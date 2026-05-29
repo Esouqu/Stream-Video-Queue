@@ -49,7 +49,6 @@ export const GET: RequestHandler = async ({ request, fetch }) => {
 		}
 
 		const payload = await kickResponse.json();
-		console.log(payload);
 		const fetchedUsername = payload.data[0].name;
 
 		if (!fetchedUsername) {

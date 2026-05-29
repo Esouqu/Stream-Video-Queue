@@ -140,7 +140,7 @@
 			</div>
 			<Toggle
 				size="icon"
-				tooltip="Следующий обычный заказ в случайном порядке"
+				tooltip="Добавлять обычный заказ в случайном порядке"
 				bind:pressed={isShuffled}
 			>
 				<ShuffleIcon />
