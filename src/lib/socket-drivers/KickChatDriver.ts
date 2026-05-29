@@ -61,7 +61,8 @@ class KickChatDriver extends SocketDriver {
 			channel: this._channel,
 			platform: this._server
 		});
-		if (!statusData) return;
+		if (!statusData)
+			throw new Error('Не удалось получить данные о соединении.');
 
 		if (statusData.stream_status === 'connected') {
 			this._connectionCounter = 0;
