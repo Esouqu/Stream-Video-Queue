@@ -14,6 +14,7 @@ export const AVAILABLE_PROVIDERS: IntegrationConfig[] = [
 		data: {
 			id: "twitch",
 			name: "Twitch",
+			type: 'chat',
 			color: colors.violet[500],
 			icon: TwitchIcon2,
 		},
@@ -23,6 +24,7 @@ export const AVAILABLE_PROVIDERS: IntegrationConfig[] = [
 		data: {
 			id: "kick",
 			name: "Kick",
+			type: 'chat',
 			color: colors.lime[500],
 			icon: KickIcon,
 		},
@@ -32,6 +34,7 @@ export const AVAILABLE_PROVIDERS: IntegrationConfig[] = [
 		data: {
 			id: "donationalerts",
 			name: "DonationAlerts",
+			type: 'donation',
 			color: colors.amber[500],
 			icon: DonationAlertsIcon,
 		},
@@ -41,6 +44,7 @@ export const AVAILABLE_PROVIDERS: IntegrationConfig[] = [
 		data: {
 			id: "donatepay",
 			name: "DonatePay",
+			type: 'donation',
 			color: colors.green[500],
 			icon: DonatePayIcon,
 			shouldHandleApiKey: true

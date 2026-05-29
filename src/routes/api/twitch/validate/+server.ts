@@ -7,7 +7,6 @@ export const GET: RequestHandler = async ({ request, fetch }) => {
 		return json({ error: 'Не авторизован' }, { status: 401 });
 	}
 
-	console.log('session ok')
 	const tokenRes = await auth.api.getAccessToken({
 		body: { providerId: "twitch" },
 		headers: request.headers

@@ -82,3 +82,14 @@ export type DonationAlertsUserData = DefaultUserData & {
 	language: string;
 	socket_connection_token: string;
 }
+
+export type TurnirResponseMessageData = {
+	id: string;
+	channel: string;
+	message: string;
+	user: {
+		id: string;
+		username: string;
+	}
+	ts: number;
+}

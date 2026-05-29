@@ -20,7 +20,7 @@
 		<VideoQueue />
 	</div>
 </div>
-<div class="absolute right-0 bottom-0">
+<div class="absolute bottom-0 left-0">
 	<DevTools />
 </div>
 

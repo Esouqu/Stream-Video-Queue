@@ -2,11 +2,13 @@ import type { Component } from "svelte";
 import type SocketDriver from "./socket-drivers/SocketDriver";
 
 export type SkipAction = 'none' | 'warning' | 'skip';
+export type IntegrationType = 'donation' | 'chat';
 export type IntegrationId = 'twitch' | 'kick' | 'donationalerts' | 'donatepay';
 export type SocketState = 'not-exists' | 'connecting' | 'open' | 'closed';
 
 export type IntegrationData = {
 	id: IntegrationId;
+	type: IntegrationType
 	name: string;
 	color: string;
 	icon: Component;

@@ -7,6 +7,7 @@
 	import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 	import ToolsIcon from '@lucide/svelte/icons/tool-case';
 	import { Switch } from './ui/switch';
+	import { randInt } from '$lib/utils';
 
 	type Props = {
 		anchor?: HTMLElement;
@@ -24,26 +25,18 @@
 	let isSimulationPressed = $state(false);
 	let withInterval = $state(false);
 
-	function addMessage() {
-		const value = isPaid ? 100 : 0;
-
-		G.__sendDevMessage(message, value);
-		message = '';
-	}
-
 	async function addMultipleVideos() {
 		for (let i = 0; i < addAmount; i++) {
 			if (withInterval) {
-				await new Promise((resolve) => setTimeout(() => resolve(true), 500));
+				await new Promise((resolve) => setTimeout(() => resolve(true), 100));
 			}
 
-			addVideo();
+			sendMessage();
 		}
 	}
 
-	function addVideo() {
-		const value = isPaid ? 100 : 0;
-		// const val = Math.random() > 0.5 ? randInt(100, 1000) : 0;
+	function sendMessage() {
+		const value = isPaid && Math.random() > 0.5 ? randInt(100, 1000) : 0;
 
 		try {
 			G.__sendDevMessage(message, value);
@@ -75,7 +68,7 @@
 							id="test-message"
 							placeholder="Сообщение"
 							bind:value={message}
-							onenter={addMessage}
+							onenter={sendMessage}
 						/>
 					</div>
 					<div class="flex gap-2">
@@ -83,7 +76,7 @@
 							<span class="text-sm font-semibold text-muted-foreground">Платное?</span>
 							<Switch bind:checked={isPaid} />
 						</div>
-						<Button variant="ghost" class="ml-auto" onclick={addMessage}>Отправить</Button>
+						<Button variant="ghost" class="ml-auto" onclick={sendMessage}>Отправить</Button>
 					</div>
 				</div>
 			</div>

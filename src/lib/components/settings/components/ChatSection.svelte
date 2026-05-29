@@ -2,7 +2,6 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import { Input } from '$lib/components/ui/input';
 	import G from '$lib/stores/G.svelte';
-	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import FieldValidator from '$lib/stores/FieldValidator.svelte';
 	import Setting from './Setting.svelte';
 	import SettingGroup from './SettingGroup.svelte';
@@ -23,29 +22,37 @@
 		.required()
 		.numeric()
 		.onValid((value) => (G.settings.neededVotes = parseInt(value)));
-
-	const pollTypeOptions = [
-		{ value: 'first', label: 'Первенство' },
-		{ value: 'difference', label: 'Борьба' }
-	];
-	// const currentPollTypeOption = $derived.by(getCurrentPollTypeOption)
-	// function getCurrentOption() {
-	// 	return enoughVotesActionOptions.find((option) => option.value === G.enoughVotesAction);
-	// }
 </script>
 
 <div class="flex flex-col gap-4">
 	<Setting>
 		{#snippet title()}
-			Заказ видео
+			Заказ видео (чат)
 		{/snippet}
 		{#snippet description()}
 			В чате:
 			<span class="rounded bg-blue-900 px-1 font-semibold text-blue-300">
 				!rq &lt;ссылка на видео&gt;
-			</span>.
+			</span>. Видео будут добавляться в конец очереди исключая повторений.
+		{/snippet}
+	</Setting>
+
+	<Setting>
+		{#snippet title()}
+			Макс. заказов на пользователя
+		{/snippet}
+		{#snippet description()}
+			Ограничить максимальное количество заказов, которое может сделать один пользователь.
 			<br />
-			Видео будут добавляться в конец очереди.
+			<i>Оставьте поле пустым, чтобы не ограничивать.</i>
+		{/snippet}
+		{#snippet input()}
+			<Input
+				id="max-requests-per-user"
+				type="number"
+				placeholder="Неограничено"
+				bind:value={G.settings.maxRequestsPerUser}
+			/>
 		{/snippet}
 	</Setting>
 
@@ -61,28 +68,6 @@
 		{/snippet}
 		{#snippet content()}
 			<SettingGroup title="Основные параметры">
-				<Setting isSub>
-					{#snippet title()}
-						Тип голосования
-					{/snippet}
-					{#snippet description()}
-						Первенство — первый вариант, который наберет нужное количество голосов, завершит
-						голосование.
-						<br />
-						Борьба — голосование не закончится, пока не наберется указанная разница голосов в пользу пропуска.
-					{/snippet}
-					{#snippet input()}
-						<Select type="single">
-							<SelectTrigger id="poll-type" class="w-full">Первенство</SelectTrigger>
-							<SelectContent>
-								{#each pollTypeOptions as option (option.value)}
-									<SelectItem value={option.value}>{option.label}</SelectItem>
-								{/each}
-							</SelectContent>
-						</Select>
-					{/snippet}
-				</Setting>
-
 				<Setting isSub>
 					{#snippet title()}
 						Оставить

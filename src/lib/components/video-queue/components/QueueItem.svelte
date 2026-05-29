@@ -3,7 +3,6 @@
 	import { cn } from '$lib/utils';
 	import { fly, type FlyParams } from 'svelte/transition';
 	import DotsIcon from '$lib/components/icons/DotsIcon.svelte';
-	import InfoIcon from '$lib/components/icons/InfoIcon.svelte';
 	import TrashIcon from '$lib/components/icons/TrashIcon.svelte';
 	import ImageLoader from '$lib/components/ImageLoader.svelte';
 	import { buttonVariants } from '$lib/components/ui/button';
@@ -16,34 +15,37 @@
 	type Props = {
 		item: QueueItemData;
 		class?: string;
-		flyParams?: {
-			in?: FlyParams;
-			out?: FlyParams;
-		};
+		flyDirection?: number;
 		isCurrent?: boolean;
 		onSelect?: (item: QueueItemData) => void;
-		onRemoveClick?: () => void;
-		onInfoClick?: () => void;
+		onRemove?: () => void;
 	};
-
-	const defaultFlyParams = { y: -168, easing: cubicOut };
 
 	let {
 		item,
 		class: className,
-		flyParams = { in: defaultFlyParams, out: defaultFlyParams },
+		flyDirection = 1,
 		isCurrent = false,
 		onSelect,
-		onRemoveClick,
-		onInfoClick
+		onRemove
 	}: Props = $props();
 
+	let clientWidth = $state(0);
+
+	let flyParams = $derived.by<{ in?: FlyParams; out?: FlyParams }>(getFlyParams);
 	const viewCount = $derived(NumberFormatter.formatViews(parseInt(item.viewCount)));
 	const publishedAt = $derived(NumberFormatter.timeAgo(item.publishedAt));
 
-	function handleRemoveClick() {
-		flyParams = { out: { x: 168 } };
-		onRemoveClick?.();
+	function getFlyParams() {
+		return {
+			in: { y: flyDirection * 196, easing: cubicOut },
+			out: { y: flyDirection * -196, easing: cubicOut }
+		};
+	}
+
+	function handleRemove() {
+		flyParams = { out: { x: clientWidth } };
+		onRemove?.();
 	}
 </script>
 
@@ -58,6 +60,7 @@
 	tabindex="0"
 	onclick={() => onSelect?.(item)}
 	onkeydown={() => {}}
+	bind:clientWidth
 	in:fly={flyParams.in}
 	out:fly={flyParams.out}
 >
@@ -86,16 +89,13 @@
 	</div>
 	<div class="flex w-full flex-col">
 		<div class="flex w-full gap-2">
-			<div class="w-full">
-				<div class="line-clamp-2 overflow-hidden text-start text-sm font-medium text-ellipsis">
-					{item.title}
-				</div>
-				<div
-					class="mt-0.75 line-clamp-1 text-start text-xs text-ellipsis text-muted-foreground transition group-data-[selected=true]:text-red-300/50"
-				>
-					{item.channelTitle}
-				</div>
+			<div
+				class="line-clamp-2 overflow-hidden text-start text-sm font-medium text-ellipsis"
+				title={item.title}
+			>
+				{item.title}
 			</div>
+
 			<Popover>
 				<PopoverTrigger
 					class={cn(
@@ -113,29 +113,29 @@
 					preventScroll
 					sideOffset={4}
 					align="end"
-					portalProps={{ disabled: !isCurrent }}
+					portalProps={{ disabled: true }}
 				>
 					<Command>
 						<CommandList>
-							<CommandItem onclick={(e) => e.stopPropagation()} onSelect={handleRemoveClick}>
+							<CommandItem onclick={(e) => e.stopPropagation()} onSelect={handleRemove}>
 								<TrashIcon />
 								<span>Удалить</span>
 							</CommandItem>
-							{#if onInfoClick}
-								<CommandItem onclick={(e) => e.stopPropagation()} onSelect={onInfoClick}>
-									<InfoIcon />
-									<span>Доп. информация</span>
-								</CommandItem>
-							{/if}
 						</CommandList>
 					</Command>
 				</PopoverContent>
 			</Popover>
 		</div>
+
 		<div
 			class="mt-0.75 line-clamp-1 flex items-center gap-0.5 text-xs text-ellipsis text-muted-foreground"
 		>
 			{viewCount} • {publishedAt}
+		</div>
+		<div
+			class="mt-0.75 line-clamp-1 flex items-center gap-0.5 text-xs text-ellipsis text-muted-foreground"
+		>
+			Заказал {item.submittedBy}
 		</div>
 	</div>
 </div>

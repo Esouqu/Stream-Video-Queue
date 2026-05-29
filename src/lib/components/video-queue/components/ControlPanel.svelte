@@ -15,8 +15,6 @@
 	import type VideoPlayerStore from '$lib/stores/VideoPlayerStore.svelte';
 	import G from '$lib/stores/G.svelte';
 	import EmptyQueueItem from './EmptyQueueItem.svelte';
-	import { cubicOut } from 'svelte/easing';
-	import Blob from '$lib/components/Blob.svelte';
 	import VideoProgress from './VideoProgress.svelte';
 
 	type ButtonMouseEvent =
@@ -30,30 +28,26 @@
 	type Props = {
 		videoPlayer: VideoPlayerStore<T>;
 		currentItem?: QueueItemData;
+		flyDirection?: number;
 		isShuffled?: boolean;
 		class?: string;
-		onRemoveClick?: () => void;
-		onInfoClick?: () => void;
-		onSkipBackwardClick?: () => void;
-		onSkipForwardClick?: () => void;
+		onRemove?: () => void;
+		onSkipBackward?: () => void;
+		onSkipForward?: () => void;
 	};
 
 	let {
 		currentItem,
 		class: className,
 		videoPlayer,
+		flyDirection = 1,
 		isShuffled = $bindable(false),
-		onRemoveClick,
-		onInfoClick,
-		onSkipBackwardClick,
-		onSkipForwardClick
+		onRemove,
+		onSkipBackward,
+		onSkipForward
 	}: Props = $props();
 
-	let flyDirection = $state(1);
-
-	let circleRef = $state<HTMLDivElement>();
 	let panelRef = $state<HTMLDivElement>();
-	let seed = $state(crypto.randomUUID());
 
 	function play(e: ButtonMouseEvent) {
 		e.stopPropagation();
@@ -64,69 +58,41 @@
 			videoPlayer.pause();
 		}
 
-		animateCircle(e);
+		animatePanel();
 	}
 
 	async function skipBackward(e: ButtonMouseEvent) {
 		e.stopPropagation();
-		onSkipBackwardClick?.();
-		animateCircle(e);
-		flyDirection = G.queueManager.isLastItem ? 0 : -1;
+		animatePanel();
+
+		onSkipBackward?.();
 	}
 
 	async function skipForward(e: ButtonMouseEvent) {
 		e.stopPropagation();
-		onSkipForwardClick?.();
-		animateCircle(e);
-		flyDirection = G.queueManager.isFirstItem ? 0 : 1;
+		animatePanel();
+
+		onSkipForward?.();
 	}
 
-	function animateCircle(event: ButtonMouseEvent) {
-		if (!circleRef || !panelRef) return;
+	function animatePanel() {
+		if (!panelRef) return;
 
-		const parentRect = panelRef.getBoundingClientRect();
-		const targetRect = event.currentTarget.getBoundingClientRect();
-
-		const circleClientWidth = circleRef.clientWidth;
-		const circleClientHeight = circleRef.clientHeight;
-		const relativeX = targetRect.left + targetRect.width / 2 - parentRect.left;
-		const relativeY = targetRect.top + targetRect.height / 2 - parentRect.top;
-
-		seed = crypto.randomUUID();
-
-		createTimeline()
-			.add(circleRef, {
-				scale: [0, 1],
-				opacity: [1, 1],
-				duration: 500,
-				ease: 'outQuad',
-				onBegin: ({ targets }) => {
-					for (const target of targets) {
-						target.style = `
-							top: ${relativeY - circleClientHeight / 2}px;
-							left: ${relativeX - circleClientWidth / 2}px;
-						`;
-					}
-				}
-			})
-			.add(
-				panelRef,
-				{
-					scale: [1, 0.95, 1],
-					ease: 'outCubic',
-					duration: 500
-				},
-				'0'
-			)
-			.add(circleRef, {
-				opacity: 0
-			});
+		createTimeline().add(
+			panelRef,
+			{
+				scale: [1, 0.95, 1],
+				ease: 'outCubic',
+				duration: 500
+			},
+			'0'
+		);
 	}
 </script>
 
 <div
 	class={cn(
-		`group pointer-events-auto relative z-1 flex shrink-0 rounded-md transition-colors delay-75 duration-500`,
+		`group pointer-events-auto relative z-1 flex shrink-0 transition-colors delay-75 duration-500`,
 		className
 	)}
 >
@@ -138,12 +104,8 @@
 						class="col-start-1 row-start-1 p-3 px-4"
 						item={currentItem}
 						isCurrent
-						flyParams={{
-							in: { y: flyDirection * 168, easing: cubicOut },
-							out: { y: flyDirection * -168, easing: cubicOut }
-						}}
-						{onRemoveClick}
-						{onInfoClick}
+						{flyDirection}
+						{onRemove}
 					/>
 				{/key}
 			</div>
@@ -176,7 +138,11 @@
 					<SkipForwardIcon />
 				</Button>
 			</div>
-			<Toggle size="icon" tooltip="Добавлять в случайном порядке" bind:pressed={isShuffled}>
+			<Toggle
+				size="icon"
+				tooltip="Следующий обычный заказ в случайном порядке"
+				bind:pressed={isShuffled}
+			>
 				<ShuffleIcon />
 			</Toggle>
 		</div>
@@ -190,6 +156,7 @@
 				start={currentItem?.startMs || 0}
 				paidDuration={G.queueManager.currentPaidMs}
 				isLive={currentItem?.isLive || false}
+				shouldShowPaidDuration={G.settings.isPaidTimeEnabled}
 			/>
 		{/if}
 
@@ -204,12 +171,5 @@
 				/>
 			{/key}
 		{/if}
-
-		<Blob
-			bind:ref={circleRef}
-			{seed}
-			color="rgb(0 0 0 / 0.25)"
-			class="pointer-events-none absolute z-2 size-250 opacity-0"
-		/>
 	</div>
 </div>

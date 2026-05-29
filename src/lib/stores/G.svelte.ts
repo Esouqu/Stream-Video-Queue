@@ -50,12 +50,14 @@ class G {
 
 	static readonly youtubePlayer = new YouTubePlayerStore();
 	static readonly integrationManager = new IntegrationManager();
-	static readonly queueManager = new QueueStore(this.youtubeApi, this.settings);
+	static readonly queueManager = new QueueStore(this.settings);
 	static readonly poll = new PollStore(this.settings);
 
 	private static _simulationIntervalId?: number;
 	private static _validationIntervalId?: number;
 	private static _isEventTriggered = false;
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	private static _submittedByUser = new Map<string, number>();
 
 	public static async initialize() {
 		if (browser) {
@@ -73,13 +75,12 @@ class G {
 	}
 
 	private static _onSocketMessage(message: SocketMessageData) {
+		if (this.queueManager.isFull) return;
+		if (dev) console.log(`[MESSAGE]: ${message.message}`);
+
 		const isPaid = message.value > 0;
 
-		if (dev) {
-			console.log(`[MESSAGE]: ${message.message}`);
-		}
-
-		if (isPaid) {
+		if (isPaid && message.value >= this.settings.paidVideoPrice) {
 			this._processDonationMessage(message);
 			return;
 		}
@@ -87,35 +88,35 @@ class G {
 		this._processChatMessage(message);
 	}
 
+	private static async _processDonationMessage(message: SocketMessageData) {
+		const newItem = await this._fetchNewQueueItem(message);
+		if (!newItem) return;
+
+		this.queueManager.enqueue(newItem);
+	}
+
 	private static async _processChatMessage({ name, message, value, source }: SocketMessageData) {
 		const hasPrefix = message.startsWith(REQUEST_PREFIX);
 		const messageWithoutPrefix = message.replace(REQUEST_PREFIX, '').trim();
+		const submittedAmount = this._submittedByUser.get(name) || 0;
+		const canRequest = this.settings.maxRequestsPerUser === null || submittedAmount < this.settings.maxRequestsPerUser;
 
-		if (hasPrefix && messageWithoutPrefix && !this.queueManager.isFull) {
+		if (hasPrefix && messageWithoutPrefix && canRequest) {
 			const newItem = await this._fetchNewQueueItem({
 				name,
 				message: messageWithoutPrefix,
 				value,
 				source
 			});
-			if (!newItem) return;
 
-			this.queueManager.enqueue(newItem);
+			if (newItem) {
+				this.queueManager.enqueue(newItem);
+				this._submittedByUser.set(name, submittedAmount + 1);
+			}
 		}
 
 		if (this.settings.isPollEnabled && this.queueManager.current) {
 			this.poll.addVote(name, message);
-		}
-	}
-
-	private static async _processDonationMessage(message: SocketMessageData) {
-		if (!this.queueManager.isFull) {
-			const newItem = await this._fetchNewQueueItem(message);
-			if (!newItem) return;
-
-			this.queueManager.enqueue(newItem);
-		} else {
-			toast.warning('Видео не было добавлено', { description: 'Очередь заполнена!' })
 		}
 	}
 
@@ -126,9 +127,13 @@ class G {
 			return;
 		}
 
-		const existingItem = await this.queueManager.isExisting(extractedData.videoId);
+		const existingItem = this.queueManager.isDuplicate(extractedData.videoId);
 		if (existingItem && value < 1) {
 			console.log(`[VIDEO FETCH]: Already in queue: "${existingItem.title}"`);
+			toast.warning('Видео уже в очереди', {
+				id: 'video-already-in-queue',
+				description: existingItem.title,
+			});
 			return;
 		};
 
@@ -184,7 +189,7 @@ class G {
 
 	private static async _onVideoTimeUpdate({ current }: { current: number, duration: number }) {
 		const isPaid = this.queueManager.current?.value > 0;
-		const isSettingEnabled = this.settings.isPaidTimerEnabled;
+		const isSettingEnabled = this.settings.isPaidTimeEnabled;
 		const isLive = this.queueManager.current?.isLive;
 
 		if (this._isEventTriggered || isLive || !isSettingEnabled || !isPaid) return;

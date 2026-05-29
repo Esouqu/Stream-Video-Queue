@@ -82,7 +82,7 @@ export const auth = betterAuth({
 				},
 				{
 					providerId: "donatepay",
-					clientId: DONATIONALERTS_CLIENT_ID,
+					clientId: '',
 				}
 			]
 		}),

@@ -5,24 +5,20 @@
 	import Setting from './Setting.svelte';
 
 	function setPaidTimerChecked(checked: boolean) {
-		G.settings.isPaidTimerEnabled = checked;
+		G.settings.isPaidTimeEnabled = checked;
 	}
 </script>
 
 <div class="space-y-4">
 	<Setting>
 		{#snippet title()}
-			Заказ видео
+			Заказ видео (донат)
 		{/snippet}
 		{#snippet description()}
 			В донате:
 			<span class="rounded bg-blue-900 px-1 font-semibold text-blue-300">
 				&lt;ссылка на видео&gt;
-			</span>.
-			<br />
-			Видео будут добавляться после текущего.
-			<br />
-			Случайное добавление не работает на платные видео.
+			</span>. Видео из доната будут формировать отдельную очередь после текущего видео.
 		{/snippet}
 		{#snippet content()}
 			<Setting isSub>
@@ -35,14 +31,14 @@
 						type="number"
 						placeholder="Значение"
 						suffix="₽"
-						bind:value={G.settings.prioritizedVideoPrice}
+						bind:value={G.settings.paidVideoPrice}
 					/>
 				{/snippet}
 			</Setting>
 		{/snippet}
 	</Setting>
 
-	<Setting isEnabled={G.settings.isPaidTimerEnabled}>
+	<Setting isEnabled={G.settings.isPaidTimeEnabled}>
 		{#snippet title()}
 			Ограничение по времени
 		{/snippet}
@@ -53,7 +49,7 @@
 		{#snippet input()}
 			<Switch
 				id="timer-enable"
-				bind:checked={() => G.settings.isPaidTimerEnabled, setPaidTimerChecked}
+				bind:checked={() => G.settings.isPaidTimeEnabled, setPaidTimerChecked}
 			/>
 		{/snippet}
 		{#snippet content()}
@@ -67,7 +63,7 @@
 						type="number"
 						placeholder="Значение"
 						suffix="₽/мин"
-						bind:value={G.settings.paidTimerPricePerMinute}
+						bind:value={G.settings.paidTimePricePerMinute}
 					/>
 				{/snippet}
 			</Setting>

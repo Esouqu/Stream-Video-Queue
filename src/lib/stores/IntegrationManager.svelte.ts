@@ -7,6 +7,12 @@ class IntegrationManager {
 
 	get integrations() { return Array.from(this._integrations.values()) }
 	get isAnyConnected() { return this.integrations.some(integration => integration.isOpen) }
+	get isDonationConnected() {
+		return this.integrations.some((i) => i.isOpen && i.data.type === 'donation');
+	}
+	get isChatConnected() {
+		return this.integrations.some((i) => i.isOpen && i.data.type === 'chat');
+	}
 
 	public connectAll() {
 		for (const conn of this._integrations.values()) {

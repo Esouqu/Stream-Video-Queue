@@ -124,7 +124,7 @@
 					class="group w-full items-start overflow-hidden hover:bg-green-900 hover:text-green-300 data-[linked=true]:bg-(--int-color)/20 data-[linked=true]:text-(--int-color) data-[linked=true]:hover:bg-red-900 data-[linked=true]:hover:text-red-300"
 					style="--int-color: {integration.color};"
 					data-linked={isLinked}
-					disabled={isDisabled || isLastAccount}
+					disabled={isDisabled || isLastAccount || !isLoggedIn}
 					onclick={openDialog}
 				>
 					<div class="flex h-full flex-col transition-transform group-hover:-translate-y-full">

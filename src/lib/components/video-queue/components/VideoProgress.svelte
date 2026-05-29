@@ -11,9 +11,11 @@
 		paidDuration: number;
 		start: number;
 		isLive: boolean;
+		shouldShowPaidDuration: boolean;
 	};
 
-	const { current, duration, paidDuration, start, isLive }: Props = $props();
+	const { current, duration, paidDuration, start, isLive, shouldShowPaidDuration }: Props =
+		$props();
 
 	const currentString = $derived(
 		NumberFormatter.formatMs(current, {
@@ -48,20 +50,16 @@
 				value={current}
 				max={duration}
 			/>
-			<Range
-				class="pointer-events-none absolute bottom-0 h-1 w-full **:data-[slot=progress-indicator]:bg-red-500"
-				{start}
-				end={start + paidDuration}
-				min={0}
-				max={duration}
-			/>
-			<!-- <Slider
-				noThumbs
-				type="multiple"
-				class="pointer-events-none absolute bottom-0 w-full **:data-[slot=slider-range]:bg-red-500 **:data-[slot=slider-track]:h-1 **:data-[slot=slider-track]:bg-transparent"
-				value={[start, paidDuration]}
-				max={duration * 1000}
-			/> -->
+
+			{#if shouldShowPaidDuration}
+				<Range
+					class="pointer-events-none absolute bottom-0 h-1 w-full **:data-[slot=progress-indicator]:bg-red-500"
+					{start}
+					end={start + paidDuration}
+					min={0}
+					max={duration}
+				/>
+			{/if}
 		{/if}
 	</div>
 </div>

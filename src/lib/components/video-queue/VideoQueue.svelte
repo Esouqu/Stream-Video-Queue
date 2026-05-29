@@ -9,12 +9,34 @@
 	import ControlPanel from './components/ControlPanel.svelte';
 	import EmptyQueueItem from './components/EmptyQueueItem.svelte';
 	import ClearQueueButton from '../ClearQueueButton.svelte';
-	import { Separator } from '../ui/separator';
 
 	const itemHeight = 102;
 	const itemsBuffer = 10;
 
+	let flyDirection = $state(1);
 	let viewportRef = $state<HTMLDivElement | null>(null);
+
+	$effect(() => {
+		if (G.queueManager.current) {
+			flyDirection = 1;
+		}
+	});
+
+	function onRemove() {
+		if (G.queueManager.current) {
+			G.queueManager.dequeue(G.queueManager.current);
+		}
+	}
+
+	function onSkipBackward() {
+		G.queueManager.previous();
+		flyDirection = G.queueManager.isLastItem ? 0 : -1;
+	}
+
+	function onSkipForward() {
+		G.queueManager.next();
+		flyDirection = G.queueManager.isFirstItem ? 0 : 1;
+	}
 
 	function onItemSelect(item: QueueItemData) {
 		G.queueManager.select(item);
@@ -27,44 +49,47 @@
 >
 	<QueueHeader />
 
-	<div class="w-full pt-2">
-		<div class="flex flex-col gap-2 text-sm font-semibold whitespace-nowrap text-muted-foreground">
-			<div class="flex items-center justify-between px-4">
-				<div>Текущее видео</div>
-				{#if G.queueManager.current}
-					<div class="tabular-nums">
-						{G.queueManager.index + 1} / {G.queueManager.size}
-					</div>
-				{/if}
-			</div>
-			<Separator class="shrink" />
+	<div class="w-full">
+		<div
+			class="flex items-center justify-between border-b px-4 pb-2 text-sm font-semibold text-muted-foreground"
+		>
+			<div>Текущее видео</div>
+			{#if G.queueManager.current}
+				<div class="tabular-nums">
+					{G.queueManager.index + 1} / {G.queueManager.size}
+				</div>
+			{/if}
 		</div>
 		<ControlPanel
+			class="border-b"
 			currentItem={G.queueManager.current}
 			videoPlayer={G.youtubePlayer}
-			onSkipBackwardClick={() => G.queueManager.previous()}
-			onSkipForwardClick={() => G.queueManager.next()}
-			onRemoveClick={() => G.queueManager.current && G.queueManager.dequeue(G.queueManager.current)}
+			{flyDirection}
 			bind:isShuffled={G.settings.shouldInsertRandomly}
+			{onSkipBackward}
+			{onSkipForward}
+			{onRemove}
 		/>
-		<div class="flex flex-col gap-2 text-sm font-semibold whitespace-nowrap text-muted-foreground">
-			<!-- <div>Далее</div> -->
-			<Separator class="shrink" />
-		</div>
 	</div>
 
 	<VirtualList
 		bind:viewportRef
-		class="z-1 w-full **:data-[slot=scroll-area-content]:pt-3"
+		class="w-full"
 		items={G.queueManager.upcoming}
 		{itemHeight}
 		{itemsBuffer}
 	>
+		{#snippet header()}
+			<div class="px-4 pt-2 text-sm font-semibold whitespace-nowrap text-muted-foreground">
+				<div>Далее</div>
+			</div>
+		{/snippet}
 		{#snippet child(item)}
 			<QueueItem
 				{item}
+				{flyDirection}
 				onSelect={(item) => onItemSelect(item)}
-				onRemoveClick={() => G.queueManager.dequeue(item)}
+				onRemove={() => G.queueManager.dequeue(item)}
 			/>
 		{/snippet}
 

@@ -3,7 +3,6 @@ import Dexie, { liveQuery, type EntityTable } from "dexie";
 import { generateKeyBetween } from "fractional-indexing";
 import { PersistedState } from "runed";
 import { toast } from "svelte-sonner";
-import type YoutubeApi from "$lib/api/YoutubeApiClient";
 import { dev } from "$app/environment";
 import type SettingsStore from "./SettingsStore.svelte";
 
@@ -18,12 +17,13 @@ class QueueManager extends Dexie {
 	readonly currentPaidMs = $derived.by(this._getPaidMs.bind(this));
 
 	queueItems!: EntityTable<QueueItemData, 'id'>;
-	private _youtubeApi: YoutubeApi;
 
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	private _pendingVideoIds = new Set<string>();
 	private _pendingSaveBuffer: RawQueueItemData[] = [];
 	private _isProcessingBuffer = false;
+	private _tickerInterval: number | null = null;
+	private _clusterTailId = new PersistedState<string | null>('clusterTailId', null);
 
 	get items() { return this._items; }
 	get index() { return this._index.current; }
@@ -35,11 +35,10 @@ class QueueManager extends Dexie {
 	get isLastItem() { return this.index === this.size - 1; }
 	get isLoading() { return this._isLoading; }
 
-	constructor(youtubeApi: YoutubeApi, settings: SettingsStore) {
+	constructor(settings: SettingsStore) {
 		super('StreamQueueDB');
 
 		this._settings = settings;
-		this._youtubeApi = youtubeApi;
 
 		liveQuery(async () => await this.queueItems.orderBy('sortOrder').toArray())
 			.subscribe(this._updateItems.bind(this));
@@ -56,7 +55,9 @@ class QueueManager extends Dexie {
 			await this.queueItems.clear();
 			toast.success("Очередь очищена");
 		} catch (err) {
-			toast.error('Не удалось очистить очередь', { description: (err as Error).message });
+			toast.error('Не удалось очистить очередь', {
+				description: (err as Error).message
+			});
 		}
 	}
 
@@ -81,8 +82,13 @@ class QueueManager extends Dexie {
 	}
 
 	public async dequeue(item: QueueItemData) {
+		if (this._clusterTailId.current === item.id) {
+			this._clusterTailId.current = null;
+		}
+
 		try {
 			await this.queueItems.delete(item.id);
+
 			toast.success("Видео удалено из очереди", {
 				description: item.title,
 			});
@@ -91,28 +97,182 @@ class QueueManager extends Dexie {
 		}
 	}
 
-	public async isExisting(videoId: string) {
-		return await this.queueItems.where({ videoId }).first();
-	}
-
 	public async enqueue(data: RawQueueItemData) {
-		const isFree = data.value === 0;
-
-		console.log(Array.from(this._pendingVideoIds.values()))
-		if (isFree && this._pendingVideoIds.has(data.videoId)) return;
-
 		this._pendingVideoIds.add(data.videoId);
 		this._pendingSaveBuffer.push(data);
 
-		if (!this._isProcessingBuffer) {
-			await this._processSaveBuffer();
+		if (!this._tickerInterval) {
+			this._startHeartbeat();
+		}
+	}
+
+	public isDuplicate(videoId: string) {
+		return this._items.find((i) => i.videoId === videoId);
+	}
+
+	private _stopHeartbeat() {
+		if (this._tickerInterval) {
+			clearInterval(this._tickerInterval);
+			this._tickerInterval = null;
+		}
+	}
+
+	private _startHeartbeat() {
+		this._tickerInterval = window.setInterval(async () => {
+			if (this._isProcessingBuffer) return;
+
+			if (this._pendingSaveBuffer.length === 0) {
+				this._stopHeartbeat();
+				return;
+			}
+
+			this._isProcessingBuffer = true;
+			try {
+				await this._flushBuffer();
+			} catch (err) {
+				console.error("Failed to flush buffer:", err);
+			} finally {
+				this._isProcessingBuffer = false;
+			}
+		}, 100);
+	}
+
+	private async _flushBuffer() {
+		this._isProcessingBuffer = true;
+
+		try {
+			while (this._pendingSaveBuffer.length > 0) {
+				const currentBatch = [...this._pendingSaveBuffer];
+				this._pendingSaveBuffer = [];
+
+				console.log(`Saving ${currentBatch.length} items...`);
+				const itemsToSave: QueueItemData[] = [];
+				const localItemsCopy = [...this._items];
+
+				// eslint-disable-next-line svelte/prefer-svelte-reactivity
+				const idMap = new Map<string, number>();
+				for (let i = 0; i < localItemsCopy.length; i++) {
+					idMap.set(localItemsCopy[i].id, i);
+				}
+
+				for (const item of currentBatch) {
+					const targetIndex = this._getTargetInsertionIndexFromTracker(item, localItemsCopy, idMap);
+					const newSortOrder = this._calculateSortOrderFromList(item, targetIndex, localItemsCopy);
+
+					const newItem: QueueItemData = {
+						...item,
+						id: crypto.randomUUID(),
+						sortOrder: newSortOrder
+					};
+
+					if (item.value && item.value > 0 && localItemsCopy.length > 0) {
+						// Insert into the cluster
+						localItemsCopy.splice(targetIndex, 0, newItem);
+
+						// Shift ID lookup map for elements affected by splice
+						for (let i = targetIndex; i < localItemsCopy.length; i++) {
+							idMap.set(localItemsCopy[i].id, i);
+						}
+
+						// This newly inserted high-value item is now the tail of the cluster
+						this._clusterTailId.current = newItem.id;
+					} else {
+						// Normal items append to the absolute end
+						localItemsCopy.push(newItem);
+						idMap.set(newItem.id, localItemsCopy.length - 1);
+					}
+
+					itemsToSave.push(newItem);
+				}
+
+				this._items = localItemsCopy;
+
+				if (dev) {
+					this._analyzeDuplicates();
+				}
+
+				try {
+					await this._commitBatch(itemsToSave);
+				} finally {
+					for (const item of currentBatch) {
+						this._pendingVideoIds.delete(item.videoId);
+					}
+				}
+			}
+		} finally {
+			this._isProcessingBuffer = false;
+		}
+	}
+
+	private _getTargetInsertionIndexFromTracker(
+		item: RawQueueItemData,
+		list: QueueItemData[],
+		idMap: Map<string, number>
+	): number {
+		const totalItems = list.length;
+
+		if (totalItems === 0 || item.value <= 0) {
+			return totalItems;
 		}
 
-		this._pendingVideoIds.delete(data.videoId);
+		const fallbackIndex = Math.min(totalItems, Math.max(0, this.index + 1));
+
+		if (this._clusterTailId.current) {
+			const trackedIdx = idMap.get(this._clusterTailId.current);
+
+			if (trackedIdx !== undefined && trackedIdx < totalItems && trackedIdx >= fallbackIndex) {
+				return trackedIdx + 1;
+			}
+		}
+
+		return fallbackIndex;
+	}
+
+	private _calculateSortOrderFromList(item: RawQueueItemData, targetIndex: number, list: QueueItemData[]): string {
+		const totalItems = list.length;
+
+		if (totalItems === 0) {
+			return generateKeyBetween(null, null);
+		}
+
+		if (item.value > 0) {
+			const afterKey = list[targetIndex - 1]?.sortOrder || null;
+			const beforeKey = list[targetIndex]?.sortOrder || null;
+
+			if (afterKey && beforeKey && afterKey >= beforeKey) {
+				return generateKeyBetween(afterKey, null);
+			}
+
+			return generateKeyBetween(afterKey, beforeKey);
+		}
+
+		const absoluteTailKey = list[totalItems - 1]?.sortOrder || null;
+		return generateKeyBetween(absoluteTailKey, null);
+	}
+
+	private async _commitBatch(itemsToSave: QueueItemData[]) {
+		if (this.isFull || itemsToSave.length === 0) return;
+
+		const itemsSnapshot = $state.snapshot(itemsToSave);
+		const isOneVideo = itemsToSave.length === 1;
+		const toastTitle = isOneVideo ? 'Видео добавлено' : `Добавлено несколько видео`;
+		const toastDescription = isOneVideo ? itemsToSave[0].title : `${itemsToSave[0].title} +${itemsToSave.length}`;
+
+		try {
+			await this.queueItems.bulkAdd(itemsSnapshot);
+			toast.success(toastTitle, {
+				description: toastDescription
+			});
+		} catch (err) {
+			console.error("Failed to commit batch to queue storage:", err);
+			toast.error(`Не удалось добавить видео +${itemsToSave.length}`, {
+				description: (err as Error).message
+			});
+		}
 	}
 
 	private _getPaidMs(): number {
-		const pricePerMin = this._settings?.paidTimerPricePerMinute;
+		const pricePerMin = this._settings?.paidTimePricePerMinute;
 
 		if (!this.current || this.current.value <= 0 || !pricePerMin || pricePerMin <= 0) {
 			return 0;
@@ -149,108 +309,6 @@ class QueueManager extends Dexie {
 			return newItem;
 		});
 	}
-
-	private async _processSaveBuffer() {
-		this._isProcessingBuffer = true;
-
-		while (this._pendingSaveBuffer.length > 0) {
-			const currentBatch = [...this._pendingSaveBuffer];
-			this._pendingSaveBuffer = [];
-
-			console.log(`Saving ${currentBatch.length} items...`);
-			const itemsToSave: QueueItemData[] = [];
-
-			for (const item of currentBatch) {
-				const targetIndex = this._getTargetInsertionIndex(item);
-				const newSortOrder = this._calculateSortOrder(item, targetIndex);
-
-				const newItem: QueueItemData = {
-					...item,
-					id: crypto.randomUUID(),
-					sortOrder: newSortOrder
-				};
-
-				if (item.value && item.value > 0 && this._items.length > 0) {
-					this._items.splice(targetIndex, 0, newItem);
-				} else {
-					this._items.push(newItem);
-				}
-
-				itemsToSave.push(newItem);
-			}
-
-			if (dev) {
-				this._analyzeDuplicates();
-			}
-
-			await this._commitBatch(itemsToSave);
-		}
-
-		this._isProcessingBuffer = false;
-	}
-
-	private _getTargetInsertionIndex(item: RawQueueItemData): number {
-		const totalItems = this._items.length;
-
-		if (totalItems === 0 || item.value <= 0) {
-			return totalItems;
-		}
-
-		// Scan forward to find the true end of the high-value cluster
-		let insertIdx = Math.max(0, this.index);
-		while (
-			insertIdx < totalItems &&
-			this._items[insertIdx]?.value &&
-			this._items[insertIdx].value > 0
-		) {
-			insertIdx++;
-		}
-		return insertIdx;
-	}
-
-	private _calculateSortOrder(item: RawQueueItemData, targetIndex: number): string {
-		const totalItems = this._items.length;
-
-		// Database is completely empty
-		if (totalItems === 0) {
-			return generateKeyBetween(null, null);
-		}
-
-		// High-value requests injected near the current index
-		if (item.value > 0) {
-			const afterKey = this._items[targetIndex - 1]?.sortOrder || null;
-			const beforeKey = this._items[targetIndex]?.sortOrder || null;
-
-			// If fractional keys ever collapse due to massive batches, append cleanly
-			if (afterKey && beforeKey && afterKey >= beforeKey) {
-				return generateKeyBetween(afterKey, null);
-			}
-
-			return generateKeyBetween(afterKey, beforeKey);
-		}
-
-		// Normal items appended to the absolute tail
-		const absoluteTailKey = this._items[totalItems - 1]?.sortOrder || null;
-		return generateKeyBetween(absoluteTailKey, null);
-	}
-
-	private async _commitBatch(itemsToSave: QueueItemData[]) {
-		if (this.isFull || itemsToSave.length === 0) return;
-
-		const itemsSnapshot = $state.snapshot(itemsToSave);
-		const toastTitle = itemsToSave.length === 1 ? 'Видео добавлено' : `Видео добавлено +${itemsToSave.length}`;
-
-		try {
-			await this.queueItems.bulkAdd(itemsSnapshot);
-			toast.success(toastTitle, {
-				description: itemsToSave[0].title
-			});
-		} catch (err) {
-			console.error("Failed to commit batch to queue storage:", err);
-			toast.error(`Не удалось добавить видео +${itemsToSave.length}`, { description: (err as Error).message });
-		}
-	}
-
 
 	private _analyzeDuplicates() {
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity

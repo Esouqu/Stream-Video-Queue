@@ -6,8 +6,8 @@
 	import VotesProgress from './components/VotesProgress.svelte';
 	import { Button } from '../ui/button';
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
-	import { fade } from 'svelte/transition';
 	import NumberFormatter from '$lib/utils/NumberFormatter';
+	import { fade } from 'svelte/transition';
 
 	type Props = {
 		class?: string;
@@ -20,6 +20,9 @@
 			startMs: G.poll.blockTimer.startTime
 		})
 	);
+	const isLocked = $derived(
+		G.poll.blockTimer.isRunning || !G.settings.isPollEnabled || !G.queueManager.current
+	);
 
 	function resetVotes() {
 		G.poll.reset(true);
@@ -27,15 +30,22 @@
 	}
 </script>
 
-<div class={cn('relative flex shrink-0 flex-col gap-2 p-2', className)}>
-	<div class="flex w-full justify-between text-sm font-semibold text-muted-foreground tabular-nums">
+<div
+	class={cn('group relative flex shrink-0 flex-col gap-2 p-2', className)}
+	data-locked={isLocked}
+>
+	<div
+		class="flex w-full justify-between text-sm font-semibold text-muted-foreground tabular-nums opacity-100 transition-opacity group-data-[locked=true]:opacity-0"
+	>
 		<div>Голосование ({G.poll.difference} из {G.settings.neededVotes})</div>
 		<Button variant="ghost" class="h-5 p-0" disabled={!G.poll.isEnoughVotes} onclick={resetVotes}>
 			<RefreshCwIcon class="size-4" />
 			Сбросить
 		</Button>
 	</div>
-	<div class="flex w-full flex-col gap-1.5">
+	<div
+		class="flex w-full flex-col gap-1.5 opacity-100 transition-opacity group-data-[locked=true]:opacity-0"
+	>
 		<VotesProgress
 			title={G.settings.keepKeyword}
 			Icon={ThumbUpIcon}
@@ -51,9 +61,9 @@
 		/>
 	</div>
 
-	{#if G.poll.blockTimer.isRunning || !G.settings.isPollEnabled || !G.queueManager.current}
+	{#if isLocked}
 		<div
-			class="absolute top-1/2 left-1/2 z-50 flex size-full -translate-1/2 items-center justify-center rounded-md bg-muted select-none"
+			class="absolute top-1/2 left-1/2 z-50 flex size-full -translate-1/2 items-center justify-center select-none"
 			transition:fade
 		>
 			<div class="flex flex-col text-center font-semibold">
