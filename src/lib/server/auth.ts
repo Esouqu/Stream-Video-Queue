@@ -42,11 +42,6 @@ export const auth = betterAuth({
 			username: { type: "string" },
 		}
 	},
-	user: {
-		additionalFields: {
-			primaryProvider: { type: "string" },
-		}
-	},
 	socialProviders: {
 		twitch: {
 			clientId: TWITCH_CLIENT_ID,

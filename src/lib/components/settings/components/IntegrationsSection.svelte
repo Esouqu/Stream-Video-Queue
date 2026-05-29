@@ -34,9 +34,7 @@
 					<CardTitle class="flex gap-2">
 						<div>{page.data.user.name}</div>
 					</CardTitle>
-					<CardDescription>
-						{page.data.user.email}
-					</CardDescription>
+					<CardDescription>Текущая сессия</CardDescription>
 				</div>
 			</div>
 			<Button variant="ghost" onclick={onSignOut}>Выйти</Button>
