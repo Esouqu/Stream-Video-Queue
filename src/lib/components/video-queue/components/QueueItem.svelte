@@ -87,46 +87,13 @@
 			</Badge>
 		</div>
 	</div>
-	<div class="flex w-full flex-col">
-		<div class="flex w-full gap-2">
-			<div
-				class="line-clamp-2 overflow-hidden text-start text-sm font-medium text-ellipsis"
-				title={item.title}
-			>
-				{item.title}
-			</div>
-
-			<Popover>
-				<PopoverTrigger
-					class={cn(
-						buttonVariants({ variant: 'ghost', size: 'icon-sm' }),
-						'translate-x-0.75 -translate-y-0.75',
-						className
-					)}
-					onclick={(e) => e.stopPropagation()}
-				>
-					<DotsIcon class="rotate-90" />
-				</PopoverTrigger>
-				<PopoverContent
-					class="w-fit border border-input p-1"
-					hideWhenDetached
-					preventScroll
-					sideOffset={4}
-					align="end"
-					portalProps={{ disabled: true }}
-				>
-					<Command>
-						<CommandList>
-							<CommandItem onclick={(e) => e.stopPropagation()} onSelect={handleRemove}>
-								<TrashIcon />
-								<span>Удалить</span>
-							</CommandItem>
-						</CommandList>
-					</Command>
-				</PopoverContent>
-			</Popover>
+	<div class="relative flex w-full flex-col">
+		<div
+			class="line-clamp-2 overflow-hidden pr-8 text-start text-sm font-medium text-ellipsis"
+			title={item.title}
+		>
+			{item.title}
 		</div>
-
 		<div
 			class="mt-0.75 line-clamp-1 flex items-center gap-0.5 text-xs text-ellipsis text-muted-foreground"
 		>
@@ -137,5 +104,35 @@
 		>
 			Заказал {item.submittedBy}
 		</div>
+
+		<Popover>
+			<PopoverTrigger
+				class={cn(
+					buttonVariants({ variant: 'ghost', size: 'icon-sm' }),
+					'absolute top-0 right-0 translate-x-0.75 -translate-y-0.75',
+					className
+				)}
+				onclick={(e) => e.stopPropagation()}
+			>
+				<DotsIcon class="rotate-90" />
+			</PopoverTrigger>
+			<PopoverContent
+				class="w-fit border border-input p-1"
+				hideWhenDetached
+				preventScroll
+				sideOffset={4}
+				align="end"
+				portalProps={{ disabled: true }}
+			>
+				<Command>
+					<CommandList>
+						<CommandItem onclick={(e) => e.stopPropagation()} onSelect={handleRemove}>
+							<TrashIcon />
+							<span>Удалить</span>
+						</CommandItem>
+					</CommandList>
+				</Command>
+			</PopoverContent>
+		</Popover>
 	</div>
 </div>
